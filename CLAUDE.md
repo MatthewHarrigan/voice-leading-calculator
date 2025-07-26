@@ -21,9 +21,8 @@ node server.js
 ## Project Structure
 ```
 /
-├── minimal_chord_library.html    # Main chord library interface
+├── minimal_chord_library.html    # Main chord library interface (includes sequence builder)
 ├── interval_browser.html         # Interval visualization tool
-├── dynamic_chord_builder.html    # Interactive chord builder
 ├── chord_generator.js            # Core chord generation (Node.js)
 ├── chord_generator_browser.js    # Browser-compatible version
 ├── interval_generator.js         # Interval generation functions
