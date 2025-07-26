@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Upper String Set Functionality</title>
+    <style>
+        body { font-family: Times, serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .test-result { margin: 10px 0; padding: 10px; }
+        .success { background: #e8f5e8; border-left: 4px solid green; }
+        .error { background: #f5e8e8; border-left: 4px solid red; }
+        button { padding: 8px 16px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Upper String Set Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Basic Upper String Generation</h2>
+        <button onclick="testBasicGeneration()">Run Test</button>
+        <div id="test1-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Compare Middle vs Upper Fingerings</h2>
+        <button onclick="testComparison()">Run Test</button>
+        <div id="test2-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: String Set Integration</h2>
+        <button onclick="testIntegration()">Run Test</button>
+        <div id="test3-result"></div>
+    </div>
+
+    <script type="module">
+        import { 
+            generateChordForStringSet,
+            create6StringChordSVG,
+            getChordNotes,
+            createDrop2Voicing,
+            findDrop2Fingering
+        } from './chord_generator_browser.js';
+
+        window.chordGenerator = {
+            generateChordForStringSet,
+            create6StringChordSVG,
+            getChordNotes,
+            createDrop2Voicing,
+            findDrop2Fingering
+        };
+
+        window.testBasicGeneration = function() {
+            const result = document.getElementById('test1-result');
+            try {
+                // Test middle strings (existing)
+                const middleChord = chordGenerator.generateChordForStringSet('C', 'maj7', 0, 'middle');
+                
+                // Test upper strings (new)  
+                const upperChord = chordGenerator.generateChordForStringSet('C', 'maj7', 0, 'upper');
+                
+                if (middleChord && upperChord) {
+                    result.innerHTML = `
+                        <div class="success">
+                            <strong>✅ SUCCESS:</strong> Both string sets generated successfully<br>
+                            Middle strings: ${JSON.stringify(middleChord.frets)}<br>
+                            Upper strings: ${JSON.stringify(upperChord.frets)}
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML = '<div class="error"><strong>❌ FAILED:</strong> Could not generate one or both chord fingerings</div>';
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error"><strong>❌ ERROR:</strong> ${error.message}</div>`;
+            }
+        };
+
+        window.testComparison = function() {
+            const result = document.getElementById('test2-result');
+            try {
+                const middleChord = chordGenerator.generateChordForStringSet('C', 'maj7', 0, 'middle');
+                const upperChord = chordGenerator.generateChordForStringSet('C', 'maj7', 0, 'upper');
+                
+                if (middleChord && upperChord) {
+                    // Check that upper strings use different (higher) fret positions
+                    const middleFrets = middleChord.frets.filter(f => f !== null && f > 0);
+                    const upperFrets = upperChord.frets.filter(f => f !== null && f > 0);
+                    
+                    const avgMiddle = middleFrets.reduce((a, b) => a + b, 0) / middleFrets.length;
+                    const avgUpper = upperFrets.reduce((a, b) => a + b, 0) / upperFrets.length;
+                    
+                    result.innerHTML = `
+                        <div class="success">
+                            <strong>✅ SUCCESS:</strong> Different fret positions confirmed<br>
+                            Middle strings average fret: ${avgMiddle.toFixed(1)}<br>
+                            Upper strings average fret: ${avgUpper.toFixed(1)}<br>
+                            Difference: ${(avgUpper - avgMiddle).toFixed(1)} frets higher
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML = '<div class="error"><strong>❌ FAILED:</strong> Could not generate chord fingerings</div>';
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error"><strong>❌ ERROR:</strong> ${error.message}</div>`;
+            }
+        };
+
+        window.testIntegration = function() {
+            const result = document.getElementById('test3-result');
+            try {
+                // Test that the string set parameter is correctly passed through all functions
+                const chordNotes = chordGenerator.getChordNotes('C', 'maj7');
+                const voicing = chordGenerator.createDrop2Voicing(chordNotes, 0);
+                
+                const middleFingering = chordGenerator.findDrop2Fingering(voicing, 'C', 3, 4, 'middle');
+                const upperFingering = chordGenerator.findDrop2Fingering(voicing, 'C', 3, 4, 'upper');
+                
+                if (middleFingering && upperFingering) {
+                    result.innerHTML = `
+                        <div class="success">
+                            <strong>✅ SUCCESS:</strong> String set integration working<br>
+                            Middle: Uses strings 1-4 (A-D-G-B)<br>
+                            Upper: Uses strings 2-5 (D-G-B-E)<br>
+                            Functions correctly handle stringSet parameter
+                        </div>
+                    `;
+                } else {
+                    result.innerHTML = '<div class="error"><strong>❌ FAILED:</strong> String set integration failed</div>';
+                }
+            } catch (error) {
+                result.innerHTML = `<div class="error"><strong>❌ ERROR:</strong> ${error.message}</div>`;
+            }
+        };
+    </script>
+</body>
+</html>

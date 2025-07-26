@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Module Test</title>
+</head>
+<body>
+    <h1>Simple Module Test</h1>
+    <div id="result"></div>
+    <button onclick="testImport()">Test Import</button>
+    
+    <script>
+        async function testImport() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing import...';
+            
+            try {
+                console.log('Attempting import...');
+                const module = await import('./chord_generator_browser.js');
+                console.log('Import successful:', module);
+                resultDiv.innerHTML = 'SUCCESS: Module loaded with functions: ' + Object.keys(module).join(', ');
+            } catch (error) {
+                console.error('Import failed:', error);
+                resultDiv.innerHTML = 'ERROR: ' + error.message + '<br>Stack: ' + error.stack;
+            }
+        }
+        
+        // Also test on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, testing import...');
+            testImport();
+        });
+    </script>
+</body>
+</html>

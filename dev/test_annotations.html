@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Interval Annotations</title>
+    <style>
+        body { font-family: Times, serif; margin: 20px; text-align: center; }
+        .chord-container { display: inline-block; margin: 20px; border: 1px solid #ccc; padding: 10px; }
+        .chord-svg { width: 200px; height: 240px; }
+    </style>
+</head>
+<body>
+    <h1>Testing Interval Annotations</h1>
+    <p>These should show interval labels (R, 5, 7, 3) under the chord diagrams</p>
+    
+    <div class="chord-container">
+        <h3>Cmaj7 Root Inversion</h3>
+        <object data="C_maj7_inv3_tedGreen.svg" type="image/svg+xml" class="chord-svg"></object>
+    </div>
+    
+    <div class="chord-container">
+        <h3>Cm7 Root Inversion</h3>
+        <object data="C_min7_inv3_tedGreen.svg" type="image/svg+xml" class="chord-svg"></object>
+    </div>
+    
+    <div class="chord-container">
+        <h3>Direct SVG Embed (Cmaj7)</h3>
+        <div id="direct-svg"></div>
+    </div>
+    
+    <script>
+        // Load SVG directly to bypass any object caching
+        fetch('C_maj7_inv3_tedGreen.svg')
+            .then(response => response.text())
+            .then(svgText => {
+                document.getElementById('direct-svg').innerHTML = svgText;
+            })
+            .catch(error => {
+                document.getElementById('direct-svg').innerHTML = 'Error loading SVG: ' + error;
+            });
+    </script>
+</body>
+</html>

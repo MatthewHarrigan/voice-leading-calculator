@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Chord Builder</title>
+    <style>
+        body {
+            font-family: Times, serif;
+            margin: 20px;
+            background: white;
+            color: black;
+        }
+        
+        .chord-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .chord-selector select {
+            padding: 5px;
+            font-family: Times, serif;
+            font-size: 14px;
+            border: 1px solid #000;
+            background: white;
+        }
+        
+        .chord-selector button {
+            padding: 5px 10px;
+            background: black;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-family: Times, serif;
+        }
+        
+        .sequence-display {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background: white;
+        }
+        
+        .sequence-chord {
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .sequence-chord .chord-diagram {
+            width: 80px;
+            height: auto;
+            border: 1px solid #000;
+        }
+        
+        .sequence-chord .chord-label {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .debug-info {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Debug Chord Builder</h1>
+    
+    <div class="chord-selector">
+        <label>Root:</label>
+        <select id="rootSelect">
+            <option value="C">C</option>
+            <option value="D">D</option>
+            <option value="E">E</option>
+            <option value="F">F</option>
+            <option value="G">G</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+        </select>
+        
+        <label>Chord Type:</label>
+        <select id="chordTypeSelect">
+            <option value="maj7">Major 7</option>
+            <option value="min7">Minor 7</option>
+            <option value="dom7">Dominant 7</option>
+        </select>
+        
+        <button onclick="addChord()">Add Chord</button>
+        <button onclick="testModule()">Test Module</button>
+    </div>
+    
+    <div class="sequence-display" id="sequenceDisplay">
+        <div style="color: #666; font-style: italic;">Your chord sequence will appear here...</div>
+    </div>
+    
+    <div class="debug-info" id="debugInfo">
+        Debug info will appear here...
+    </div>
+
+    <script type="module">
+        let chordSequence = [];
+        let moduleLoaded = false;
+        let chordGenerator = null;
+        
+        // Debug function
+        function debug(message) {
+            const debugDiv = document.getElementById('debugInfo');
+            debugDiv.innerHTML += new Date().toLocaleTimeString() + ': ' + message + '<br>';
+            console.log(message);
+        }
+        
+        // Test module loading
+        window.testModule = async function() {
+            debug('Testing module import...');
+            try {
+                chordGenerator = await import('./chord_generator.js');
+                debug('Module imported successfully: ' + Object.keys(chordGenerator).join(', '));
+                moduleLoaded = true;
+                
+                // Test basic functionality
+                const notes = chordGenerator.getChordNotes('C', 'maj7');
+                debug('C maj7 notes: ' + notes.join(', '));
+                
+                const voicing = chordGenerator.createDrop2Voicing(notes, 0);
+                debug('Drop 2 voicing: ' + voicing.join(', '));
+                
+                const fingering = chordGenerator.findDrop2Fingering(voicing, 'C');
+                debug('Fingering found: ' + (fingering ? 'YES' : 'NO'));
+                
+                if (fingering) {
+                    debug('Fingering frets: ' + JSON.stringify(fingering.frets));
+                }
+                
+            } catch (error) {
+                debug('ERROR importing module: ' + error.message);
+                console.error('Import error:', error);
+            }
+        };
+        
+        // Add chord function
+        window.addChord = function() {
+            debug('addChord() called');
+            
+            if (!moduleLoaded) {
+                debug('Module not loaded, loading now...');
+                window.testModule().then(() => {
+                    window.addChord();
+                });
+                return;
+            }
+            
+            const root = document.getElementById('rootSelect').value;
+            const chordType = document.getElementById('chordTypeSelect').value;
+            
+            debug('Adding chord: ' + root + ' ' + chordType);
+            
+            try {
+                const chordNotes = chordGenerator.getChordNotes(root, chordType);
+                debug('Chord notes: ' + chordNotes.join(', '));
+                
+                const voicing = chordGenerator.createDrop2Voicing(chordNotes, 0);
+                debug('Voicing: ' + voicing.join(', '));
+                
+                const fingering = chordGenerator.findDrop2Fingering(voicing, root);
+                debug('Fingering: ' + (fingering ? 'Found' : 'Not found'));
+                
+                if (fingering) {
+                    const svg = chordGenerator.create6StringChordSVG(fingering, root + chordType);
+                    debug('SVG generated, length: ' + svg.length);
+                    
+                    const chord = {
+                        root: root,
+                        chordType: chordType,
+                        symbol: root + chordType,
+                        id: Date.now(),
+                        svg: svg
+                    };
+                    
+                    chordSequence.push(chord);
+                    debug('Chord added to sequence, total: ' + chordSequence.length);
+                    
+                    updateDisplay();
+                } else {
+                    debug('ERROR: No fingering found for ' + root + chordType);
+                }
+                
+            } catch (error) {
+                debug('ERROR in addChord: ' + error.message);
+                console.error('Add chord error:', error);
+            }
+        };
+        
+        function updateDisplay() {
+            debug('updateDisplay() called');
+            const display = document.getElementById('sequenceDisplay');
+            
+            if (chordSequence.length === 0) {
+                display.innerHTML = '<div style="color: #666; font-style: italic;">Your chord sequence will appear here...</div>';
+                return;
+            }
+            
+            display.innerHTML = '';
+            
+            chordSequence.forEach((chord, index) => {
+                const chordElement = document.createElement('div');
+                chordElement.className = 'sequence-chord';
+                
+                const blob = new Blob([chord.svg], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+                
+                chordElement.innerHTML = `
+                    <img src="${url}" class="chord-diagram" alt="${chord.symbol}">
+                    <div class="chord-label">${chord.symbol}</div>
+                `;
+                
+                display.appendChild(chordElement);
+                
+                if (index < chordSequence.length - 1) {
+                    const arrow = document.createElement('div');
+                    arrow.style.fontSize = '18px';
+                    arrow.textContent = '→';
+                    display.appendChild(arrow);
+                }
+            });
+            
+            debug('Display updated with ' + chordSequence.length + ' chords');
+        }
+        
+        // Auto-load module on page load
+        window.addEventListener('load', function() {
+            debug('Page loaded, auto-loading module...');
+            window.testModule();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Chord Sequence Builder</title>
+    <style>
+        body {
+            font-family: Times, serif;
+            margin: 0;
+            padding: 20px;
+            background: white;
+            color: black;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            font-weight: normal;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+        
+        .builder-section {
+            background: #f8f8f8;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+        }
+        
+        .chord-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .chord-selector select {
+            padding: 5px;
+            font-family: Times, serif;
+            font-size: 14px;
+            border: 1px solid #000;
+            background: white;
+        }
+        
+        .chord-selector button {
+            padding: 5px 10px;
+            background: black;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-family: Times, serif;
+        }
+        
+        .chord-selector button:hover {
+            background: #333;
+        }
+        
+        .sequence-display {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background: white;
+        }
+        
+        .sequence-chord {
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .sequence-chord .chord-diagram {
+            width: 80px;
+            height: auto;
+            border: 1px solid #000;
+        }
+        
+        .sequence-chord .chord-label {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .sequence-chord .remove-btn {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .sequence-arrow {
+            font-size: 18px;
+            color: #666;
+        }
+        
+        .voice-leading-info {
+            background: #f0f0f0;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+        }
+        
+        .voice-leading-info h3 {
+            margin-top: 0;
+            font-size: 16px;
+        }
+        
+        .movement-analysis {
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .controls button {
+            padding: 8px 16px;
+            background: black;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-family: Times, serif;
+        }
+        
+        .controls button:hover {
+            background: #333;
+        }
+        
+        .optimization-display {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f4f8;
+            border: 1px solid #ccc;
+        }
+        
+        .optimization-display h3 {
+            margin-top: 0;
+        }
+        
+        .optimized-sequence {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .optimized-chord {
+            text-align: center;
+        }
+        
+        .optimized-chord .chord-diagram {
+            width: 80px;
+            height: auto;
+            border: 1px solid #000;
+        }
+        
+        .optimized-chord .chord-label {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .optimized-chord .inversion-label {
+            font-size: 10px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DYNAMIC CHORD SEQUENCE BUILDER</h1>
+        
+        <div class="builder-section">
+            <h2>Build Your Sequence</h2>
+            
+            <div class="chord-selector">
+                <label>Root:</label>
+                <select id="rootSelect">
+                    <option value="C">C</option>
+                    <option value="C#">C#</option>
+                    <option value="D">D</option>
+                    <option value="D#">D#</option>
+                    <option value="E">E</option>
+                    <option value="F">F</option>
+                    <option value="F#">F#</option>
+                    <option value="G">G</option>
+                    <option value="G#">G#</option>
+                    <option value="A">A</option>
+                    <option value="A#">A#</option>
+                    <option value="B">B</option>
+                </select>
+                
+                <label>Chord Type:</label>
+                <select id="chordTypeSelect">
+                    <option value="maj7">Major 7</option>
+                    <option value="min7">Minor 7</option>
+                    <option value="dom7">Dominant 7</option>
+                    <option value="min7b5">Minor 7♭5</option>
+                    <option value="dim7">Diminished 7</option>
+                    <option value="maj6">Major 6</option>
+                    <option value="min6">Minor 6</option>
+                    <option value="sus4">Sus4</option>
+                    <option value="sus2">Sus2</option>
+                    <option value="maj9">Major 9</option>
+                    <option value="min9">Minor 9</option>
+                    <option value="dom9">Dominant 9</option>
+                    <option value="6add9">6/9</option>
+                    <option value="7b9">7♭9</option>
+                    <option value="7#9">7#9</option>
+                    <option value="7b13">7♭13</option>
+                </select>
+                
+                <button onclick="addChordToSequence()">Add Chord</button>
+            </div>
+            
+            <div class="sequence-display" id="sequenceDisplay">
+                <div style="color: #666; font-style: italic;">Your chord sequence will appear here...</div>
+            </div>
+            
+            <div class="controls">
+                <button onclick="optimizeSequence()">Optimize Voice Leading</button>
+                <button onclick="clearSequence()">Clear All</button>
+                <button onclick="exportSequence()">Export</button>
+            </div>
+        </div>
+        
+        <div class="voice-leading-info" id="voiceLeadingInfo" style="display: none;">
+            <h3>Voice Leading Analysis</h3>
+            <div id="analysisContent"></div>
+        </div>
+        
+        <div class="optimization-display" id="optimizationDisplay" style="display: none;">
+            <h3>Optimized Sequence</h3>
+            <div class="optimized-sequence" id="optimizedSequence"></div>
+            <div class="movement-analysis" id="movementAnalysis"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Global sequence state
+        let chordSequence = [];
+        let chordGenerator = null;
+        
+        // Load the module
+        async function loadModule() {
+            try {
+                chordGenerator = await import('./chord_generator_browser.js');
+                console.log('Chord generator module loaded successfully');
+            } catch (error) {
+                console.error('Failed to load chord generator:', error);
+                alert('Failed to load chord generator module');
+            }
+        }
+        
+        // Add chord to sequence
+        window.addChordToSequence = async function() {
+            if (!chordGenerator) {
+                await loadModule();
+                if (!chordGenerator) return;
+            }
+            const root = document.getElementById('rootSelect').value;
+            const chordType = document.getElementById('chordTypeSelect').value;
+            
+            const chord = {
+                root: root,
+                chordType: chordType,
+                symbol: `${root}${getChordSymbol(chordType)}`,
+                id: Date.now()
+            };
+            
+            chordSequence.push(chord);
+            updateSequenceDisplay();
+            updateVoiceLeadingAnalysis();
+        };
+        
+        // Remove chord from sequence
+        window.removeChordFromSequence = function(id) {
+            chordSequence = chordSequence.filter(chord => chord.id !== id);
+            updateSequenceDisplay();
+            updateVoiceLeadingAnalysis();
+        };
+        
+        // Clear entire sequence
+        window.clearSequence = function() {
+            chordSequence = [];
+            updateSequenceDisplay();
+            document.getElementById('voiceLeadingInfo').style.display = 'none';
+            document.getElementById('optimizationDisplay').style.display = 'none';
+        };
+        
+        // Update sequence display
+        function updateSequenceDisplay() {
+            const display = document.getElementById('sequenceDisplay');
+            
+            if (chordSequence.length === 0) {
+                display.innerHTML = '<div style="color: #666; font-style: italic;">Your chord sequence will appear here...</div>';
+                return;
+            }
+            
+            display.innerHTML = '';
+            
+            chordSequence.forEach((chord, index) => {
+                // Create chord element
+                const chordElement = document.createElement('div');
+                chordElement.className = 'sequence-chord';
+                
+                // Generate SVG for first inversion (placeholder)
+                const chordNotes = chordGenerator.getChordNotes(chord.root, chord.chordType);
+                const voicing = chordGenerator.createDrop2Voicing(chordNotes, 0); // Start with root position
+                const fingering = chordGenerator.findDrop2Fingering(voicing, chord.root);
+                
+                if (fingering) {
+                    const svg = chordGenerator.create6StringChordSVG(fingering, chord.symbol);
+                    const blob = new Blob([svg], { type: 'image/svg+xml' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    chordElement.innerHTML = `
+                        <img src="${url}" class="chord-diagram" alt="${chord.symbol}">
+                        <div class="chord-label">${chord.symbol}</div>
+                        <button class="remove-btn" onclick="removeChordFromSequence(${chord.id})">×</button>
+                    `;
+                }
+                
+                display.appendChild(chordElement);
+                
+                // Add arrow if not the last chord
+                if (index < chordSequence.length - 1) {
+                    const arrow = document.createElement('div');
+                    arrow.className = 'sequence-arrow';
+                    arrow.textContent = '→';
+                    display.appendChild(arrow);
+                }
+            });
+        }
+        
+        // Optimize sequence for voice leading
+        window.optimizeSequence = function() {
+            if (chordSequence.length < 2) {
+                alert('Please add at least 2 chords to optimize voice leading');
+                return;
+            }
+            
+            const optimizedSequence = optimizeVoiceLeading(chordSequence);
+            displayOptimizedSequence(optimizedSequence);
+        };
+        
+        // Voice leading optimization algorithm
+        function optimizeVoiceLeading(sequence) {
+            const optimized = [];
+            
+            // Start with all possible inversions for first chord
+            const firstChord = sequence[0];
+            const firstChordNotes = chordGenerator.getChordNotes(firstChord.root, firstChord.chordType);
+            let bestFirstInversion = 0;
+            let bestFirstFingering = null;
+            
+            // Try all inversions for first chord
+            for (let inv = 0; inv < 4; inv++) {
+                const voicing = chordGenerator.createDrop2Voicing(firstChordNotes, inv);
+                const fingering = chordGenerator.findDrop2Fingering(voicing, firstChord.root);
+                if (fingering) {
+                    bestFirstInversion = inv;
+                    bestFirstFingering = fingering;
+                    break;
+                }
+            }
+            
+            optimized.push({
+                ...firstChord,
+                inversion: bestFirstInversion,
+                fingering: bestFirstFingering,
+                voicing: chordGenerator.createDrop2Voicing(firstChordNotes, bestFirstInversion)
+            });
+            
+            // Optimize each subsequent chord
+            for (let i = 1; i < sequence.length; i++) {
+                const currentChord = sequence[i];
+                const previousChord = optimized[i - 1];
+                const currentChordNotes = chordGenerator.getChordNotes(currentChord.root, currentChord.chordType);
+                
+                let bestInversion = 0;
+                let bestFingering = null;
+                let bestDistance = Infinity;
+                
+                // Try all inversions for current chord
+                for (let inv = 0; inv < 4; inv++) {
+                    const voicing = chordGenerator.createDrop2Voicing(currentChordNotes, inv);
+                    const fingering = chordGenerator.findDrop2Fingering(voicing, currentChord.root);
+                    
+                    if (fingering) {
+                        const distance = calculateVoiceLeadingDistance(previousChord.fingering, fingering);
+                        if (distance < bestDistance) {
+                            bestDistance = distance;
+                            bestInversion = inv;
+                            bestFingering = fingering;
+                        }
+                    }
+                }
+                
+                optimized.push({
+                    ...currentChord,
+                    inversion: bestInversion,
+                    fingering: bestFingering,
+                    voicing: chordGenerator.createDrop2Voicing(currentChordNotes, bestInversion),
+                    distance: bestDistance
+                });
+            }
+            
+            return optimized;
+        }
+        
+        // Calculate voice leading distance between two fingerings
+        function calculateVoiceLeadingDistance(fingering1, fingering2) {
+            const strings = [1, 2, 3, 4]; // A, D, G, B
+            let totalDistance = 0;
+            
+            for (const string of strings) {
+                const fret1 = fingering1.frets[string] || 0;
+                const fret2 = fingering2.frets[string] || 0;
+                totalDistance += Math.abs(fret2 - fret1);
+            }
+            
+            return totalDistance;
+        }
+        
+        // Display optimized sequence
+        function displayOptimizedSequence(optimizedSequence) {
+            const display = document.getElementById('optimizedSequence');
+            const analysisDisplay = document.getElementById('movementAnalysis');
+            
+            display.innerHTML = '';
+            
+            let totalMovement = 0;
+            const movements = [];
+            
+            optimizedSequence.forEach((chord, index) => {
+                const chordElement = document.createElement('div');
+                chordElement.className = 'optimized-chord';
+                
+                const svg = chordGenerator.create6StringChordSVG(chord.fingering, chord.symbol);
+                const blob = new Blob([svg], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+                
+                chordElement.innerHTML = `
+                    <img src="${url}" class="chord-diagram" alt="${chord.symbol}">
+                    <div class="chord-label">${chord.symbol}</div>
+                    <div class="inversion-label">${getInversionName(chord.inversion)}</div>
+                `;
+                
+                display.appendChild(chordElement);
+                
+                if (index < optimizedSequence.length - 1) {
+                    const arrow = document.createElement('div');
+                    arrow.className = 'sequence-arrow';
+                    arrow.textContent = '→';
+                    display.appendChild(arrow);
+                    
+                    if (chord.distance !== undefined) {
+                        totalMovement += chord.distance;
+                        movements.push(`${chord.symbol}: ${chord.distance} semitones`);
+                    }
+                }
+            });
+            
+            // Display movement analysis
+            analysisDisplay.innerHTML = `
+                <strong>Total Voice Movement:</strong> ${totalMovement} semitones<br>
+                <strong>Individual Movements:</strong> ${movements.join(', ')}<br>
+                <strong>Average Movement:</strong> ${(totalMovement / Math.max(1, movements.length)).toFixed(1)} semitones per chord change
+            `;
+            
+            document.getElementById('optimizationDisplay').style.display = 'block';
+        }
+        
+        // Update voice leading analysis
+        function updateVoiceLeadingAnalysis() {
+            if (chordSequence.length < 2) {
+                document.getElementById('voiceLeadingInfo').style.display = 'none';
+                return;
+            }
+            
+            const analysis = analyzeCurrentSequence();
+            document.getElementById('analysisContent').innerHTML = analysis;
+            document.getElementById('voiceLeadingInfo').style.display = 'block';
+        }
+        
+        // Analyze current sequence
+        function analyzeCurrentSequence() {
+            let analysis = '<strong>Current Sequence:</strong><br>';
+            
+            chordSequence.forEach((chord, index) => {
+                analysis += `${index + 1}. ${chord.symbol}`;
+                if (index < chordSequence.length - 1) {
+                    analysis += ' → ';
+                }
+            });
+            
+            analysis += '<br><br><strong>Recommendations:</strong><br>';
+            analysis += '• Click "Optimize Voice Leading" to find the best inversions<br>';
+            analysis += '• Each chord will be positioned for minimal finger movement<br>';
+            analysis += '• Root positions will be marked with black dots<br>';
+            
+            return analysis;
+        }
+        
+        // Export sequence
+        window.exportSequence = function() {
+            if (chordSequence.length === 0) {
+                alert('No chords to export');
+                return;
+            }
+            
+            const exportData = {
+                sequence: chordSequence,
+                timestamp: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'chord_sequence.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+        
+        // Helper functions
+        function getChordSymbol(chordType) {
+            const symbols = {
+                'maj7': 'maj7',
+                'min7': 'm7',
+                'dom7': '7',
+                'min7b5': 'm7♭5',
+                'dim7': '°7',
+                'maj6': '6',
+                'min6': 'm6',
+                'sus4': 'sus4',
+                'sus2': 'sus2',
+                'maj9': 'maj9',
+                'min9': 'm9',
+                'dom9': '9',
+                '6add9': '6/9',
+                '7b9': '7♭9',
+                '7#9': '7#9',
+                '7b13': '7♭13'
+            };
+            return symbols[chordType] || chordType;
+        }
+        
+        function getInversionName(inversion) {
+            const names = ['Root', '1st', '2nd', '3rd'];
+            return names[inversion] || 'Root';
+        }
+        
+        // Load module when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            loadModule();
+        });
+    </script>
+</body>
+</html>

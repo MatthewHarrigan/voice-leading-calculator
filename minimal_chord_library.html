@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drop 2 Guitar Chord Library</title>
+    <style>
+        body {
+            font-family: Times, serif;
+            margin: 0;
+            padding: 20px;
+            background: white;
+            color: black;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            font-weight: normal;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .nav-button {
+            padding: 8px 16px;
+            border: 1px solid black;
+            background: white;
+            text-decoration: none;
+            color: black;
+            cursor: pointer;
+        }
+        
+        .nav-button.active {
+            background: black;
+            color: white;
+        }
+        
+        .section {
+            display: none;
+        }
+        
+        .section.active {
+            display: block;
+        }
+        
+        /* All Chords */
+        .chord-category {
+            margin-bottom: 40px;
+        }
+        
+        .chord-category h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        
+        .chord-type h3 {
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+        
+        .chord-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .chord-card {
+            text-align: center;
+        }
+        
+        .chord-card h4 {
+            font-size: 11px;
+            margin: 5px 0;
+        }
+        
+        .chord-diagram {
+            width: 100%;
+            max-width: 120px;
+            height: auto;
+            cursor: pointer;
+        }
+        
+        .chord-diagram-container {
+            width: 100%;
+            max-width: 120px;
+            height: auto;
+            cursor: pointer;
+        }
+        
+        .chord-diagram-container svg {
+            width: 100%;
+            height: auto;
+        }
+        
+        /* Progressions */
+        .progression {
+            margin-bottom: 40px;
+        }
+        
+        .progression h3 {
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .progression-chords {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .progression-chord {
+            text-align: center;
+            cursor: pointer;
+            width: 160px;
+        }
+        
+        .progression-chord svg {
+            width: 160px;
+            height: auto;
+        }
+        
+        .progression-svg {
+            width: 160px;
+            height: auto;
+        }
+        
+        .progression-arrow {
+            font-size: 20px;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border: 2px solid black;
+            width: 300px;
+            text-align: center;
+        }
+        
+        .modal-chord {
+            width: 200px;
+            height: auto;
+        }
+        
+        .close {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        /* Sequence Builder Styles */
+        .builder-section {
+            background: #f8f8f8;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+        }
+        
+        .chord-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .chord-selector select {
+            padding: 5px;
+            font-family: Times, serif;
+            font-size: 14px;
+            border: 1px solid #000;
+            background: white;
+        }
+        
+        .chord-selector button {
+            padding: 5px 10px;
+            background: black;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-family: Times, serif;
+        }
+        
+        .chord-selector button:hover {
+            background: #333;
+        }
+        
+        .sequence-display {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background: white;
+        }
+        
+        .sequence-chord {
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .sequence-chord .chord-diagram {
+            width: 80px;
+            height: auto;
+            border: 1px solid #000;
+        }
+        
+        .sequence-chord .chord-label {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .sequence-chord .remove-btn {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .sequence-arrow {
+            font-size: 18px;
+            color: #666;
+        }
+        
+        .voice-leading-info {
+            background: #f0f0f0;
+            padding: 15px;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+        }
+        
+        .voice-leading-info h3 {
+            margin-top: 0;
+            font-size: 16px;
+        }
+        
+        .movement-analysis {
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .controls button {
+            padding: 8px 16px;
+            background: black;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-family: Times, serif;
+        }
+        
+        .controls button:hover {
+            background: #333;
+        }
+        
+        .optimization-display {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f4f8;
+            border: 1px solid #ccc;
+        }
+        
+        .optimization-display h3 {
+            margin-top: 0;
+        }
+        
+        .optimized-sequence {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .optimized-chord {
+            text-align: center;
+        }
+        
+        .optimized-chord .chord-diagram {
+            width: 80px;
+            height: auto;
+            border: 1px solid #000;
+        }
+        
+        .optimized-chord .chord-label {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .optimized-chord .inversion-label {
+            font-size: 10px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .chord-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .progression-chords {
+                flex-direction: column;
+            }
+            
+            .progression-arrow {
+                transform: rotate(90deg);
+            }
+            
+            .chord-selector {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .chord-selector > * {
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DROP 2 CHORD INVERSIONS</h1>
+        
+        <div class="navigation">
+            <button class="nav-button active" onclick="showSection('all-chords')">All Chords</button>
+            <button class="nav-button" onclick="showSection('major-progressions')">Major ii-V-I</button>
+            <button class="nav-button" onclick="showSection('minor-progressions')">Minor ii-V-i</button>
+            <button class="nav-button" onclick="showSection('sequence-builder')">Build Sequence</button>
+        </div>
+        
+        <!-- String Set Selection -->
+        <div style="text-align: center; margin-bottom: 20px;">
+            <label style="font-size: 14px; margin-right: 15px;">String Set:</label>
+            <button id="string-set-middle" class="nav-button active" onclick="setStringSet('middle')" style="margin-right: 5px;">Middle (A-D-G-B)</button>
+            <button id="string-set-upper" class="nav-button" onclick="setStringSet('upper')">Upper (D-G-B-E)</button>
+        </div>
+        
+        <!-- Sort Options for All Chords -->
+        <div id="sort-options" style="text-align: center; margin-bottom: 30px; display: none;">
+            <label style="font-size: 14px; margin-right: 15px;">Sort by:</label>
+            <button id="sort-default" class="nav-button active" onclick="setSortMode('default')" style="margin-right: 5px;">Default (Root-1st-2nd-3rd)</button>
+            <button id="sort-string" class="nav-button" onclick="setSortMode('string')">Root String Position</button>
+        </div>
+        
+        <!-- ALL CHORDS -->
+        <div id="all-chords" class="section active">
+            
+            <div class="chord-category">
+                <h2>Basic 7th Chords</h2>
+                
+                <div class="chord-type" data-chord-type="maj7">
+                    <h3>Major 7</h3>
+                    <div class="chord-grid">
+                        <div class="chord-card" onclick="showModal('C_maj7_inv3_tedGreen.svg?v=7', 'Cmaj7 Root')">
+                            <object data="C_maj7_inv3_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_maj7_inv4_tedGreen.svg?v=7', 'Cmaj7 1st')">
+                            <object data="C_maj7_inv4_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_maj7_inv1_tedGreen.svg?v=7', 'Cmaj7 2nd')">
+                            <object data="C_maj7_inv1_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_maj7_inv2_tedGreen.svg?v=7', 'Cmaj7 3rd')">
+                            <object data="C_maj7_inv2_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chord-type" data-chord-type="min7">
+                    <h3>Minor 7</h3>
+                    <div class="chord-grid">
+                        <div class="chord-card" onclick="showModal('C_min7_inv3_tedGreen.svg?v=7', 'Cm7 Root')">
+                            <object data="C_min7_inv3_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_min7_inv4_tedGreen.svg?v=7', 'Cm7 1st')">
+                            <object data="C_min7_inv4_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_min7_inv1_tedGreen.svg?v=7', 'Cm7 2nd')">
+                            <object data="C_min7_inv1_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_min7_inv2_tedGreen.svg?v=7', 'Cm7 3rd')">
+                            <object data="C_min7_inv2_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chord-type" data-chord-type="dom7">
+                    <h3>Dominant 7</h3>
+                    <div class="chord-grid">
+                        <div class="chord-card" onclick="showModal('C_dom7_inv3_tedGreen.svg?v=7', 'C7 Root')">
+                            <object data="C_dom7_inv3_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_dom7_inv4_tedGreen.svg?v=7', 'C7 1st')">
+                            <object data="C_dom7_inv4_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_dom7_inv1_tedGreen.svg?v=7', 'C7 2nd')">
+                            <object data="C_dom7_inv1_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_dom7_inv2_tedGreen.svg?v=7', 'C7 3rd')">
+                            <object data="C_dom7_inv2_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chord-type" data-chord-type="min7b5">
+                    <h3>Minor 7♭5</h3>
+                    <div class="chord-grid">
+                        <div class="chord-card" onclick="showModal('C_min7b5_inv3_tedGreen.svg?v=7', 'Cm7♭5 Root')">
+                            <object data="C_min7b5_inv3_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_min7b5_inv4_tedGreen.svg?v=7', 'Cm7♭5 1st')">
+                            <object data="C_min7b5_inv4_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_min7b5_inv1_tedGreen.svg?v=7', 'Cm7♭5 2nd')">
+                            <object data="C_min7b5_inv1_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_min7b5_inv2_tedGreen.svg?v=7', 'Cm7♭5 3rd')">
+                            <object data="C_min7b5_inv2_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chord-type" data-chord-type="dim7">
+                    <h3>Diminished 7</h3>
+                    <div class="chord-grid">
+                        <div class="chord-card" onclick="showModal('C_dim7_inv3_tedGreen.svg?v=7', 'C°7 Root')">
+                            <object data="C_dim7_inv3_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_dim7_inv4_tedGreen.svg?v=7', 'C°7 1st')">
+                            <object data="C_dim7_inv4_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_dim7_inv1_tedGreen.svg?v=7', 'C°7 2nd')">
+                            <object data="C_dim7_inv1_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_dim7_inv2_tedGreen.svg?v=7', 'C°7 3rd')">
+                            <object data="C_dim7_inv2_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chord-category">
+                <h2>6th & Suspended Chords</h2>
+                
+                <div class="chord-type" data-chord-type="maj6">
+                    <h3>Major 6</h3>
+                    <div class="chord-grid">
+                        <div class="chord-card" onclick="showModal('C_maj6_inv3_tedGreen.svg?v=7', 'C6 Root')">
+                            <object data="C_maj6_inv3_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_maj6_inv4_tedGreen.svg?v=7', 'C6 1st')">
+                            <object data="C_maj6_inv4_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_maj6_inv1_tedGreen.svg?v=7', 'C6 2nd')">
+                            <object data="C_maj6_inv1_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_maj6_inv2_tedGreen.svg?v=7', 'C6 3rd')">
+                            <object data="C_maj6_inv2_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chord-type" data-chord-type="min6">
+                    <h3>Minor 6</h3>
+                    <div class="chord-grid">
+                        <div class="chord-card" onclick="showModal('C_min6_inv3_tedGreen.svg?v=7', 'Cm6 Root')">
+                            <object data="C_min6_inv3_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_min6_inv4_tedGreen.svg?v=7', 'Cm6 1st')">
+                            <object data="C_min6_inv4_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_min6_inv1_tedGreen.svg?v=7', 'Cm6 2nd')">
+                            <object data="C_min6_inv1_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_min6_inv2_tedGreen.svg?v=7', 'Cm6 3rd')">
+                            <object data="C_min6_inv2_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chord-type" data-chord-type="sus4">
+                    <h3>Sus4</h3>
+                    <div class="chord-grid">
+                        <div class="chord-card" onclick="showModal('C_sus4_inv3_tedGreen.svg?v=7', 'Csus4 Root')">
+                            <object data="C_sus4_inv3_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_sus4_inv4_tedGreen.svg?v=7', 'Csus4 1st')">
+                            <object data="C_sus4_inv4_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_sus4_inv1_tedGreen.svg?v=7', 'Csus4 2nd')">
+                            <object data="C_sus4_inv1_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_sus4_inv2_tedGreen.svg?v=7', 'Csus4 3rd')">
+                            <object data="C_sus4_inv2_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chord-type" data-chord-type="sus2">
+                    <h3>Sus2</h3>
+                    <div class="chord-grid">
+                        <div class="chord-card" onclick="showModal('C_sus2_inv3_tedGreen.svg?v=7', 'Csus2 Root')">
+                            <object data="C_sus2_inv3_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_sus2_inv4_tedGreen.svg?v=7', 'Csus2 1st')">
+                            <object data="C_sus2_inv4_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_sus2_inv1_tedGreen.svg?v=7', 'Csus2 2nd')">
+                            <object data="C_sus2_inv1_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                        <div class="chord-card" onclick="showModal('C_sus2_inv2_tedGreen.svg?v=7', 'Csus2 3rd')">
+                            <object data="C_sus2_inv2_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- MAJOR PROGRESSIONS -->
+        <div id="major-progressions" class="section">
+            
+            <div class="progression">
+                <h3>ii → V → I</h3>
+                <div class="progression-chords">
+                    <div class="progression-chord" onclick="showModal('major_pattern1_chord1_iim7.svg?v=7', 'Dm7 1st Inversion')">
+                        <object data="major_pattern1_chord1_iim7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                    <div class="progression-arrow">→</div>
+                    <div class="progression-chord" onclick="showModal('major_pattern1_chord2_V7.svg?v=7', 'G7 3rd Inversion')">
+                        <object data="major_pattern1_chord2_V7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                    <div class="progression-arrow">→</div>
+                    <div class="progression-chord" onclick="showModal('major_pattern1_chord3_Imaj7.svg?v=7', 'Cmaj7 1st Inversion')">
+                        <object data="major_pattern1_chord3_Imaj7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progression">
+                <h3>ii → V → I</h3>
+                <div class="progression-chords">
+                    <div class="progression-chord" onclick="showModal('major_pattern2_chord1_iim7.svg?v=7', 'Dm7 2nd Inversion')">
+                        <object data="major_pattern2_chord1_iim7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                    <div class="progression-arrow">→</div>
+                    <div class="progression-chord" onclick="showModal('major_pattern2_chord2_V7.svg?v=7', 'G7 Root Position')">
+                        <object data="major_pattern2_chord2_V7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                    <div class="progression-arrow">→</div>
+                    <div class="progression-chord" onclick="showModal('major_pattern2_chord3_Imaj7.svg?v=7', 'Cmaj7 3rd Inversion')">
+                        <object data="major_pattern2_chord3_Imaj7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progression">
+                <h3>ii → V → I</h3>
+                <div class="progression-chords">
+                    <div class="progression-chord" onclick="showModal('major_pattern3_chord1_iim7.svg?v=7', 'Dm7 3rd Inversion')">
+                        <object data="major_pattern3_chord1_iim7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                    <div class="progression-arrow">→</div>
+                    <div class="progression-chord" onclick="showModal('major_pattern3_chord2_V7.svg?v=7', 'G7 Root Position')">
+                        <object data="major_pattern3_chord2_V7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                    <div class="progression-arrow">→</div>
+                    <div class="progression-chord" onclick="showModal('major_pattern3_chord3_Imaj7.svg?v=7', 'Cmaj7 3rd Inversion')">
+                        <object data="major_pattern3_chord3_Imaj7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progression">
+                <h3>ii → V → I</h3>
+                <div class="progression-chords">
+                    <div class="progression-chord" onclick="showModal('major_pattern4_chord1_iim7.svg?v=7', 'Dm7 4th Inversion')">
+                        <object data="major_pattern4_chord1_iim7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                    <div class="progression-arrow">→</div>
+                    <div class="progression-chord" onclick="showModal('major_pattern4_chord2_V7.svg?v=7', 'G7 2nd Inversion')">
+                        <object data="major_pattern4_chord2_V7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                    <div class="progression-arrow">→</div>
+                    <div class="progression-chord" onclick="showModal('major_pattern4_chord3_Imaj7.svg?v=7', 'Cmaj7 4th Inversion')">
+                        <object data="major_pattern4_chord3_Imaj7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- MINOR PROGRESSIONS -->
+        <div id="minor-progressions" class="section">
+            
+            <div class="progression">
+                <h3>ii → V → i</h3>
+                <div class="progression-chords">
+                    <div class="progression-chord" onclick="showModal('pattern1_chord1_iidim7.svg?v=7', 'Dm7♭5 1st Inversion')">
+                        <object data="pattern1_chord1_iidim7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                    <div class="progression-arrow">→</div>
+                    <div class="progression-chord" onclick="showModal('pattern1_chord2_V7.svg?v=7', 'G7 3rd Inversion')">
+                        <object data="pattern1_chord2_V7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                    <div class="progression-arrow">→</div>
+                    <div class="progression-chord" onclick="showModal('pattern1_chord3_im7.svg?v=7', 'Cm7 1st Inversion')">
+                        <object data="pattern1_chord3_im7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progression">
+                <h3>ii → V → i</h3>
+                <div class="progression-chords">
+                    <div class="progression-chord" onclick="showModal('pattern2_chord1_iidim7.svg?v=7', 'Dm7♭5 2nd Inversion')">
+                        <object data="pattern2_chord1_iidim7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                    <div class="progression-arrow">→</div>
+                    <div class="progression-chord" onclick="showModal('pattern2_chord2_V7.svg?v=7', 'G7 Root Position')">
+                        <object data="pattern2_chord2_V7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                    <div class="progression-arrow">→</div>
+                    <div class="progression-chord" onclick="showModal('pattern2_chord3_im7.svg?v=7', 'Cm7 3rd Inversion')">
+                        <object data="pattern2_chord3_im7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progression">
+                <h3>ii → V → i</h3>
+                <div class="progression-chords">
+                    <div class="progression-chord" onclick="showModal('pattern3_chord1_iidim7.svg?v=7', 'Dm7♭5 3rd Inversion')">
+                        <object data="pattern3_chord1_iidim7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                    <div class="progression-arrow">→</div>
+                    <div class="progression-chord" onclick="showModal('pattern3_chord2_V7.svg?v=7', 'G7 Root Position')">
+                        <object data="pattern3_chord2_V7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                    <div class="progression-arrow">→</div>
+                    <div class="progression-chord" onclick="showModal('pattern3_chord3_im7.svg?v=7', 'Cm7 3rd Inversion')">
+                        <object data="pattern3_chord3_im7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                </div>
+            </div>
+
+            <div class="progression">
+                <h3>ii → V → i</h3>
+                <div class="progression-chords">
+                    <div class="progression-chord" onclick="showModal('pattern4_chord1_iidim7.svg?v=7', 'Dm7♭5 4th Inversion')">
+                        <object data="pattern4_chord1_iidim7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                    <div class="progression-arrow">→</div>
+                    <div class="progression-chord" onclick="showModal('pattern4_chord2_V7.svg?v=7', 'G7 2nd Inversion')">
+                        <object data="pattern4_chord2_V7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                    <div class="progression-arrow">→</div>
+                    <div class="progression-chord" onclick="showModal('pattern4_chord3_im7.svg?v=7', 'Cm7 4th Inversion')">
+                        <object data="pattern4_chord3_im7.svg?v=7" type="image/svg+xml" class="progression-svg"></object>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SEQUENCE BUILDER -->
+        <div id="sequence-builder" class="section">
+            <div class="builder-section">
+                <h2>Build Custom Sequence</h2>
+                
+                <div class="chord-selector">
+                    <label>Root:</label>
+                    <select id="rootSelect">
+                        <option value="C">C</option>
+                        <option value="C#">C#</option>
+                        <option value="D">D</option>
+                        <option value="D#">D#</option>
+                        <option value="E">E</option>
+                        <option value="F">F</option>
+                        <option value="F#">F#</option>
+                        <option value="G">G</option>
+                        <option value="G#">G#</option>
+                        <option value="A">A</option>
+                        <option value="A#">A#</option>
+                        <option value="B">B</option>
+                    </select>
+                    
+                    <label>Chord Type:</label>
+                    <select id="chordTypeSelect">
+                        <option value="maj7">Major 7</option>
+                        <option value="min7">Minor 7</option>
+                        <option value="dom7">Dominant 7</option>
+                        <option value="min7b5">Minor 7♭5</option>
+                        <option value="dim7">Diminished 7</option>
+                        <option value="maj6">Major 6</option>
+                        <option value="min6">Minor 6</option>
+                        <option value="sus4">Sus4</option>
+                        <option value="sus2">Sus2</option>
+                        <option value="maj9">Major 9</option>
+                        <option value="min9">Minor 9</option>
+                        <option value="dom9">Dominant 9</option>
+                        <option value="6add9">6/9</option>
+                        <option value="7b9">7♭9</option>
+                        <option value="7#9">7#9</option>
+                        <option value="7b13">7♭13</option>
+                    </select>
+                    
+                    <button onclick="addChordToSequence()">Add Chord</button>
+                    <button onclick="addFromLibrary()">Pick from Library</button>
+                </div>
+                
+                <div class="sequence-display" id="sequenceDisplay">
+                    <div style="color: #666; font-style: italic;">Your chord sequence will appear here...</div>
+                </div>
+                
+                <div class="controls">
+                    <label>Starting Inversion:</label>
+                    <select id="startingInversionSelect">
+                        <option value="0">Root</option>
+                        <option value="1">1st</option>
+                        <option value="2">2nd</option>
+                        <option value="3">3rd</option>
+                    </select>
+                    <button onclick="optimizeSequence()">Optimize Voice Leading</button>
+                    <button onclick="clearSequence()">Clear All</button>
+                    <button onclick="saveAsPreset()">Save as Preset</button>
+                    <button onclick="loadPreset()">Load Preset</button>
+                </div>
+            </div>
+            
+            <div class="voice-leading-info" id="voiceLeadingInfo" style="display: none;">
+                <h3>Voice Leading Analysis</h3>
+                <div id="analysisContent"></div>
+            </div>
+            
+            <div class="optimization-display" id="optimizationDisplay" style="display: none;">
+                <h3>Optimized Sequence</h3>
+                <div class="optimized-sequence" id="optimizedSequence"></div>
+                <div class="movement-analysis" id="movementAnalysis"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle"></h3>
+            <object id="modalChord" data="" type="image/svg+xml" class="modal-chord"></object>
+        </div>
+    </div>
+
+    <script>
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(sectionId).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Show/hide sort options based on section
+            const sortOptions = document.getElementById('sort-options');
+            if (sectionId === 'all-chords') {
+                sortOptions.style.display = 'block';
+            } else {
+                sortOptions.style.display = 'none';
+            }
+        }
+        
+        function showModal(svgFile, title) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalChord').data = svgFile;
+            document.getElementById('modal').style.display = 'block';
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+        
+        window.onclick = function(event) {
+            if (event.target.id === 'modal') {
+                closeModal();
+            }
+        }
+        
+        window.setStringSet = function setStringSet(stringSet) {
+            currentStringSet = stringSet;
+            
+            // Update button styles
+            document.getElementById('string-set-middle').classList.remove('active');
+            document.getElementById('string-set-upper').classList.remove('active');
+            document.getElementById('string-set-' + stringSet).classList.add('active');
+            
+            // Update chord displays based on current section
+            const activeSection = document.querySelector('.section.active');
+            if (activeSection) {
+                updateChordsForStringSet(activeSection.id, stringSet);
+            }
+        }
+        
+        window.setSortMode = function setSortMode(sortMode) {
+            currentSortMode = sortMode;
+            
+            // Update button styles
+            document.getElementById('sort-default').classList.remove('active');
+            document.getElementById('sort-string').classList.remove('active');
+            document.getElementById('sort-' + sortMode).classList.add('active');
+            
+            // Regenerate all chords with new sort order
+            const activeSection = document.querySelector('.section.active');
+            if (activeSection && activeSection.id === 'all-chords') {
+                generateDynamicChords(currentStringSet);
+            }
+        }
+        
+        async function updateChordsForStringSet(sectionId, stringSet) {
+            console.log('Updating', sectionId, 'for string set:', stringSet);
+            
+            if (sectionId === 'sequence-builder') {
+                // Clear current sequence when changing string sets
+                clearSequence();
+                return;
+            }
+            
+            if (sectionId === 'all-chords') {
+                await generateDynamicChords(stringSet);
+            }
+            
+            if (sectionId === 'major-progressions') {
+                await generateDynamicProgressions('major', stringSet);
+            }
+            
+            if (sectionId === 'minor-progressions') {
+                await generateDynamicProgressions('minor', stringSet);
+            }
+        }
+        
+        // Generate chord diagrams dynamically for the selected string set
+        async function generateDynamicChords(stringSet) {
+            await loadChordGenerator();
+            if (!chordGenerator) return;
+            
+            const chordTypes = [
+                { type: 'maj7', symbol: 'maj7' },
+                { type: 'min7', symbol: 'm7' },
+                { type: 'dom7', symbol: '7' },
+                { type: 'min7b5', symbol: 'm7♭5' },
+                { type: 'dim7', symbol: '°7' },
+                { type: 'maj6', symbol: '6' },
+                { type: 'min6', symbol: 'm6' },
+                { type: 'sus4', symbol: 'sus4' },
+                { type: 'sus2', symbol: 'sus2' }
+            ];
+            
+            const inversionNames = ['Root', '1st', '2nd', '3rd'];
+            
+            // Update each chord type section
+            for (const chordInfo of chordTypes) {
+                const chordTypeSection = document.querySelector(`[data-chord-type="${chordInfo.type}"]`);
+                if (!chordTypeSection) continue;
+                
+                const chordGrid = chordTypeSection.querySelector('.chord-grid');
+                if (!chordGrid) continue;
+                
+                // Clear existing diagrams
+                chordGrid.innerHTML = '';
+                
+                // Generate chord data for all inversions first
+                const chordDataArray = [];
+                for (let invIndex = 0; invIndex < 4; invIndex++) {
+                    const chordData = chordGenerator.generateChordForStringSet('C', chordInfo.type, invIndex, stringSet);
+                    if (chordData) {
+                        chordDataArray.push({
+                            invIndex: invIndex,
+                            chordData: chordData,
+                            inversionName: inversionNames[invIndex],
+                            rootString: findRootString(chordData, stringSet)
+                        });
+                    }
+                }
+                
+                // Sort based on current sort mode
+                if (currentSortMode === 'string') {
+                    // Sort by root string position (lowest string number first)
+                    chordDataArray.sort((a, b) => a.rootString - b.rootString);
+                }
+                // Default mode keeps original order (invIndex 0, 1, 2, 3)
+                
+                // Create chord cards in sorted order
+                chordDataArray.forEach(({ invIndex, chordData, inversionName, rootString }) => {
+                    const chordTitle = `C${chordInfo.symbol} ${inversionName} Inversion`;
+                    
+                    const svg = chordGenerator.create6StringChordSVG(
+                        chordData,
+                        `C${chordInfo.symbol}`,
+                        chordTitle,
+                        'C',
+                        chordInfo.type,
+                        stringSet
+                    );
+                    
+                    // Create chord card element
+                    const chordCard = document.createElement('div');
+                    chordCard.className = 'chord-card';
+                    chordCard.innerHTML = `<div class="chord-diagram-container"></div>`;
+                    
+                    // Add SVG directly to the container
+                    const container = chordCard.querySelector('.chord-diagram-container');
+                    container.innerHTML = svg;
+                    
+                    // Add click handler for modal
+                    chordCard.onclick = () => showModalWithSVG(svg, `C${chordInfo.symbol} ${inversionName}`);
+                    
+                    chordGrid.appendChild(chordCard);
+                });
+            }
+        }
+        
+        // Helper function to find which string the root note is on
+        function findRootString(chordData, stringSet) {
+            const activeStrings = stringSet === 'upper' ? [2, 3, 4, 5] : [1, 2, 3, 4];
+            
+            // Find the lowest string (bass note) that has a fret value
+            for (const stringIndex of activeStrings) {
+                if (chordData.frets[stringIndex] !== null) {
+                    return stringIndex;
+                }
+            }
+            return activeStrings[0]; // fallback
+        }
+        
+        // Show modal with dynamically generated SVG
+        function showModalWithSVG(svgContent, title) {
+            document.getElementById('modalTitle').textContent = title;
+            const modalChord = document.getElementById('modalChord');
+            modalChord.style.display = 'none'; // Hide object element
+            modalChord.insertAdjacentHTML('afterend', `<div id="modalSVG" class="modal-chord">${svgContent}</div>`);
+            document.getElementById('modal').style.display = 'block';
+        }
+        
+        // Update close modal to clean up dynamic SVG
+        const originalCloseModal = window.closeModal;
+        window.closeModal = function() {
+            const modalSVG = document.getElementById('modalSVG');
+            if (modalSVG) modalSVG.remove();
+            const modalChord = document.getElementById('modalChord');
+            modalChord.style.display = 'block';
+            originalCloseModal();
+        };
+        
+        // Generate progression diagrams dynamically for the selected string set
+        async function generateDynamicProgressions(progressionType, stringSet) {
+            await loadChordGenerator();
+            if (!chordGenerator) return;
+            
+            // Generate optimal hybrid progressions that can mix string sets
+            const optimalProgressions = generateOptimalHybridProgressions(progressionType);
+            
+            const sectionId = progressionType + '-progressions';
+            const section = document.getElementById(sectionId);
+            
+            if (!section) return;
+            
+            // Clear existing progressions
+            section.innerHTML = '';
+            
+            // Display the optimal progressions
+            displayProgressions(optimalProgressions, section, progressionType);
+        }
+        
+        // Generate optimal hybrid ii-V-I progressions across both string sets
+        function generateOptimalHybridProgressions(progressionType) {
+            const chordTypes = progressionType === 'major' 
+                ? ['min7', 'dom7', 'maj7']  // ii-V-I major
+                : ['min7b5', 'dom7', 'min7']; // ii-V-i minor
+            
+            const roots = ['D', 'G', 'C'];
+            const stringSetCombinations = [
+                ['middle', 'middle', 'middle'],
+                ['middle', 'middle', 'upper'],
+                ['middle', 'upper', 'middle'],
+                ['middle', 'upper', 'upper'],
+                ['upper', 'middle', 'middle'],
+                ['upper', 'middle', 'upper'],
+                ['upper', 'upper', 'middle'],
+                ['upper', 'upper', 'upper']
+            ];
+            
+            const allProgressions = [];
+            
+            // Generate all possible progression patterns
+            for (const stringSetPattern of stringSetCombinations) {
+                for (let inv1 = 0; inv1 < 4; inv1++) {
+                    for (let inv2 = 0; inv2 < 4; inv2++) {
+                        for (let inv3 = 0; inv3 < 4; inv3++) {
+                            const progression = evaluateProgressionPattern(
+                                roots, chordTypes, [inv1, inv2, inv3], stringSetPattern
+                            );
+                            if (progression) {
+                                allProgressions.push(progression);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Sort by voice leading efficiency (lower is better)
+            allProgressions.sort((a, b) => a.totalDistance - b.totalDistance);
+            
+            // Return top 4 patterns for display
+            return allProgressions.slice(0, 4);
+        }
+        
+        // Evaluate a specific progression pattern
+        function evaluateProgressionPattern(roots, chordTypes, inversions, stringSetPattern) {
+            const chords = [];
+            let totalDistance = 0;
+            let valid = true;
+            
+            // Generate chord data for each position
+            for (let i = 0; i < 3; i++) {
+                const chordData = chordGenerator.generateChordForStringSet(
+                    roots[i], chordTypes[i], inversions[i], stringSetPattern[i]
+                );
+                
+                if (!chordData) {
+                    valid = false;
+                    break;
+                }
+                
+                chords.push({
+                    root: roots[i],
+                    type: chordTypes[i],
+                    inversion: inversions[i],
+                    stringSet: stringSetPattern[i],
+                    data: chordData,
+                    label: `${roots[i]}${getChordSymbol(chordTypes[i])} ${getInversionName(inversions[i])}`
+                });
+            }
+            
+            if (!valid) return null;
+            
+            // Calculate voice leading distances
+            for (let i = 0; i < 2; i++) {
+                const distance = calculateCrossStringSetVoiceLeading(
+                    chords[i], chords[i + 1]
+                );
+                totalDistance += distance;
+            }
+            
+            return {
+                chords: chords,
+                totalDistance: totalDistance,
+                stringSetPattern: stringSetPattern.join('-')
+            };
+        }
+        
+        // Calculate voice leading distance between two chords (potentially on different string sets)
+        function calculateCrossStringSetVoiceLeading(chord1, chord2) {
+            const notes1 = getActiveNotes(chord1.data);
+            const notes2 = getActiveNotes(chord2.data);
+            
+            if (notes1.length !== 4 || notes2.length !== 4) return 1000; // Invalid
+            
+            let totalDistance = 0;
+            
+            // Calculate voice movement for each note
+            for (let i = 0; i < 4; i++) {
+                const fret1 = notes1[i].fret;
+                const fret2 = notes2[i].fret;
+                const string1 = notes1[i].string;
+                const string2 = notes2[i].string;
+                
+                // Basic fret distance
+                let distance = Math.abs(fret2 - fret1);
+                
+                // Add penalty for string changes (cross-string-set movement)
+                if (string1 !== string2) {
+                    distance += 3; // Penalty for string change
+                }
+                
+                totalDistance += distance;
+            }
+            
+            // Additional penalty for string set changes
+            if (chord1.stringSet !== chord2.stringSet) {
+                totalDistance += 2; // Encourages staying on same string set
+            }
+            
+            return totalDistance;
+        }
+        
+        // Extract active notes from chord data
+        function getActiveNotes(chordData) {
+            const notes = [];
+            const activeStrings = chordData.stringSet === 'upper' ? [2, 3, 4, 5] : [1, 2, 3, 4];
+            
+            activeStrings.forEach(stringIndex => {
+                if (chordData.frets[stringIndex] !== null) {
+                    notes.push({
+                        string: stringIndex,
+                        fret: chordData.frets[stringIndex]
+                    });
+                }
+            });
+            
+            return notes;
+        }
+        
+        // Get inversion name
+        function getInversionName(inversionIndex) {
+            const names = ['Root', '1st', '2nd', '3rd'];
+            return names[inversionIndex] || 'Unknown';
+        }
+        
+        // Display the generated progressions
+        function displayProgressions(progressions, section, progressionType) {
+            progressions.forEach((progression, index) => {
+                const progressionDiv = document.createElement('div');
+                progressionDiv.className = 'progression';
+                
+                // Add title with string set pattern info
+                const title = document.createElement('h3');
+                title.innerHTML = `ii → V → I (${progression.stringSetPattern}) - Distance: ${progression.totalDistance.toFixed(1)}`;
+                progressionDiv.appendChild(title);
+                
+                const chordsDiv = document.createElement('div');
+                chordsDiv.className = 'progression-chords';
+                
+                progression.chords.forEach((chord, chordIndex) => {
+                    const svg = chordGenerator.create6StringChordSVG(
+                        chord.data,
+                        `${chord.root}${getChordSymbol(chord.type)}`,
+                        `${chord.label} (${chord.stringSet})`,
+                        chord.root,
+                        chord.type,
+                        chord.stringSet
+                    );
+                    
+                    // Create progression chord element
+                    const chordElement = document.createElement('div');
+                    chordElement.className = 'progression-chord';
+                    chordElement.innerHTML = svg;
+                    chordElement.onclick = () => showModalWithSVG(svg, chord.label);
+                    
+                    chordsDiv.appendChild(chordElement);
+                    
+                    // Add arrow between chords
+                    if (chordIndex < progression.chords.length - 1) {
+                        const arrow = document.createElement('div');
+                        arrow.className = 'progression-arrow';
+                        arrow.textContent = '→';
+                        chordsDiv.appendChild(arrow);
+                    }
+                });
+                
+                progressionDiv.appendChild(chordsDiv);
+                section.appendChild(progressionDiv);
+            });
+        }
+        
+        // Helper function to get chord symbol
+        function getChordSymbol(chordType) {
+            const symbols = {
+                'maj7': 'maj7',
+                'min7': 'm7', 
+                'dom7': '7',
+                'min7b5': 'm7♭5',
+                'dim7': '°7',
+                'maj6': '6',
+                'min6': 'm6',
+                'sus4': 'sus4',
+                'sus2': 'sus2'
+            };
+            return symbols[chordType] || chordType;
+        }
+        
+        // ==================== SEQUENCE BUILDER FUNCTIONALITY ====================
+        
+        // Global sequence state
+        let chordSequence = [];
+        let chordGenerator = null;
+        let currentStringSet = 'middle'; // Track current string set
+        let currentSortMode = 'default'; // Track current sort mode
+        
+        // Load the chord generator module
+        async function loadChordGenerator() {
+            if (!chordGenerator) {
+                try {
+                    chordGenerator = await import('./chord_generator_browser.js');
+                    console.log('Chord generator loaded successfully');
+                } catch (error) {
+                    console.error('Failed to load chord generator:', error);
+                    alert('Failed to load chord generator module');
+                }
+            }
+        }
+        
+        // Initialize dynamic chord generation on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Show sort options since All Chords is the default active section
+            document.getElementById('sort-options').style.display = 'block';
+            
+            // Always generate initial chords for middle string set when All Chords is active
+            await loadChordGenerator();
+            generateDynamicChords('middle');
+            
+            // Also generate progressions with larger default size
+            generateDynamicProgressions('major', 'middle');
+            generateDynamicProgressions('minor', 'middle');
+        });
+        
+        // Add chord to sequence
+        window.addChordToSequence = async function() {
+            await loadChordGenerator();
+            if (!chordGenerator) return;
+            
+            const root = document.getElementById('rootSelect').value;
+            const chordType = document.getElementById('chordTypeSelect').value;
+            
+            const chord = {
+                root: root,
+                chordType: chordType,
+                symbol: `${root}${getChordSymbol(chordType)}`,
+                stringSet: currentStringSet,
+                id: Date.now()
+            };
+            
+            chordSequence.push(chord);
+            updateSequenceDisplay();
+            updateVoiceLeadingAnalysis();
+        };
+        
+        // Add chord from library (clicking on chord diagrams)
+        window.addFromLibrary = function() {
+            alert('Click on any chord diagram in the "All Chords" section to add it to your sequence!');
+            showSection('all-chords');
+        };
+        
+        // Enhanced chord click handler to add to sequence
+        const originalShowModal = window.showModal;
+        window.showModal = function(svgFile, title) {
+            if (document.getElementById('sequence-builder').classList.contains('active')) {
+                // If we're in sequence builder mode, add chord to sequence instead of showing modal
+                const chordInfo = parseChordFromTitle(title);
+                if (chordInfo) {
+                    const chord = {
+                        root: chordInfo.root,
+                        chordType: chordInfo.chordType,
+                        symbol: chordInfo.symbol,
+                        id: Date.now()
+                    };
+                    chordSequence.push(chord);
+                    updateSequenceDisplay();
+                    updateVoiceLeadingAnalysis();
+                }
+            } else {
+                // Normal modal behavior
+                originalShowModal(svgFile, title);
+            }
+        };
+        
+        // Parse chord info from title
+        function parseChordFromTitle(title) {
+            // Extract chord info from titles like "Cmaj7 Root", "Dm7 1st", etc.
+            const parts = title.split(' ');
+            if (parts.length >= 1) {
+                const chordSymbol = parts[0];
+                const root = chordSymbol.charAt(0);
+                const accidental = chordSymbol.charAt(1) === '#' || chordSymbol.charAt(1) === 'b' ? chordSymbol.charAt(1) : '';
+                const chordTypeStr = chordSymbol.slice(root.length + accidental.length);
+                
+                const chordTypeMap = {
+                    'maj7': 'maj7', 'm7': 'min7', '7': 'dom7', 'm7♭5': 'min7b5', '°7': 'dim7',
+                    '6': 'maj6', 'm6': 'min6', 'sus4': 'sus4', 'sus2': 'sus2',
+                    'maj9': 'maj9', 'm9': 'min9', '9': 'dom9', '6/9': '6add9',
+                    '7♭9': '7b9', '7#9': '7#9', '7♭13': '7b13'
+                };
+                
+                return {
+                    root: root + accidental,
+                    chordType: chordTypeMap[chordTypeStr] || chordTypeStr,
+                    symbol: chordSymbol
+                };
+            }
+            return null;
+        }
+        
+        // Remove chord from sequence
+        window.removeChordFromSequence = function(id) {
+            chordSequence = chordSequence.filter(chord => chord.id !== id);
+            updateSequenceDisplay();
+            updateVoiceLeadingAnalysis();
+        };
+        
+        // Clear sequence
+        window.clearSequence = function() {
+            chordSequence = [];
+            updateSequenceDisplay();
+            document.getElementById('voiceLeadingInfo').style.display = 'none';
+            document.getElementById('optimizationDisplay').style.display = 'none';
+        };
+        
+        
+        // Update sequence display
+        async function updateSequenceDisplay() {
+            await loadChordGenerator();
+            if (!chordGenerator) return;
+            
+            const display = document.getElementById('sequenceDisplay');
+            
+            if (chordSequence.length === 0) {
+                display.innerHTML = '<div style="color: #666; font-style: italic;">Your chord sequence will appear here...</div>';
+                return;
+            }
+            
+            display.innerHTML = '';
+            
+            chordSequence.forEach((chord, index) => {
+                const chordElement = document.createElement('div');
+                chordElement.className = 'sequence-chord';
+                
+                // Generate SVG - all chords use root inversion in the basic display
+                const chordNotes = chordGenerator.getChordNotes(chord.root, chord.chordType);
+                const voicing = chordGenerator.createDrop2Voicing(chordNotes, 0);
+                const fingering = chordGenerator.findDrop2Fingering(voicing, chord.root);
+                
+                if (fingering) {
+                    const svg = chordGenerator.create6StringChordSVG(fingering, chord.symbol, '', chord.root, chord.chordType);
+                    const blob = new Blob([svg], { type: 'image/svg+xml' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    chordElement.innerHTML = `
+                        <img src="${url}" class="chord-diagram" alt="${chord.symbol}">
+                        <div class="chord-label">${chord.symbol}</div>
+                        <button class="remove-btn" onclick="removeChordFromSequence(${chord.id})">×</button>
+                    `;
+                }
+                
+                display.appendChild(chordElement);
+                
+                if (index < chordSequence.length - 1) {
+                    const arrow = document.createElement('div');
+                    arrow.className = 'sequence-arrow';
+                    arrow.textContent = '→';
+                    display.appendChild(arrow);
+                }
+            });
+        }
+        
+        // Voice leading optimization
+        window.optimizeSequence = async function() {
+            await loadChordGenerator();
+            if (!chordGenerator) return;
+            
+            if (chordSequence.length < 2) {
+                alert('Please add at least 2 chords to optimize voice leading');
+                return;
+            }
+            
+            const optimizedSequence = optimizeVoiceLeading(chordSequence);
+            displayOptimizedSequence(optimizedSequence);
+        };
+        
+        // Voice leading optimization algorithm
+        function optimizeVoiceLeading(sequence) {
+            const optimized = [];
+            
+            // Start with first chord using the selected starting inversion
+            const firstChord = sequence[0];
+            const firstChordNotes = chordGenerator.getChordNotes(firstChord.root, firstChord.chordType);
+            const startingInversion = parseInt(document.getElementById('startingInversionSelect').value);
+            let bestFirstInversion = startingInversion;
+            let bestFirstFingering = null;
+            
+            // Use the selected starting inversion
+            const voicing = chordGenerator.createDrop2Voicing(firstChordNotes, startingInversion);
+            bestFirstFingering = chordGenerator.findDrop2Fingering(voicing, firstChord.root, 3, 4, firstChord.stringSet || 'middle');
+            
+            // If the selected inversion doesn't work, try others
+            if (!bestFirstFingering) {
+                for (let inv = 0; inv < 4; inv++) {
+                    const voicing = chordGenerator.createDrop2Voicing(firstChordNotes, inv);
+                    const fingering = chordGenerator.findDrop2Fingering(voicing, firstChord.root, 3, 4, firstChord.stringSet || 'middle');
+                    if (fingering) {
+                        bestFirstInversion = inv;
+                        bestFirstFingering = fingering;
+                        break;
+                    }
+                }
+            }
+            
+            optimized.push({
+                ...firstChord,
+                inversion: bestFirstInversion,
+                fingering: bestFirstFingering,
+                voicing: chordGenerator.createDrop2Voicing(firstChordNotes, bestFirstInversion)
+            });
+            
+            // Optimize each subsequent chord
+            for (let i = 1; i < sequence.length; i++) {
+                const currentChord = sequence[i];
+                const previousChord = optimized[i - 1];
+                const currentChordNotes = chordGenerator.getChordNotes(currentChord.root, currentChord.chordType);
+                
+                let bestInversion = 0;
+                let bestFingering = null;
+                let bestDistance = Infinity;
+                
+                // Try all inversions for current chord
+                for (let inv = 0; inv < 4; inv++) {
+                    const voicing = chordGenerator.createDrop2Voicing(currentChordNotes, inv);
+                    const fingering = chordGenerator.findDrop2Fingering(voicing, currentChord.root, 3, 4, currentChord.stringSet || 'middle');
+                    
+                    if (fingering) {
+                        const distance = calculateVoiceLeadingDistance(previousChord.fingering, fingering, currentChord.stringSet || 'middle');
+                        if (distance < bestDistance) {
+                            bestDistance = distance;
+                            bestInversion = inv;
+                            bestFingering = fingering;
+                        }
+                    }
+                }
+                
+                optimized.push({
+                    ...currentChord,
+                    inversion: bestInversion,
+                    fingering: bestFingering,
+                    voicing: chordGenerator.createDrop2Voicing(currentChordNotes, bestInversion),
+                    distance: bestDistance
+                });
+            }
+            
+            return optimized;
+        }
+        
+        // Calculate voice leading distance
+        function calculateVoiceLeadingDistance(fingering1, fingering2, stringSet = 'middle') {
+            const strings = stringSet === 'upper' ? [2, 3, 4, 5] : [1, 2, 3, 4]; // D, G, B, E (upper) or A, D, G, B (middle)
+            let totalDistance = 0;
+            
+            for (const string of strings) {
+                const fret1 = fingering1.frets[string] || 0;
+                const fret2 = fingering2.frets[string] || 0;
+                totalDistance += Math.abs(fret2 - fret1);
+            }
+            
+            return totalDistance;
+        }
+        
+        // Display optimized sequence
+        function displayOptimizedSequence(optimizedSequence) {
+            const display = document.getElementById('optimizedSequence');
+            const analysisDisplay = document.getElementById('movementAnalysis');
+            
+            display.innerHTML = '';
+            
+            let totalMovement = 0;
+            const movements = [];
+            
+            optimizedSequence.forEach((chord, index) => {
+                const chordElement = document.createElement('div');
+                chordElement.className = 'optimized-chord';
+                
+                const svg = chordGenerator.create6StringChordSVG(chord.fingering, chord.symbol, '', chord.root, chord.chordType);
+                const blob = new Blob([svg], { type: 'image/svg+xml' });
+                const url = URL.createObjectURL(blob);
+                
+                chordElement.innerHTML = `
+                    <img src="${url}" class="chord-diagram" alt="${chord.symbol}">
+                    <div class="chord-label">${chord.symbol}</div>
+                    <div class="inversion-label">${getInversionName(chord.inversion)}</div>
+                `;
+                
+                display.appendChild(chordElement);
+                
+                if (index < optimizedSequence.length - 1) {
+                    const arrow = document.createElement('div');
+                    arrow.className = 'sequence-arrow';
+                    arrow.textContent = '→';
+                    display.appendChild(arrow);
+                    
+                    if (chord.distance !== undefined) {
+                        totalMovement += chord.distance;
+                        movements.push(`${chord.symbol}: ${chord.distance} semitones`);
+                    }
+                }
+            });
+            
+            // Display movement analysis
+            analysisDisplay.innerHTML = `
+                <strong>Total Voice Movement:</strong> ${totalMovement} semitones<br>
+                <strong>Individual Movements:</strong> ${movements.join(', ')}<br>
+                <strong>Average Movement:</strong> ${(totalMovement / Math.max(1, movements.length)).toFixed(1)} semitones per chord change
+            `;
+            
+            document.getElementById('optimizationDisplay').style.display = 'block';
+        }
+        
+        // Update voice leading analysis
+        function updateVoiceLeadingAnalysis() {
+            if (chordSequence.length < 2) {
+                document.getElementById('voiceLeadingInfo').style.display = 'none';
+                return;
+            }
+            
+            let analysis = '<strong>Current Sequence:</strong><br>';
+            
+            chordSequence.forEach((chord, index) => {
+                analysis += `${index + 1}. ${chord.symbol}`;
+                if (index < chordSequence.length - 1) {
+                    analysis += ' → ';
+                }
+            });
+            
+            analysis += '<br><br><strong>Recommendations:</strong><br>';
+            analysis += '• Click "Optimize Voice Leading" to find the best inversions<br>';
+            analysis += '• Each chord will be positioned for minimal finger movement<br>';
+            analysis += '• Root positions will be marked with black dots<br>';
+            
+            document.getElementById('analysisContent').innerHTML = analysis;
+            document.getElementById('voiceLeadingInfo').style.display = 'block';
+        }
+        
+        // Save and load presets
+        window.saveAsPreset = function() {
+            if (chordSequence.length === 0) {
+                alert('No chords to save');
+                return;
+            }
+            
+            const name = prompt('Enter a name for this preset:');
+            if (name) {
+                const presets = JSON.parse(localStorage.getItem('chordPresets') || '{}');
+                presets[name] = chordSequence;
+                localStorage.setItem('chordPresets', JSON.stringify(presets));
+                alert(`Preset "${name}" saved!`);
+            }
+        };
+        
+        window.loadPreset = function() {
+            const presets = JSON.parse(localStorage.getItem('chordPresets') || '{}');
+            const presetNames = Object.keys(presets);
+            
+            if (presetNames.length === 0) {
+                alert('No presets saved');
+                return;
+            }
+            
+            const name = prompt('Available presets:\\n' + presetNames.join('\\n') + '\\n\\nEnter preset name to load:');
+            if (name && presets[name]) {
+                chordSequence = presets[name];
+                updateSequenceDisplay();
+                updateVoiceLeadingAnalysis();
+                alert(`Preset "${name}" loaded!`);
+            }
+        };
+        
+        // Helper functions
+        function getChordSymbol(chordType) {
+            const symbols = {
+                'maj7': 'maj7', 'min7': 'm7', 'dom7': '7', 'min7b5': 'm7♭5', 'dim7': '°7',
+                'maj6': '6', 'min6': 'm6', 'sus4': 'sus4', 'sus2': 'sus2',
+                'maj9': 'maj9', 'min9': 'm9', 'dom9': '9', '6add9': '6/9',
+                '7b9': '7♭9', '7#9': '7#9', '7b13': '7♭13'
+            };
+            return symbols[chordType] || chordType;
+        }
+        
+        function getInversionName(inversion) {
+            const names = ['Root', '1st', '2nd', '3rd'];
+            return names[inversion] || 'Root';
+        }
+        
+        // Load chord generator on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            loadChordGenerator();
+        });
+    </script>
+</body>
+</html>

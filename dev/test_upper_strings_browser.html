@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upper String Set Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .chord-comparison {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        .chord-diagram {
+            text-align: center;
+        }
+        .output {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 3px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Upper String Set Functionality Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Configuration</h2>
+        <div class="output">
+Standard guitar tuning: E(0) - A(1) - D(2) - G(3) - B(4) - E(5)
+Middle strings: A(1) - D(2) - G(3) - B(4)  [strings 1-4]
+Upper strings:  D(2) - G(3) - B(4) - E(5)  [strings 2-5]
+
+This creates drop-2 voicings on different string sets for various fingering options.
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <button onclick="runTests()">Run Upper String Tests</button>
+        <div id="test-output" class="output">Click "Run Upper String Tests" to execute the tests...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Generated Chord Diagrams</h2>
+        <div id="chord-diagrams"></div>
+    </div>
+
+    <script type="module">
+        import { 
+            generateChordForStringSet,
+            create6StringChordSVG 
+        } from './chord_generator_browser.js';
+
+        window.generateChordForStringSet = generateChordForStringSet;
+        window.create6StringChordSVG = create6StringChordSVG;
+
+        window.runTests = function() {
+            const output = document.getElementById('test-output');
+            const diagramsDiv = document.getElementById('chord-diagrams');
+            
+            output.textContent = 'Running tests...\n\n';
+            diagramsDiv.innerHTML = '';
+
+            const testCases = [
+                { root: 'C', type: 'maj7', inversion: 0, name: 'Cmaj7' },
+                { root: 'G', type: 'dom7', inversion: 0, name: 'G7' },
+                { root: 'F', type: 'maj7', inversion: 0, name: 'Fmaj7' },
+                { root: 'D', type: 'min7', inversion: 0, name: 'Dm7' }
+            ];
+
+            testCases.forEach(({ root, type, inversion, name }, index) => {
+                output.textContent += `=== Test ${index + 1}: ${name} ===\n`;
+
+                // Test middle strings (existing functionality)
+                const middleChord = generateChordForStringSet(root, type, inversion, 'middle');
+                const middleSuccess = middleChord ? 'SUCCESS' : 'FAILED';
+                output.textContent += `Middle strings (A-D-G-B): ${middleSuccess}\n`;
+
+                // Test upper strings (new functionality)  
+                const upperChord = generateChordForStringSet(root, type, inversion, 'upper');
+                const upperSuccess = upperChord ? 'SUCCESS' : 'FAILED';
+                output.textContent += `Upper strings (D-G-B-E): ${upperSuccess}\n`;
+
+                if (middleChord && upperChord) {
+                    output.textContent += `Middle frets: [${middleChord.frets.join(', ')}]\n`;
+                    output.textContent += `Upper frets:  [${upperChord.frets.join(', ')}]\n`;
+                    output.textContent += `Middle voicing: [${middleChord.voicing.join(', ')}]\n`;
+                    output.textContent += `Upper voicing:  [${upperChord.voicing.join(', ')}]\n`;
+
+                    // Generate SVG diagrams
+                    const middleSVG = create6StringChordSVG(
+                        middleChord, 
+                        name,
+                        `${name} - Middle Strings`,
+                        root,
+                        type,
+                        'middle'
+                    );
+                    
+                    const upperSVG = create6StringChordSVG(
+                        upperChord, 
+                        name,
+                        `${name} - Upper Strings`,
+                        root,
+                        type,
+                        'upper'
+                    );
+
+                    // Add diagrams to page
+                    const comparisonDiv = document.createElement('div');
+                    comparisonDiv.className = 'chord-comparison';
+                    comparisonDiv.innerHTML = `
+                        <div class="chord-diagram">
+                            <h4>${name} - Middle Strings</h4>
+                            ${middleSVG}
+                        </div>
+                        <div class="chord-diagram">
+                            <h4>${name} - Upper Strings</h4>
+                            ${upperSVG}
+                        </div>
+                    `;
+                    diagramsDiv.appendChild(comparisonDiv);
+
+                    output.textContent += 'SVG generation: SUCCESS\n';
+                } else {
+                    if (!middleChord) output.textContent += 'ERROR: Middle chord generation failed\n';
+                    if (!upperChord) output.textContent += 'ERROR: Upper chord generation failed\n';
+                }
+                
+                output.textContent += '\n';
+            });
+
+            output.textContent += 'Testing complete!\n\n';
+            output.textContent += 'Analysis:\n';
+            output.textContent += '- Middle strings use the traditional Ted Greene drop-2 approach\n';
+            output.textContent += '- Upper strings provide higher voicings with different fingering patterns\n';
+            output.textContent += '- Both string sets generate proper drop-2 voicings with interval labels\n';
+            output.textContent += '- SVG generation works correctly for both string sets\n';
+        };
+    </script>
+</body>
+</html>

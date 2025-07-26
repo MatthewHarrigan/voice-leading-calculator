@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Inversion Corrections</title>
+    <style>
+        body { font-family: Times, serif; margin: 20px; }
+        .test-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 20px 0; }
+        .chord-test { text-align: center; border: 1px solid #ccc; padding: 10px; }
+        .chord-diagram { width: 120px; height: auto; }
+        h3 { margin-top: 0; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <h1>Drop 2 Inversion Test - Cmaj7</h1>
+    <p>Testing corrected inversion naming with interval labels</p>
+    
+    <div class="test-grid" id="testGrid">
+        <div class="chord-test">
+            <h3>Root Inversion</h3>
+            <div>Should be: R 5 7 3</div>
+            <div id="rootInv"></div>
+        </div>
+        <div class="chord-test">
+            <h3>1st Inversion</h3>
+            <div>Should be: 3 7 R 5</div>
+            <div id="firstInv"></div>
+        </div>
+        <div class="chord-test">
+            <h3>2nd Inversion</h3>
+            <div>Should be: 5 R 3 7</div>
+            <div id="secondInv"></div>
+        </div>
+        <div class="chord-test">
+            <h3>3rd Inversion</h3>
+            <div>Should be: 7 3 5 R</div>
+            <div id="thirdInv"></div>
+        </div>
+    </div>
+    
+    <div id="debug"></div>
+
+    <script type="module">
+        async function testInversions() {
+            try {
+                const chordGenerator = await import('./chord_generator_browser.js');
+                const debugDiv = document.getElementById('debug');
+                
+                const chordNotes = chordGenerator.getChordNotes('C', 'maj7');
+                debugDiv.innerHTML += `Cmaj7 notes: ${chordNotes.join(', ')}<br>`;
+                
+                // Test all inversions
+                for (let inv = 0; inv < 4; inv++) {
+                    const voicing = chordGenerator.createDrop2Voicing(chordNotes, inv);
+                    const fingering = chordGenerator.findDrop2Fingering(voicing, 'C');
+                    
+                    debugDiv.innerHTML += `Inversion ${inv}: ${voicing.join(', ')}<br>`;
+                    
+                    // Get interval names
+                    const intervals = voicing.map(note => 
+                        chordGenerator.getIntervalName(note, 'C', 'maj7')
+                    );
+                    debugDiv.innerHTML += `Intervals: ${intervals.join(' ')}<br>`;
+                    
+                    if (fingering) {
+                        const svg = chordGenerator.create6StringChordSVG(
+                            fingering, 
+                            `Cmaj7`, 
+                            `Cmaj7 ${['Root', '1st', '2nd', '3rd'][inv]} Inv`, 
+                            'C', 
+                            'maj7'
+                        );
+                        
+                        const blob = new Blob([svg], { type: 'image/svg+xml' });
+                        const url = URL.createObjectURL(blob);
+                        
+                        const containers = ['rootInv', 'firstInv', 'secondInv', 'thirdInv'];
+                        document.getElementById(containers[inv]).innerHTML = 
+                            `<img src="${url}" class="chord-diagram">`;
+                    }
+                    
+                    debugDiv.innerHTML += '<br>';
+                }
+                
+            } catch (error) {
+                document.getElementById('debug').innerHTML = 'Error: ' + error.message;
+                console.error(error);
+            }
+        }
+        
+        window.addEventListener('DOMContentLoaded', testInversions);
+    </script>
+</body>
+</html>

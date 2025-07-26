@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="240" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240">
+    <defs>
+        <style>
+            .chord-title { 
+                font-family: Times, serif; 
+                font-size: 14px; 
+                fill: #000000; 
+                font-weight: normal; 
+                text-anchor: middle; 
+            }
+            .string-label { 
+                font-family: Times, serif; 
+                font-size: 11px; 
+                fill: #000000; 
+                text-anchor: middle; 
+            }
+            .fret-label { 
+                font-family: Times, serif; 
+                font-size: 9px; 
+                fill: #000000; 
+                text-anchor: middle; 
+            }
+            .string-line { 
+                stroke: #000000; 
+                stroke-width: 1.5; 
+            }
+            .fret-line { 
+                stroke: #000000; 
+                stroke-width: 1; 
+            }
+            .nut-line { 
+                stroke: #000000; 
+                stroke-width: 3; 
+            }
+            .note-circle { 
+                stroke: #000000; 
+                stroke-width: 1.5; 
+            }
+            .root-note { 
+                fill: #000000; 
+            }
+            .chord-note { 
+                fill: #ffffff; 
+            }
+        </style>
+    </defs>
+    
+    <!-- Title -->
+    <text x="100" y="15" class="chord-title">Cmaj7 Root Inversion (Test)</text>
+    
+    <!-- Interval labels under middle 4 strings (NO string letters at top) -->
+    <text x="55" y="235" class="string-label">R</text>
+    <text x="85" y="235" class="string-label">5</text>
+    <text x="115" y="235" class="string-label">7</text>
+    <text x="145" y="235" class="string-label">3</text>
+    
+    <!-- Strings (vertical lines) - all 6 strings -->
+    <line x1="25" y1="35" x2="25" y2="220" class="string-line"/>
+    <line x1="55" y1="35" x2="55" y2="220" class="string-line"/>
+    <line x1="85" y1="35" x2="85" y2="220" class="string-line"/>
+    <line x1="115" y1="35" x2="115" y2="220" class="string-line"/>
+    <line x1="145" y1="35" x2="145" y2="220" class="string-line"/>
+    <line x1="175" y1="35" x2="175" y2="220" class="string-line"/>
+    
+    <!-- Frets (horizontal lines) -->
+    <line x1="25" y1="35" x2="175" y2="35" class="nut-line"/>
+    <line x1="25" y1="72" x2="175" y2="72" class="fret-line"/>
+    <line x1="25" y1="109" x2="175" y2="109" class="fret-line"/>
+    <line x1="25" y1="146" x2="175" y2="146" class="fret-line"/>
+    <line x1="25" y1="183" x2="175" y2="183" class="fret-line"/>
+    <line x1="25" y1="220" x2="175" y2="220" class="fret-line"/>
+    
+    <!-- Chord notes on middle 4 strings only -->
+    <circle cx="55" cy="53.5" r="10" class="note-circle root-note"/>
+    <circle cx="85" cy="90.5" r="10" class="note-circle chord-note"/>
+    <circle cx="115" cy="127.5" r="10" class="note-circle chord-note"/>
+    <circle cx="145" cy="164.5" r="10" class="note-circle chord-note"/>
+</svg>

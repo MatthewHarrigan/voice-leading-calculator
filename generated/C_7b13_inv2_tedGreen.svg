@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="240" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240">
+    <defs>
+        <style>
+            .chord-title { 
+                font-family: Times, serif; 
+                font-size: 14px; 
+                fill: #000000; 
+                font-weight: normal; 
+                text-anchor: middle; 
+            }
+            .chord-subtitle { 
+                font-family: Times, serif; 
+                font-size: 11px; 
+                fill: #000000; 
+                text-anchor: middle; 
+            }
+            .string-label { 
+                font-family: Times, serif; 
+                font-size: 11px; 
+                fill: #000000; 
+                text-anchor: middle; 
+            }
+            .fret-label { 
+                font-family: Times, serif; 
+                font-size: 9px; 
+                fill: #000000; 
+                text-anchor: middle; 
+            }
+            .string-line { 
+                stroke: #000000; 
+                stroke-width: 1.5; 
+            }
+            .fret-line { 
+                stroke: #000000; 
+                stroke-width: 1; 
+            }
+            .nut-line { 
+                stroke: #000000; 
+                stroke-width: 3; 
+            }
+            .note-circle { 
+                stroke: #000000; 
+                stroke-width: 1.5; 
+            }
+            .root-note { 
+                fill: #000000; 
+            }
+            .chord-note { 
+                fill: #ffffff; 
+            }
+            .note-text { 
+                font-family: Times, serif; 
+                font-size: 9px; 
+                fill: #ffffff; 
+                font-weight: bold; 
+                text-anchor: middle; 
+                dominant-baseline: middle; 
+            }
+        </style>
+    </defs>
+    
+    <!-- String labels -->
+    <text x="25" y="20" class="string-label">E</text>
+    <text x="55" y="20" class="string-label">A</text>
+    <text x="85" y="20" class="string-label">D</text>
+    <text x="115" y="20" class="string-label">G</text>
+    <text x="145" y="20" class="string-label">B</text>
+    <text x="175" y="20" class="string-label">E</text>
+    <line x1="25" y1="25" x2="25" y2="220" class="string-line"/>
+    <line x1="55" y1="25" x2="55" y2="220" class="string-line"/>
+    <line x1="85" y1="25" x2="85" y2="220" class="string-line"/>
+    <line x1="115" y1="25" x2="115" y2="220" class="string-line"/>
+    <line x1="145" y1="25" x2="145" y2="220" class="string-line"/>
+    <line x1="175" y1="25" x2="175" y2="220" class="string-line"/>
+    <line x1="25" y1="25" x2="175" y2="25" class="fret-line"/>
+    <line x1="25" y1="64" x2="175" y2="64" class="fret-line"/>
+    <line x1="25" y1="103" x2="175" y2="103" class="fret-line"/>
+    <line x1="25" y1="142" x2="175" y2="142" class="fret-line"/>
+    <line x1="25" y1="181" x2="175" y2="181" class="fret-line"/>
+    <line x1="25" y1="220" x2="175" y2="220" class="fret-line"/>
+    <text x="10" y="44.5" class="fret-label">11</text>
+    <circle cx="55" cy="44.5" r="10" class="note-circle chord-note"/>
+    <circle cx="85" cy="161.5" r="10" class="note-circle chord-note"/>
+    <circle cx="115" cy="200.5" r="10" class="note-circle chord-note"/>
+    <circle cx="145" cy="122.5" r="10" class="note-circle root-note"/>
+</svg>

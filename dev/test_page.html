@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Test</title>
+</head>
+<body>
+    <h1>Testing SVG Loading</h1>
+    <div id="test-container"></div>
+
+    <script src="svg_manifest.js"></script>
+    <script>
+        async function testSVGLoad() {
+            console.log('SVG Manifest:', window.SVG_MANIFEST);
+            
+            if (window.SVG_MANIFEST && window.SVG_MANIFEST.perfect_5th) {
+                const filename = window.SVG_MANIFEST.perfect_5th[0];
+                console.log('Testing with file:', filename);
+                
+                try {
+                    const response = await fetch(`intervals_perfect_5th/${filename}`);
+                    if (response.ok) {
+                        const svgContent = await response.text();
+                        document.getElementById('test-container').innerHTML = svgContent;
+                        console.log('Successfully loaded SVG!');
+                    } else {
+                        console.log('Failed to fetch SVG:', response.status);
+                    }
+                } catch (error) {
+                    console.log('Error loading SVG:', error);
+                }
+            }
+        }
+        
+        testSVGLoad();
+    </script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Dynamic Chord Builder</title>
+</head>
+<body>
+    <h1>Testing Dynamic Chord Builder</h1>
+    <div id="test-results"></div>
+    
+    <script type="module">
+        try {
+            console.log('Starting import test...');
+            
+            const module = await import('./chord_generator.js');
+            console.log('Module imported successfully:', Object.keys(module));
+            
+            const { getChordNotes, createDrop2Voicing, findDrop2Fingering, create6StringChordSVG } = module;
+            
+            // Test chord generation
+            const chordNotes = getChordNotes('C', 'maj7');
+            console.log('C major 7 notes:', chordNotes);
+            
+            const voicing = createDrop2Voicing(chordNotes, 0);
+            console.log('Drop 2 voicing:', voicing);
+            
+            const fingering = findDrop2Fingering(voicing, 'C');
+            console.log('Fingering:', fingering);
+            
+            if (fingering) {
+                const svg = create6StringChordSVG(fingering, 'Cmaj7');
+                console.log('SVG generated successfully, length:', svg.length);
+                
+                document.getElementById('test-results').innerHTML = `
+                    <h2>Test Results: SUCCESS</h2>
+                    <p>Module loaded and functions working</p>
+                    <p>Chord notes: ${chordNotes.join(', ')}</p>
+                    <p>Voicing: ${voicing.join(', ')}</p>
+                    <div>${svg}</div>
+                `;
+            } else {
+                document.getElementById('test-results').innerHTML = '<h2>Test Results: FAILED - No fingering found</h2>';
+            }
+            
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('test-results').innerHTML = `<h2>Test Results: ERROR</h2><p>${error.message}</p>`;
+        }
+    </script>
+</body>
+</html>
