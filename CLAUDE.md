@@ -62,6 +62,9 @@ node server.js
 # Generate all chords
 node chord_generator.js
 
+# Generate all intervals
+npm run generate-intervals
+
 # Regenerate specific chord sets
 node dev/regenerate_all_chords.js
 

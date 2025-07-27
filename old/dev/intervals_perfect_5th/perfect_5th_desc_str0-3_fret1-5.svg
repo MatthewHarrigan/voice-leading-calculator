@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="240" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240">
+    <defs>
+        <style>
+            .interval-title { 
+                font-family: Times, serif; 
+                font-size: 14px; 
+                fill: #000000; 
+                font-weight: normal; 
+                text-anchor: middle; 
+            }
+            .string-label { 
+                font-family: Times, serif; 
+                font-size: 11px; 
+                fill: #000000; 
+                text-anchor: middle; 
+            }
+            .fret-label { 
+                font-family: Times, serif; 
+                font-size: 9px; 
+                fill: #000000; 
+                text-anchor: middle; 
+            }
+            .string-line { 
+                stroke: #000000; 
+                stroke-width: 1.5; 
+            }
+            .fret-line { 
+                stroke: #000000; 
+                stroke-width: 1; 
+            }
+            .nut-line { 
+                stroke: #000000; 
+                stroke-width: 3; 
+            }
+            .note-circle { 
+                stroke: #000000; 
+                stroke-width: 1.5; 
+            }
+            .low-note { 
+                fill: #000000; 
+            }
+            .high-note { 
+                fill: #ffffff; 
+            }
+            .note-text {
+                font-family: Times, serif;
+                font-size: 10px;
+                font-weight: bold;
+                fill: #ffffff;
+                text-anchor: middle;
+                dominant-baseline: central;
+            }
+            .root-text {
+                font-family: Times, serif;
+                font-size: 10px;
+                font-weight: bold;
+                fill: #ffffff;
+                text-anchor: middle;
+                dominant-baseline: central;
+            }
+            .interval-text {
+                font-family: Times, serif;
+                font-size: 10px;
+                font-weight: bold;
+                fill: #000000;
+                text-anchor: middle;
+                dominant-baseline: central;
+            }
+        </style>
+    </defs>
+    
+    <!-- Title (removed for cleaner display) -->
+    <text x="25" y="20" class="string-label">E</text>
+    <text x="55" y="20" class="string-label">A</text>
+    <text x="85" y="20" class="string-label">D</text>
+    <text x="115" y="20" class="string-label">G</text>
+    <text x="145" y="20" class="string-label">B</text>
+    <text x="175" y="20" class="string-label">E</text>
+    <line x1="25" y1="25" x2="25" y2="220" class="string-line"/>
+    <line x1="55" y1="25" x2="55" y2="220" class="string-line"/>
+    <line x1="85" y1="25" x2="85" y2="220" class="string-line"/>
+    <line x1="115" y1="25" x2="115" y2="220" class="string-line"/>
+    <line x1="145" y1="25" x2="145" y2="220" class="string-line"/>
+    <line x1="175" y1="25" x2="175" y2="220" class="string-line"/>
+    <line x1="25" y1="25" x2="175" y2="25" class="nut-line"/>
+    <line x1="25" y1="52.85714285714286" x2="175" y2="52.85714285714286" class="fret-line"/>
+    <line x1="25" y1="80.71428571428572" x2="175" y2="80.71428571428572" class="fret-line"/>
+    <line x1="25" y1="108.57142857142857" x2="175" y2="108.57142857142857" class="fret-line"/>
+    <line x1="25" y1="136.42857142857144" x2="175" y2="136.42857142857144" class="fret-line"/>
+    <line x1="25" y1="164.28571428571428" x2="175" y2="164.28571428571428" class="fret-line"/>
+    <line x1="25" y1="192.14285714285714" x2="175" y2="192.14285714285714" class="fret-line"/>
+    <line x1="25" y1="220" x2="175" y2="220" class="fret-line"/>
+    <circle cx="25" cy="38.92857142857143" r="10" class="note-circle low-note"/>
+    <text x="25" y="38.92857142857143" class="root-text">R</text>
+    <circle cx="115" cy="150.35714285714286" r="10" class="note-circle high-note"/>
+    <text x="115" y="150.35714285714286" class="interval-text">undefined</text>
+</svg>

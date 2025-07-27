@@ -1,0 +1,15 @@
+{
+  "name": "guitar-chord-app",
+  "version": "1.0.0",
+  "description": "Drop 2 guitar chord reference with interval visualization",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "generate-chords": "node chord_generator.js",
+    "generate-intervals": "node dev/generate_all_intervals.js"
+  },
+  "keywords": ["guitar", "chords", "intervals", "music", "drop2"],
+  "author": "",
+  "license": "MIT"
+}
