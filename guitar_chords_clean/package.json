@@ -1,0 +1,14 @@
+{
+  "name": "guitar-chords-clean",
+  "version": "1.0.0",
+  "description": "Clean drop 2 guitar chord reference",
+  "type": "module",
+  "scripts": {
+    "generate": "node scripts/chord-generator.js",
+    "serve": "python3 -m http.server 8080",
+    "build": "npm run generate"
+  },
+  "keywords": ["guitar", "chords", "drop2", "jazz"],
+  "author": "",
+  "license": "MIT"
+}
