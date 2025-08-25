@@ -255,6 +255,33 @@
             font-size: 12px;
             cursor: pointer;
         }
+
+        .sequence-chord.selected {
+            background-color: rgba(76, 175, 80, 0.3);
+        }
+        
+        .sequence-chord:hover {
+            background-color: rgba(200, 200, 200, 0.2);
+            cursor: pointer;
+        }
+
+        .sequence-chord.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+        }
+
+        .sequence-chord.drag-over {
+            border: 2px dashed #4CAF50;
+        }
+
+        .sequence-chord {
+            cursor: grab;
+        }
+
+        .sequence-chord:active {
+            cursor: grabbing;
+        }
+
         
         .sequence-arrow {
             font-size: 18px;
@@ -1013,7 +1040,6 @@
                     </select>
                     
                     <button onclick="addChordToSequence()">Add Chord</button>
-                    <button onclick="addFromLibrary()">Pick from Library</button>
                 </div>
                 
                 <div class="sequence-display" id="sequenceDisplay">
@@ -1149,7 +1175,7 @@
             }
         }
         
-        function showModal(svgFile, title) {
+        window.showModal = function showModal(svgFile, title) {
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalChord').data = svgFile;
             document.getElementById('modal').style.display = 'block';
@@ -1274,8 +1300,8 @@
             await loadChordGenerator();
             if (!chordGenerator) return;
             
-            // Generate optimal hybrid progressions that can mix string sets
-            const optimalProgressions = generateOptimalHybridProgressions(progressionType);
+            // Generate optimal progressions for the selected string set
+            const optimalProgressions = generateOptimalHybridProgressions(progressionType, stringSet);
             
             const sectionId = progressionType + '-progressions';
             const section = document.getElementById(sectionId);
@@ -1289,23 +1315,36 @@
             displayProgressions(optimalProgressions, section, progressionType);
         }
         
-        // Generate optimal hybrid ii-V-I progressions across both string sets
-        function generateOptimalHybridProgressions(progressionType) {
+        // Generate optimal ii-V-I progressions for the specified string set
+        function generateOptimalHybridProgressions(progressionType, stringSet) {
             const chordTypes = progressionType === 'major' 
                 ? ['min7', 'dom7', 'maj7']  // ii-V-I major
                 : ['min7b5', 'dom7', 'min7']; // ii-V-i minor
             
             const roots = ['D', 'G', 'C'];
-            const stringSetCombinations = [
-                ['middle', 'middle', 'middle'],
-                ['middle', 'middle', 'upper'],
-                ['middle', 'upper', 'middle'],
-                ['middle', 'upper', 'upper'],
-                ['upper', 'middle', 'middle'],
-                ['upper', 'middle', 'upper'],
-                ['upper', 'upper', 'middle'],
-                ['upper', 'upper', 'upper']
-            ];
+            // Filter string set combinations based on selected string set
+            let stringSetCombinations;
+            if (stringSet === 'middle') {
+                stringSetCombinations = [
+                    ['middle', 'middle', 'middle']
+                ];
+            } else if (stringSet === 'upper') {
+                stringSetCombinations = [
+                    ['upper', 'upper', 'upper']
+                ];
+            } else {
+                // Default to showing all combinations (hybrid mode)
+                stringSetCombinations = [
+                    ['middle', 'middle', 'middle'],
+                    ['middle', 'middle', 'upper'],
+                    ['middle', 'upper', 'middle'],
+                    ['middle', 'upper', 'upper'],
+                    ['upper', 'middle', 'middle'],
+                    ['upper', 'middle', 'upper'],
+                    ['upper', 'upper', 'middle'],
+                    ['upper', 'upper', 'upper']
+                ];
+            }
             
             const allProgressions = [];
             
@@ -1595,12 +1634,50 @@
             // Also generate progressions with larger default size
             generateDynamicProgressions('major', 'middle');
             generateDynamicProgressions('minor', 'middle');
+            
+            // Add background click handler for sequence builder section
+            setupBackgroundClickHandler();
         });
+
+        // Setup background click handler to clear chord selection
+        function setupBackgroundClickHandler() {
+            const sequenceBuilderSection = document.getElementById('sequence-builder');
+            if (!sequenceBuilderSection) return;
+
+            // Add click handler to the sequence builder section
+            sequenceBuilderSection.addEventListener('click', function(e) {
+                // Only clear selection if clicking on background areas, not on interactive elements
+                const clickedElement = e.target;
+                
+                // Don't clear if clicking on:
+                // - chords (they handle their own selection)
+                // - buttons
+                // - form inputs
+                // - remove buttons
+                if (clickedElement.closest('.sequence-chord') || 
+                    clickedElement.tagName === 'BUTTON' ||
+                    clickedElement.tagName === 'SELECT' ||
+                    clickedElement.tagName === 'INPUT' ||
+                    clickedElement.classList.contains('remove-btn')) {
+                    return;
+                }
+                
+                // Clear selection if clicking on background
+                if (selectedChordForEditing) {
+                    clearChordSelection();
+                }
+            });
+        }
         
         // Add chord to sequence
         window.addChordToSequence = async function() {
             await loadChordGenerator();
             if (!chordGenerator) return;
+            
+            // Only add new chord if no chord is currently selected for editing
+            if (selectedChordForEditing) {
+                return; // Do nothing if we're in edit mode
+            }
             
             const root = document.getElementById('rootSelect').value;
             const chordType = document.getElementById('chordTypeSelect').value;
@@ -1683,10 +1760,263 @@
             updateSequenceDisplay();
             updateVoiceLeadingAnalysis();
         };
+
+        // Variables for chord editing
+        let selectedChordForEditing = null;
+
+        // Select chord for editing
+        window.selectChordForEditing = function(id) {
+            const chord = chordSequence.find(c => c.id === id);
+            if (!chord) return;
+
+            // Clear previous selection
+            document.querySelectorAll('.sequence-chord').forEach(el => {
+                el.classList.remove('selected');
+            });
+
+            // Mark current chord as selected
+            selectedChordForEditing = chord;
+            const chordElement = document.querySelector(`[data-chord-id="${id}"]`);
+            if (chordElement) {
+                chordElement.classList.add('selected');
+            }
+
+            // Show edit mode buttons
+            showEditModeButtons(chord);
+
+            // Populate form fields
+            const rootSelect = document.getElementById('rootSelect');
+            const chordTypeSelect = document.getElementById('chordTypeSelect');
+
+            if (rootSelect) rootSelect.value = chord.root;
+            if (chordTypeSelect) chordTypeSelect.value = chord.chordType;
+        };
+
+        // Show edit mode buttons
+        function showEditModeButtons(chord) {
+            const buttonContainer = document.querySelector('.chord-selector');
+            if (!buttonContainer) return;
+
+            // Remove any existing edit buttons
+            const existingEditButtons = buttonContainer.querySelectorAll('.edit-mode-button');
+            existingEditButtons.forEach(btn => btn.remove());
+
+            // Hide the original Add Chord button
+            const addButton = document.querySelector('button[onclick="addChordToSequence()"]');
+            if (addButton) {
+                addButton.style.display = 'none';
+            }
+
+            // Create Update button
+            const updateButton = document.createElement('button');
+            updateButton.textContent = 'Update Chord';
+            updateButton.className = 'edit-mode-button';
+            updateButton.style.backgroundColor = '#4CAF50';
+            updateButton.style.color = 'white';
+            updateButton.style.marginRight = '10px';
+            updateButton.onclick = function() { updateSelectedChord(); };
+
+            // Create Insert button
+            const insertButton = document.createElement('button');
+            insertButton.textContent = 'Insert';
+            insertButton.className = 'edit-mode-button';
+            insertButton.style.backgroundColor = '#2196F3';
+            insertButton.style.color = 'white';
+            insertButton.style.marginRight = '10px';
+            insertButton.onclick = function() { insertChordAfterSelected(); };
+
+            // Add buttons after the Add Chord button
+            const addChordButton = document.querySelector('button[onclick="addChordToSequence()"]');
+            if (addChordButton && addChordButton.nextSibling) {
+                buttonContainer.insertBefore(updateButton, addChordButton.nextSibling);
+                buttonContainer.insertBefore(insertButton, addChordButton.nextSibling);
+            } else {
+                buttonContainer.appendChild(updateButton);
+                buttonContainer.appendChild(insertButton);
+            }
+        }
+
+        // Update the selected chord
+        window.updateSelectedChord = function() {
+            if (!selectedChordForEditing) return;
+
+            const rootSelect = document.getElementById('rootSelect');
+            const chordTypeSelect = document.getElementById('chordTypeSelect');
+            
+            if (!rootSelect || !chordTypeSelect) return;
+
+            // Store the selected chord ID to maintain selection after update
+            const selectedChordId = selectedChordForEditing.id;
+
+            // Update the chord
+            selectedChordForEditing.root = rootSelect.value;
+            selectedChordForEditing.chordType = chordTypeSelect.value;
+            selectedChordForEditing.symbol = `${selectedChordForEditing.root}${getChordSymbol(selectedChordForEditing.chordType)}`;
+
+            // Update displays
+            updateSequenceDisplay();
+            updateVoiceLeadingAnalysis();
+            
+            // Re-infer key with updated chords
+            inferredKey = inferKeyFromChords(chordSequence);
+            updateChordSpellingsForKey(inferredKey);
+
+            // Restore selection after the display update
+            setTimeout(() => {
+                selectChordForEditing(selectedChordId);
+            }, 50);
+        };
+
+        // Insert chord after the selected chord
+        window.insertChordAfterSelected = function() {
+            if (!selectedChordForEditing) return;
+
+            const rootSelect = document.getElementById('rootSelect');
+            const chordTypeSelect = document.getElementById('chordTypeSelect');
+            
+            if (!rootSelect || !chordTypeSelect) return;
+
+            // Store the original selected chord ID to maintain selection
+            const originalSelectedId = selectedChordForEditing.id;
+
+            // Create new chord from form values
+            const newChord = {
+                root: rootSelect.value,
+                chordType: chordTypeSelect.value,
+                symbol: `${rootSelect.value}${getChordSymbol(chordTypeSelect.value)}`,
+                stringSet: currentStringSet,
+                id: Date.now()
+            };
+
+            // Find the position to insert after
+            const selectedIndex = chordSequence.findIndex(c => c.id === selectedChordForEditing.id);
+            if (selectedIndex !== -1) {
+                chordSequence.splice(selectedIndex + 1, 0, newChord);
+            }
+
+            // Update displays
+            updateSequenceDisplay();
+            updateVoiceLeadingAnalysis();
+            
+            // Re-infer key with updated chords
+            inferredKey = inferKeyFromChords(chordSequence);
+            updateChordSpellingsForKey(inferredKey);
+
+            // Move selection to the newly inserted chord after the display update
+            setTimeout(() => {
+                selectChordForEditing(newChord.id);
+            }, 50);
+        };
+
+        // Clear chord selection
+        function clearChordSelection() {
+            selectedChordForEditing = null;
+            
+            // Clear visual selection
+            document.querySelectorAll('.sequence-chord').forEach(el => {
+                el.classList.remove('selected');
+            });
+
+            // Remove edit mode buttons
+            const existingEditButtons = document.querySelectorAll('.edit-mode-button');
+            existingEditButtons.forEach(btn => btn.remove());
+
+            // Show the original Add Chord button
+            const addButton = document.querySelector('button[onclick="addChordToSequence()"]');
+            if (addButton) {
+                addButton.style.display = '';
+            }
+        }
+
+        // Drag and drop variables
+        let draggedElement = null;
+        let draggedChordId = null;
+
+        // Drag start handler
+        function handleDragStart(e) {
+            draggedElement = e.target;
+            draggedChordId = e.target.dataset.chordId;
+            e.target.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', e.target.outerHTML);
+        }
+
+        // Drag over handler
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        // Drag enter handler
+        function handleDragEnter(e) {
+            if (e.target.classList.contains('sequence-chord') && e.target !== draggedElement) {
+                e.target.classList.add('drag-over');
+            }
+        }
+
+        // Drag leave handler
+        function handleDragLeave(e) {
+            if (e.target.classList.contains('sequence-chord')) {
+                e.target.classList.remove('drag-over');
+            }
+        }
+
+        // Drop handler
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            const targetElement = e.target.closest('.sequence-chord');
+            if (targetElement && targetElement !== draggedElement) {
+                const targetChordId = targetElement.dataset.chordId;
+                reorderChords(draggedChordId, targetChordId);
+            }
+            
+            // Clean up
+            document.querySelectorAll('.sequence-chord').forEach(el => {
+                el.classList.remove('drag-over');
+            });
+            
+            return false;
+        }
+
+        // Drag end handler
+        function handleDragEnd(e) {
+            e.target.classList.remove('dragging');
+            document.querySelectorAll('.sequence-chord').forEach(el => {
+                el.classList.remove('drag-over');
+            });
+            draggedElement = null;
+            draggedChordId = null;
+        }
+
+        // Reorder chords in the sequence
+        function reorderChords(draggedId, targetId) {
+            const draggedIndex = chordSequence.findIndex(c => c.id == draggedId);
+            const targetIndex = chordSequence.findIndex(c => c.id == targetId);
+            
+            if (draggedIndex !== -1 && targetIndex !== -1 && draggedIndex !== targetIndex) {
+                // Remove dragged chord from its current position
+                const draggedChord = chordSequence.splice(draggedIndex, 1)[0];
+                
+                // Insert at target position
+                const newTargetIndex = draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
+                chordSequence.splice(newTargetIndex, 0, draggedChord);
+                
+                // Update display and analysis
+                updateSequenceDisplay();
+                updateVoiceLeadingAnalysis();
+            }
+        }
         
         // Clear sequence
         window.clearSequence = function() {
             chordSequence = [];
+            clearChordSelection(); // Also clear any selected chord
             updateSequenceDisplay();
             document.getElementById('voiceLeadingInfo').style.display = 'none';
             document.getElementById('optimizationDisplay').style.display = 'none';
@@ -1726,13 +2056,31 @@
                     const showBothSpellings = chord.symbol !== preferredSymbol;
                     
                     chordElement.innerHTML = `
-                        <img src="${url}" class="chord-diagram" alt="${chord.symbol}">
+                        <img src="${url}" class="chord-diagram" alt="${chord.symbol}" onclick="selectChordForEditing(${chord.id})">
                         <div class="chord-label">
                             ${preferredSymbol}
                             ${showBothSpellings ? `<br><small style="color: #999;">(${chord.symbol})</small>` : ''}
                         </div>
                         <button class="remove-btn" onclick="removeChordFromSequence(${chord.id})">×</button>
                     `;
+                    
+                    // Add click handler to the entire chord element for selection
+                    chordElement.onclick = function(e) {
+                        // Don't trigger if clicking the remove button
+                        if (!e.target.classList.contains('remove-btn')) {
+                            selectChordForEditing(chord.id);
+                        }
+                    };
+                    
+                    // Add drag-and-drop attributes
+                    chordElement.draggable = true;
+                    chordElement.dataset.chordId = chord.id;
+                    chordElement.addEventListener('dragstart', handleDragStart);
+                    chordElement.addEventListener('dragover', handleDragOver);
+                    chordElement.addEventListener('dragenter', handleDragEnter);
+                    chordElement.addEventListener('dragleave', handleDragLeave);
+                    chordElement.addEventListener('drop', handleDrop);
+                    chordElement.addEventListener('dragend', handleDragEnd);
                 }
                 
                 display.appendChild(chordElement);
