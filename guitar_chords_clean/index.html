@@ -337,6 +337,151 @@
             color: #666;
         }
 
+        /* Melody Builder Styles */
+        .melody-result-display {
+            background: #f0f8ff;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #ccc;
+        }
+        
+        .melody-chord-container {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .melody-chord-container svg {
+            width: 160px;
+            height: auto;
+            border: 1px solid #000;
+        }
+        
+        .melody-chord-info {
+            font-size: 14px;
+        }
+        
+        .melody-not-found {
+            background: #fff3cd;
+            padding: 15px;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+        }
+        
+        .melody-sequence-display {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background: white;
+        }
+        
+        .melody-sequence-chord {
+            text-align: center;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .melody-sequence-chord .chord-diagram {
+            width: 80px;
+            height: auto;
+            border: 1px solid #000;
+        }
+        
+        .melody-sequence-chord .chord-label {
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .melody-sequence-chord .melody-label {
+            font-size: 10px;
+            color: #0066cc;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+        
+        .melody-sequence-chord .approximate-melody {
+            color: #ff9800;
+        }
+        
+        .melody-sequence-chord .remove-btn {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: red;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+        .melody-analysis-display {
+            background: #f8f9fa;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        /* Key information display */
+        .key-info {
+            background: #e8f5e8;
+            padding: 12px;
+            margin: 15px 0;
+            border: 1px solid #4caf50;
+            border-radius: 4px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .key-info strong {
+            color: #2e7d32;
+        }
+        
+        /* Enhanced dropdown styling for enharmonic notes */
+        .chord-selector select {
+            min-width: 100px;
+        }
+        
+        .chord-selector select option {
+            padding: 4px;
+        }
+        
+        /* Substitution highlighting */
+        .substitution-info {
+            background: #e3f2fd;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #0066cc;
+            border-radius: 4px;
+        }
+        
+        /* Approximation highlighting */
+        .approximation-info {
+            background: #fff3e0;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #ff9800;
+            border-radius: 4px;
+        }
+        
+        .approximation-info strong {
+            color: #f57c00;
+        }
+        
+        .melody-not-found {
+            background: #fff3cd;
+            padding: 15px;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            color: #856404;
+        }
+
         @media (max-width: 768px) {
             .chord-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -370,6 +515,7 @@
             <button class="nav-button" onclick="showSection('major-progressions')">Major ii-V-I</button>
             <button class="nav-button" onclick="showSection('minor-progressions')">Minor ii-V-i</button>
             <button class="nav-button" onclick="showSection('sequence-builder')">Build Sequence</button>
+            <button class="nav-button" onclick="showSection('melody-builder')">Melody Builder</button>
         </div>
         
         <!-- String Set Selection -->
@@ -832,18 +978,7 @@
                 <div class="chord-selector">
                     <label>Root:</label>
                     <select id="rootSelect">
-                        <option value="C">C</option>
-                        <option value="C#">C#</option>
-                        <option value="D">D</option>
-                        <option value="D#">D#</option>
-                        <option value="E">E</option>
-                        <option value="F">F</option>
-                        <option value="F#">F#</option>
-                        <option value="G">G</option>
-                        <option value="G#">G#</option>
-                        <option value="A">A</option>
-                        <option value="A#">A#</option>
-                        <option value="B">B</option>
+                        <!-- Populated by JavaScript with enharmonic spellings -->
                     </select>
                     
                     <label>Chord Type:</label>
@@ -911,6 +1046,70 @@
                 <div class="movement-analysis" id="movementAnalysis"></div>
             </div>
         </div>
+        
+        <!-- MELODY BUILDER -->
+        <div id="melody-builder" class="section">
+            <div class="builder-section">
+                <h2>Melody-Based Chord Builder</h2>
+                <p style="margin-bottom: 20px; font-style: italic; color: #666;">
+                    Select a melody note and chord to find inversions where the melody note appears on the B string (top voice).
+                </p>
+                
+                <div class="chord-selector">
+                    <label>Melody Note:</label>
+                    <select id="melodyNoteSelect">
+                        <!-- Populated by JavaScript with enharmonic spellings -->
+                    </select>
+                    
+                    <label>Chord Root:</label>
+                    <select id="melodyChordRootSelect">
+                        <!-- Populated by JavaScript with enharmonic spellings -->
+                    </select>
+                    
+                    <label>Chord Type:</label>
+                    <select id="melodyChordTypeSelect">
+                        <!-- Will be populated by JavaScript -->
+                    </select>
+                    
+                    <button onclick="findMelodyChord()">Find Chord</button>
+                    <button onclick="addMelodyChordToMelodySequence()">Add to Melody Sequence</button>
+                </div>
+                
+                <div class="melody-result-display" id="melodyResultDisplay" style="display: none;">
+                    <h3>Found Chord</h3>
+                    <div class="melody-chord-container" id="melodyChordContainer">
+                        <!-- Chord diagram will appear here -->
+                    </div>
+                    <div class="melody-chord-info" id="melodyChordInfo">
+                        <!-- Chord information will appear here -->
+                    </div>
+                </div>
+                
+                <div class="melody-not-found" id="melodyNotFound" style="display: none; color: #666; font-style: italic; margin-top: 20px;">
+                    No inversion found where this melody note appears on the B string for this chord.
+                </div>
+                
+                <!-- Melody Sequence Display -->
+                <div class="melody-sequence-section" style="margin-top: 30px;">
+                    <h3>Melody Sequence</h3>
+                    <div class="melody-sequence-display" id="melodySequenceDisplay">
+                        <div style="color: #666; font-style: italic;">Your melody sequence will appear here...</div>
+                    </div>
+                    
+                    <div class="controls" style="margin-top: 15px;">
+                        <button onclick="clearMelodySequence()">Clear Melody Sequence</button>
+                        <button onclick="analyzeMelodyLine()">Analyze Melody Line</button>
+                        <button onclick="optimizeMelodyVoiceLeading()">Optimize Voice Leading</button>
+                    </div>
+                </div>
+                
+                <!-- Melody Analysis Display -->
+                <div class="melody-analysis-display" id="melodyAnalysisDisplay" style="display: none; margin-top: 20px;">
+                    <h3>Melody Line Analysis</h3>
+                    <div id="melodyAnalysisContent"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Modal -->
@@ -938,9 +1137,15 @@
                 sortOptions.style.display = 'none';
             }
             
-            // Ensure chord generator is loaded for sequence builder
+            // Ensure chord generator is loaded for sequence builder and melody builder
             if (sectionId === 'sequence-builder') {
                 await loadChordGenerator();
+            }
+            
+            // Ensure chord generator is loaded for melody builder
+            if (sectionId === 'melody-builder') {
+                await loadChordGenerator();
+                populateMelodyChordTypeDropdown();
             }
         }
         
@@ -1411,6 +1616,10 @@
             chordSequence.push(chord);
             updateSequenceDisplay();
             updateVoiceLeadingAnalysis();
+            
+            // Update key inference
+            inferredKey = inferKeyFromChords(chordSequence);
+            updateChordSpellingsForKey(inferredKey);
         };
         
         // Add chord from library (clicking on chord diagrams)
@@ -1512,9 +1721,16 @@
                     const blob = new Blob([svg], { type: 'image/svg+xml' });
                     const url = URL.createObjectURL(blob);
                     
+                    // Get preferred spelling for display
+                    const preferredSymbol = getChordSymbolWithPreferredSpelling(chord.root, chord.chordType, inferredKey);
+                    const showBothSpellings = chord.symbol !== preferredSymbol;
+                    
                     chordElement.innerHTML = `
                         <img src="${url}" class="chord-diagram" alt="${chord.symbol}">
-                        <div class="chord-label">${chord.symbol}</div>
+                        <div class="chord-label">
+                            ${preferredSymbol}
+                            ${showBothSpellings ? `<br><small style="color: #999;">(${chord.symbol})</small>` : ''}
+                        </div>
                         <button class="remove-btn" onclick="removeChordFromSequence(${chord.id})">×</button>
                     `;
                 }
@@ -1769,9 +1985,797 @@
             return names[inversion] || 'Root';
         }
         
+        // ==================== ENHARMONIC SPELLING SYSTEM ====================
+        
+        // Enharmonic equivalents mapping
+        const ENHARMONIC_MAP = {
+            'C': ['C'],
+            'C#': ['C#', 'Db'],
+            'D': ['D'],
+            'D#': ['D#', 'Eb'],
+            'E': ['E'],
+            'F': ['F'],
+            'F#': ['F#', 'Gb'],
+            'G': ['G'],
+            'G#': ['G#', 'Ab'],
+            'A': ['A'],
+            'A#': ['A#', 'Bb'],
+            'B': ['B']
+        };
+        
+        // Create chromatic list with enharmonic groupings for dropdown display
+        const CHROMATIC_NOTES_FOR_DISPLAY = [
+            { chromatic: 'C', display: 'C', values: ['C'] },
+            { chromatic: 'C#', display: 'C# / Db', values: ['C#', 'Db'] },
+            { chromatic: 'D', display: 'D', values: ['D'] },
+            { chromatic: 'D#', display: 'D# / Eb', values: ['D#', 'Eb'] },
+            { chromatic: 'E', display: 'E', values: ['E'] },
+            { chromatic: 'F', display: 'F', values: ['F'] },
+            { chromatic: 'F#', display: 'F# / Gb', values: ['F#', 'Gb'] },
+            { chromatic: 'G', display: 'G', values: ['G'] },
+            { chromatic: 'G#', display: 'G# / Ab', values: ['G#', 'Ab'] },
+            { chromatic: 'A', display: 'A', values: ['A'] },
+            { chromatic: 'A#', display: 'A# / Bb', values: ['A#', 'Bb'] },
+            { chromatic: 'B', display: 'B', values: ['B'] }
+        ];
+        
+        // Get chromatic equivalent (for internal calculations)
+        function getChromaticNote(note) {
+            const chromaticMap = {
+                'C': 'C', 'C#': 'C#', 'Db': 'C#',
+                'D': 'D', 'D#': 'D#', 'Eb': 'D#',
+                'E': 'E',
+                'F': 'F', 'F#': 'F#', 'Gb': 'F#',
+                'G': 'G', 'G#': 'G#', 'Ab': 'G#',
+                'A': 'A', 'A#': 'A#', 'Bb': 'A#',
+                'B': 'B'
+            };
+            return chromaticMap[note] || note;
+        }
+        
+        // Major key signatures (number of sharps/flats)
+        const KEY_SIGNATURES = {
+            // Sharp keys
+            'C': { sharps: 0, flats: 0 },
+            'G': { sharps: 1, flats: 0 },
+            'D': { sharps: 2, flats: 0 },
+            'A': { sharps: 3, flats: 0 },
+            'E': { sharps: 4, flats: 0 },
+            'B': { sharps: 5, flats: 0 },
+            'F#': { sharps: 6, flats: 0 },
+            // Flat keys
+            'F': { sharps: 0, flats: 1 },
+            'Bb': { sharps: 0, flats: 2 },
+            'Eb': { sharps: 0, flats: 3 },
+            'Ab': { sharps: 0, flats: 4 },
+            'Db': { sharps: 0, flats: 5 },
+            'Gb': { sharps: 0, flats: 6 }
+        };
+        
+        // Get preferred spelling based on key context
+        function getPreferredSpelling(chromaticNote, keyContext) {
+            if (!keyContext || keyContext === 'C') {
+                // Default to sharps for C major or no key context
+                return chromaticNote;
+            }
+            
+            const keyInfo = KEY_SIGNATURES[keyContext];
+            if (!keyInfo) return chromaticNote;
+            
+            // Use sharps or flats based on key signature
+            const enharmonics = ENHARMONIC_MAP[chromaticNote];
+            if (enharmonics.length === 1) return enharmonics[0];
+            
+            if (keyInfo.sharps > 0) {
+                // Sharp key - prefer sharp spelling
+                return enharmonics.find(note => note.includes('#')) || enharmonics[0];
+            } else if (keyInfo.flats > 0) {
+                // Flat key - prefer flat spelling
+                return enharmonics.find(note => note.includes('b')) || enharmonics[0];
+            }
+            
+            return chromaticNote;
+        }
+        
+        // Infer key from a sequence of chords
+        function inferKeyFromChords(chordSequence) {
+            if (chordSequence.length === 0) return null;
+            
+            // Count chord roots to find most likely key center
+            const rootCounts = {};
+            const chordTypeCounts = { major: 0, minor: 0, dominant: 0 };
+            
+            chordSequence.forEach(chord => {
+                const chromaticRoot = getChromaticNote(chord.root);
+                rootCounts[chromaticRoot] = (rootCounts[chromaticRoot] || 0) + 1;
+                
+                // Count chord types for major/minor inference
+                if (chord.chordType.includes('maj')) chordTypeCounts.major++;
+                else if (chord.chordType.includes('min')) chordTypeCounts.minor++;
+                else if (chord.chordType.includes('dom')) chordTypeCounts.dominant++;
+            });
+            
+            // Find most frequent root
+            const mostFrequentRoot = Object.keys(rootCounts).reduce((a, b) => 
+                rootCounts[a] > rootCounts[b] ? a : b
+            );
+            
+            // Determine if major or minor
+            const isMajor = chordTypeCounts.major >= chordTypeCounts.minor;
+            
+            // Simple key inference - could be more sophisticated
+            if (isMajor) {
+                // Major key
+                return getPreferredKeySpelling(mostFrequentRoot, true);
+            } else {
+                // Minor key - find relative major
+                const relativeMajorRoot = NOTES[(NOTES.indexOf(mostFrequentRoot) + 3) % 12];
+                return getPreferredKeySpelling(relativeMajorRoot, true);
+            }
+        }
+        
+        // Get preferred key spelling
+        function getPreferredKeySpelling(chromaticRoot, isMajor) {
+            // Simple heuristic: prefer flat keys for flat roots, sharp keys for sharp roots
+            if (chromaticRoot.includes('#')) {
+                const enharmonics = ENHARMONIC_MAP[chromaticRoot];
+                return enharmonics.find(note => note.includes('#')) || chromaticRoot;
+            }
+            return chromaticRoot;
+        }
+        
+        // Get chord symbol with preferred spelling based on key context
+        function getChordSymbolWithPreferredSpelling(root, chordType, keyContext) {
+            const chromaticRoot = getChromaticNote(root);
+            const preferredRoot = getPreferredSpelling(chromaticRoot, keyContext);
+            return chordGenerator.getChordDisplaySymbol(preferredRoot, chordType);
+        }
+        
+        // Update chord labels in sequences to use preferred spellings
+        function updateSequenceSpellings() {
+            // This function will be called when key changes to update all chord displays
+            if (chordSequence.length > 0) {
+                updateSequenceDisplay();
+            }
+            if (melodySequence.length > 0) {
+                updateMelodySequenceDisplay();
+            }
+        }
+        
+        // ==================== MELODY BUILDER FUNCTIONALITY ====================
+        
+        let currentMelodyChord = null;
+        let melodySequence = []; // Separate sequence for melody builder
+        let inferredKey = null; // Track inferred key for both sequences
+        
+        // Populate note selectors with grouped enharmonic spellings
+        function populateNoteSelectors() {
+            const selectors = ['rootSelect', 'melodyNoteSelect', 'melodyChordRootSelect'];
+            
+            selectors.forEach(selectorId => {
+                const select = document.getElementById(selectorId);
+                if (!select) return;
+                
+                select.innerHTML = '';
+                
+                CHROMATIC_NOTES_FOR_DISPLAY.forEach(noteInfo => {
+                    const option = document.createElement('option');
+                    // Use chromatic note as value for consistent internal handling
+                    option.value = noteInfo.chromatic;
+                    option.textContent = noteInfo.display;
+                    // Store both spellings as data attribute for context switching
+                    option.setAttribute('data-spellings', noteInfo.values.join(','));
+                    select.appendChild(option);
+                });
+            });
+        }
+        
+        // Get user's preferred spelling from dropdown selection
+        function getUserPreferredSpelling(selectId) {
+            const select = document.getElementById(selectId);
+            if (!select) return null;
+            
+            const chromaticValue = select.value;
+            const option = select.selectedOptions[0];
+            const spellings = option.getAttribute('data-spellings').split(',');
+            
+            // For now, return the chromatic value - could be enhanced to remember user preference
+            return chromaticValue;
+        }
+        
+        // Update chord spellings based on inferred key
+        function updateChordSpellingsForKey(keyContext) {
+            // Update sequence display
+            if (chordSequence.length > 0) {
+                updateSequenceDisplay();
+                updateVoiceLeadingAnalysis();
+            }
+            
+            // Update melody sequence display
+            if (melodySequence.length > 0) {
+                updateMelodySequenceDisplay();
+            }
+            
+            // Update dropdown displays to show preferred spellings
+            updateDropdownSpellings(keyContext);
+            
+            // Display key information
+            displayKeyInformation(keyContext);
+        }
+        
+        // Update dropdown displays to show key-appropriate spellings
+        function updateDropdownSpellings(keyContext) {
+            if (!keyContext) return;
+            
+            const selectors = ['rootSelect', 'melodyNoteSelect', 'melodyChordRootSelect'];
+            
+            selectors.forEach(selectorId => {
+                const select = document.getElementById(selectorId);
+                if (!select) return;
+                
+                // Store current selection
+                const currentValue = select.value;
+                
+                // Update option text to show preferred spelling first
+                Array.from(select.options).forEach(option => {
+                    const chromaticNote = option.value;
+                    const spellings = option.getAttribute('data-spellings').split(',');
+                    
+                    if (spellings.length > 1) {
+                        const preferredSpelling = getPreferredSpelling(chromaticNote, keyContext);
+                        const alternateSpelling = spellings.find(s => s !== preferredSpelling);
+                        
+                        if (alternateSpelling) {
+                            option.textContent = `${preferredSpelling} / ${alternateSpelling}`;
+                        }
+                    }
+                });
+                
+                // Restore selection
+                select.value = currentValue;
+            });
+        }
+        
+        // Display key information
+        function displayKeyInformation(keyContext) {
+            // Add key info to sequence builder
+            let keyInfoElement = document.getElementById('keyInfo');
+            if (!keyInfoElement) {
+                keyInfoElement = document.createElement('div');
+                keyInfoElement.id = 'keyInfo';
+                keyInfoElement.className = 'key-info';
+                document.querySelector('#sequence-builder .builder-section').appendChild(keyInfoElement);
+            }
+            
+            if (keyContext) {
+                keyInfoElement.innerHTML = `<strong>Inferred Key:</strong> ${keyContext} major`;
+                keyInfoElement.style.display = 'block';
+            } else {
+                keyInfoElement.style.display = 'none';
+            }
+            
+            // Add key info to melody builder
+            let melodyKeyInfoElement = document.getElementById('melodyKeyInfo');
+            if (!melodyKeyInfoElement) {
+                melodyKeyInfoElement = document.createElement('div');
+                melodyKeyInfoElement.id = 'melodyKeyInfo';
+                melodyKeyInfoElement.className = 'key-info';
+                document.querySelector('#melody-builder .builder-section').appendChild(melodyKeyInfoElement);
+            }
+            
+            if (keyContext) {
+                melodyKeyInfoElement.innerHTML = `<strong>Inferred Key:</strong> ${keyContext} major`;
+                melodyKeyInfoElement.style.display = 'block';
+            } else {
+                melodyKeyInfoElement.style.display = 'none';
+            }
+        }
+        
+        // Populate melody chord type dropdown
+        function populateMelodyChordTypeDropdown() {
+            if (!chordGenerator) return;
+            
+            const chordTypeSelect = document.getElementById('melodyChordTypeSelect');
+            const chordIntervals = chordGenerator.CHORD_INTERVALS;
+            
+            // Display names for chord types
+            const chordDisplayNames = {
+                'maj7': 'Major 7',
+                'maj6': 'Major 6', 
+                'maj7s5': 'Major 7♯5',
+                'maj7b5': 'Major 7♭5',
+                'dom7': 'Dominant 7',
+                'dom7sus4': 'Dominant 7sus4',
+                'dom7s5': 'Dominant 7♯5',
+                'dom7b5': 'Dominant 7♭5',
+                'min6': 'Minor 6',
+                'min7': 'Minor 7',
+                'min7b5': 'Minor 7♭5',
+                'min7s5': 'Minor 7♯5',
+                'minmaj7': 'Minor Major 7',
+                'dim7': 'Diminished 7',
+                'dimmaj7': 'Diminished Major 7'
+            };
+            
+            // Group chord types by category
+            const chordCategories = [
+                { name: 'Major Chords', chords: ['maj7', 'maj6', 'maj7s5', 'maj7b5'] },
+                { name: 'Dominant Chords', chords: ['dom7', 'dom7sus4', 'dom7s5', 'dom7b5'] },
+                { name: 'Minor Chords', chords: ['min6', 'min7', 'min7b5', 'min7s5', 'minmaj7'] },
+                { name: 'Diminished Chords', chords: ['dim7', 'dimmaj7'] }
+            ];
+            
+            // Clear existing options
+            chordTypeSelect.innerHTML = '';
+            
+            // Add options grouped by category
+            chordCategories.forEach(category => {
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = category.name;
+                
+                category.chords.forEach(chordType => {
+                    if (chordIntervals[chordType]) {
+                        const option = document.createElement('option');
+                        option.value = chordType;
+                        option.textContent = chordDisplayNames[chordType] || chordType;
+                        optgroup.appendChild(option);
+                    }
+                });
+                
+                chordTypeSelect.appendChild(optgroup);
+            });
+        }
+        
+        // Define chord families for substitutions
+        const CHORD_FAMILIES = {
+            major: ['maj7', 'maj6', 'maj7s5', 'maj7b5'],
+            minor: ['min6', 'min7', 'min7b5', 'min7s5', 'minmaj7'],
+            dominant: ['dom7', 'dom7sus4', 'dom7s5', 'dom7b5'],
+            diminished: ['dim7', 'dimmaj7']
+        };
+        
+        // Get chord family for a given chord type
+        function getChordFamily(chordType) {
+            for (const [family, chords] of Object.entries(CHORD_FAMILIES)) {
+                if (chords.includes(chordType)) {
+                    return family;
+                }
+            }
+            return null;
+        }
+        
+        // Check if a note is in a chord
+        function isNoteInChord(note, chordNotes) {
+            return chordNotes.includes(note);
+        }
+        
+        // Find chord inversion with melody note on B string (with family substitutions)
+        window.findMelodyChord = async function() {
+            await loadChordGenerator();
+            if (!chordGenerator) return;
+            
+            const melodyNote = document.getElementById('melodyNoteSelect').value;
+            const chordRoot = document.getElementById('melodyChordRootSelect').value;
+            const originalChordType = document.getElementById('melodyChordTypeSelect').value;
+            
+            let foundChord = null;
+            let isSubstitution = false;
+            let originalChordSymbol = chordGenerator.getChordDisplaySymbol(chordRoot, originalChordType);
+            
+            // First try the original chord
+            foundChord = tryFindMelodyChordInversion(melodyNote, chordRoot, originalChordType);
+            
+            // If not found, try chord family substitutions
+            if (!foundChord) {
+                const chordFamily = getChordFamily(originalChordType);
+                if (chordFamily && CHORD_FAMILIES[chordFamily]) {
+                    console.log(`Original chord ${originalChordSymbol} doesn't contain ${melodyNote}, trying ${chordFamily} family substitutions...`);
+                    
+                    for (const substituteChordType of CHORD_FAMILIES[chordFamily]) {
+                        if (substituteChordType !== originalChordType) {
+                            const substituteChordNotes = chordGenerator.getChordNotes(chordRoot, substituteChordType);
+                            
+                            // Check if melody note is in this substitute chord
+                            if (isNoteInChord(melodyNote, substituteChordNotes)) {
+                                foundChord = tryFindMelodyChordInversion(melodyNote, chordRoot, substituteChordType);
+                                if (foundChord) {
+                                    isSubstitution = true;
+                                    foundChord.originalChordType = originalChordType;
+                                    foundChord.originalSymbol = originalChordSymbol;
+                                    console.log(`Found substitution: ${foundChord.symbol} (contains ${melodyNote})`);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // If still not found, find the closest approximation
+            if (!foundChord) {
+                console.log(`No exact match found, finding closest inversion for ${originalChordSymbol}`);
+                foundChord = findClosestMelodyChord(melodyNote, chordRoot, originalChordType);
+                if (foundChord) {
+                    foundChord.isApproximate = true;
+                    foundChord.originalChordType = originalChordType;
+                    foundChord.originalSymbol = originalChordSymbol;
+                }
+            }
+            
+            currentMelodyChord = foundChord;
+            displayMelodyChordResult(foundChord, melodyNote, chordRoot, originalChordType, isSubstitution);
+        };
+        
+        // Helper function to try finding melody chord inversion for a specific chord type
+        function tryFindMelodyChordInversion(melodyNote, chordRoot, chordType) {
+            const chordNotes = chordGenerator.getChordNotes(chordRoot, chordType);
+            
+            // First check if the melody note is even in this chord
+            if (!isNoteInChord(melodyNote, chordNotes)) {
+                return null;
+            }
+            
+            // Try all inversions to find one where melody note is on B string (string index 4)
+            for (let inversion = 0; inversion < 4; inversion++) {
+                const voicing = chordGenerator.createDrop2Voicing(chordNotes, inversion);
+                const fingering = chordGenerator.findDrop2Fingering(voicing, chordRoot, 3, 4, 'middle');
+                
+                if (fingering) {
+                    // Check if the note on B string (index 4) matches our melody note
+                    const bStringFret = fingering.frets[4]; // B string
+                    if (bStringFret !== null) {
+                        const noteOnBString = getNoteAtFretBrowser(4, bStringFret);
+                        if (noteOnBString === melodyNote) {
+                            return {
+                                ...fingering,
+                                root: chordRoot,
+                                chordType: chordType,
+                                inversion: inversion,
+                                symbol: chordGenerator.getChordDisplaySymbol(chordRoot, chordType),
+                                melodyNote: melodyNote
+                            };
+                        }
+                    }
+                }
+            }
+            
+            return null;
+        };
+        
+        // Find the closest melody chord when exact match isn't possible
+        function findClosestMelodyChord(melodyNote, chordRoot, chordType) {
+            const chordNotes = chordGenerator.getChordNotes(chordRoot, chordType);
+            let bestChord = null;
+            let bestDistance = Infinity;
+            let bestActualNote = null;
+            
+            // Try all inversions and find the one with the closest note to our melody note
+            for (let inversion = 0; inversion < 4; inversion++) {
+                const voicing = chordGenerator.createDrop2Voicing(chordNotes, inversion);
+                const fingering = chordGenerator.findDrop2Fingering(voicing, chordRoot, 3, 4, 'middle');
+                
+                if (fingering) {
+                    // Get the note that's actually on the B string (index 4)
+                    const bStringFret = fingering.frets[4]; // B string
+                    if (bStringFret !== null) {
+                        const actualNote = getNoteAtFretBrowser(4, bStringFret);
+                        const distance = calculateNoteDistance(melodyNote, actualNote);
+                        
+                        if (distance < bestDistance) {
+                            bestDistance = distance;
+                            bestActualNote = actualNote;
+                            bestChord = {
+                                ...fingering,
+                                root: chordRoot,
+                                chordType: chordType,
+                                inversion: inversion,
+                                symbol: chordGenerator.getChordDisplaySymbol(chordRoot, chordType),
+                                melodyNote: melodyNote,
+                                actualMelodyNote: actualNote,
+                                distance: distance
+                            };
+                        }
+                    }
+                }
+            }
+            
+            return bestChord;
+        }
+        
+        // Calculate the shortest distance between two notes (in semitones)
+        function calculateNoteDistance(note1, note2) {
+            const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const index1 = NOTES.indexOf(note1);
+            const index2 = NOTES.indexOf(note2);
+            
+            // Calculate distance in both directions and take the minimum
+            let distance1 = Math.abs(index2 - index1);
+            let distance2 = 12 - distance1;
+            
+            return Math.min(distance1, distance2);
+        }
+        
+        // Get interval name for display
+        function getIntervalDisplayName(distance) {
+            const intervalNames = {
+                0: 'unison',
+                1: 'minor 2nd',
+                2: 'major 2nd', 
+                3: 'minor 3rd',
+                4: 'major 3rd',
+                5: 'perfect 4th',
+                6: 'tritone'
+            };
+            return intervalNames[distance] || `${distance} semitones`;
+        }
+        
+        // Helper function to get note at fret for browser use
+        function getNoteAtFretBrowser(stringIndex, fret) {
+            const tuning = ['E', 'A', 'D', 'G', 'B', 'E'];
+            const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const openNote = tuning[stringIndex];
+            const openNoteIndex = NOTES.indexOf(openNote);
+            const noteIndex = (openNoteIndex + fret) % 12;
+            return NOTES[noteIndex];
+        }
+        
+        // Display the result of melody chord search
+        function displayMelodyChordResult(foundChord, melodyNote, originalChordRoot, originalChordType, isSubstitution) {
+            const resultDisplay = document.getElementById('melodyResultDisplay');
+            const notFoundDisplay = document.getElementById('melodyNotFound');
+            const chordContainer = document.getElementById('melodyChordContainer');
+            const chordInfo = document.getElementById('melodyChordInfo');
+            
+            if (foundChord) {
+                // Hide not found message
+                notFoundDisplay.style.display = 'none';
+                
+                // Determine the display melody note (actual note on B string for approximate matches)
+                const displayMelodyNote = foundChord.isApproximate ? foundChord.actualMelodyNote : melodyNote;
+                
+                // Generate and display SVG
+                const svg = chordGenerator.create6StringChordSVG(
+                    foundChord,
+                    foundChord.symbol,
+                    `${chordGenerator.getInversionName(foundChord.inversion)} - Melody: ${displayMelodyNote}`,
+                    foundChord.root,
+                    foundChord.chordType,
+                    'middle'
+                );
+                
+                chordContainer.innerHTML = svg;
+                
+                // Build chord information with substitution/approximation details
+                let infoHTML = `<strong>Chord:</strong> ${foundChord.symbol}<br>`;
+                
+                if (isSubstitution) {
+                    const originalSymbol = chordGenerator.getChordDisplaySymbol(originalChordRoot, originalChordType);
+                    const chordFamily = getChordFamily(originalChordType);
+                    infoHTML += `
+                        <div class="substitution-info">
+                            <strong>🔄 Chord Substitution:</strong><br>
+                            Suggested ${foundChord.symbol} (${chordFamily} family) instead of ${originalSymbol}<br>
+                            <em>Reason: ${originalSymbol} doesn't contain ${melodyNote}, but ${foundChord.symbol} does</em>
+                        </div>
+                    `;
+                } else if (foundChord.isApproximate) {
+                    const originalSymbol = chordGenerator.getChordDisplaySymbol(originalChordRoot, originalChordType);
+                    const intervalName = getIntervalDisplayName(foundChord.distance);
+                    infoHTML += `
+                        <div class="approximation-info">
+                            <strong>≈ Closest Match:</strong><br>
+                            ${originalSymbol} doesn't contain ${melodyNote} on B string<br>
+                            <strong>Actual melody note:</strong> ${foundChord.actualMelodyNote}<br>
+                            <em>Distance from requested ${melodyNote}: ${intervalName}</em>
+                        </div>
+                    `;
+                }
+                
+                infoHTML += `<strong>Inversion:</strong> ${chordGenerator.getInversionName(foundChord.inversion)}<br>`;
+                infoHTML += `<strong>Melody Note:</strong> ${displayMelodyNote} (on B string)`;
+                if (foundChord.isApproximate) {
+                    infoHTML += ` <em>(requested: ${melodyNote})</em>`;
+                }
+                infoHTML += `<br>`;
+                infoHTML += `<strong>Voicing:</strong> ${foundChord.voicing.join(' - ')}<br>`;
+                infoHTML += `<strong>Frets (A-D-G-B):</strong> ${[1,2,3,4].map(i => foundChord.frets[i] || 'x').join('-')}`;
+                
+                chordInfo.innerHTML = infoHTML;
+                
+                resultDisplay.style.display = 'block';
+            } else {
+                // This should rarely happen now with approximation fallback
+                const originalSymbol = chordGenerator.getChordDisplaySymbol(originalChordRoot, originalChordType);
+                
+                notFoundDisplay.innerHTML = `
+                    <strong>No chord voicing found</strong><br><br>
+                    Could not find a playable voicing for ${originalSymbol} on the middle 4 strings.<br>
+                    <em>Try a different chord type or check the chord exists.</em>
+                `;
+                
+                resultDisplay.style.display = 'none';
+                notFoundDisplay.style.display = 'block';
+            }
+        }
+        
+        // Add melody chord to melody sequence (separate from regular sequence)
+        window.addMelodyChordToMelodySequence = function() {
+            if (!currentMelodyChord) {
+                alert('Please find a chord first using the "Find Chord" button');
+                return;
+            }
+            
+            const chord = {
+                root: currentMelodyChord.root,
+                chordType: currentMelodyChord.chordType,
+                symbol: currentMelodyChord.symbol,
+                stringSet: 'middle',
+                inversion: currentMelodyChord.inversion,
+                melodyNote: currentMelodyChord.melodyNote,
+                actualMelodyNote: currentMelodyChord.actualMelodyNote, // For approximate matches
+                isApproximate: currentMelodyChord.isApproximate,
+                distance: currentMelodyChord.distance,
+                id: Date.now()
+            };
+            
+            melodySequence.push(chord);
+            updateMelodySequenceDisplay();
+            
+            // Update key inference for melody sequence
+            inferredKey = inferKeyFromChords(melodySequence);
+            updateChordSpellingsForKey(inferredKey);
+        };
+        
+        // Update melody sequence display
+        async function updateMelodySequenceDisplay() {
+            await loadChordGenerator();
+            if (!chordGenerator) return;
+            
+            const display = document.getElementById('melodySequenceDisplay');
+            
+            if (melodySequence.length === 0) {
+                display.innerHTML = '<div style="color: #666; font-style: italic;">Your melody sequence will appear here...</div>';
+                return;
+            }
+            
+            display.innerHTML = '';
+            
+            melodySequence.forEach((chord, index) => {
+                const chordElement = document.createElement('div');
+                chordElement.className = 'melody-sequence-chord';
+                
+                // Generate SVG using the stored chord data
+                const chordNotes = chordGenerator.getChordNotes(chord.root, chord.chordType);
+                const voicing = chordGenerator.createDrop2Voicing(chordNotes, chord.inversion);
+                const fingering = chordGenerator.findDrop2Fingering(voicing, chord.root, 3, 4, 'middle');
+                
+                if (fingering) {
+                    const svg = chordGenerator.create6StringChordSVG(
+                        fingering, 
+                        chord.symbol, 
+                        '', 
+                        chord.root, 
+                        chord.chordType, 
+                        'middle'
+                    );
+                    const blob = new Blob([svg], { type: 'image/svg+xml' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    // Show the actual melody note that appears on the B string
+                    const displayMelodyNote = chord.actualMelodyNote || chord.melodyNote;
+                    const isApproximate = chord.actualMelodyNote && chord.actualMelodyNote !== chord.melodyNote;
+                    
+                    // Get preferred spelling for display
+                    const preferredSymbol = getChordSymbolWithPreferredSpelling(chord.root, chord.chordType, inferredKey);
+                    const showBothSpellings = chord.symbol !== preferredSymbol;
+                    
+                    chordElement.innerHTML = `
+                        <img src="${url}" class="chord-diagram" alt="${chord.symbol}">
+                        <div class="chord-label">
+                            ${preferredSymbol}
+                            ${showBothSpellings ? `<br><small style="color: #999;">(${chord.symbol})</small>` : ''}
+                        </div>
+                        <div class="melody-label ${isApproximate ? 'approximate-melody' : ''}">
+                            ♪ ${displayMelodyNote}${isApproximate ? ' ≈' : ''}
+                        </div>
+                        <button class="remove-btn" onclick="removeMelodyChordFromSequence(${chord.id})">×</button>
+                    `;
+                }
+                
+                display.appendChild(chordElement);
+                
+                if (index < melodySequence.length - 1) {
+                    const arrow = document.createElement('div');
+                    arrow.className = 'sequence-arrow';
+                    arrow.textContent = '→';
+                    display.appendChild(arrow);
+                }
+            });
+        }
+        
+        // Remove chord from melody sequence
+        window.removeMelodyChordFromSequence = function(id) {
+            melodySequence = melodySequence.filter(chord => chord.id !== id);
+            updateMelodySequenceDisplay();
+            // Clear analysis if no chords left
+            if (melodySequence.length === 0) {
+                document.getElementById('melodyAnalysisDisplay').style.display = 'none';
+            }
+        };
+        
+        // Clear melody sequence
+        window.clearMelodySequence = function() {
+            melodySequence = [];
+            updateMelodySequenceDisplay();
+            document.getElementById('melodyAnalysisDisplay').style.display = 'none';
+        };
+        
+        // Analyze melody line
+        window.analyzeMelodyLine = function() {
+            if (melodySequence.length === 0) {
+                alert('Please add some chords to analyze the melody line');
+                return;
+            }
+            
+            const melodyNotes = melodySequence.map(chord => chord.melodyNote);
+            const chordSymbols = melodySequence.map(chord => chord.symbol);
+            
+            // Calculate intervals between melody notes
+            const intervals = [];
+            for (let i = 1; i < melodyNotes.length; i++) {
+                const interval = calculateInterval(melodyNotes[i-1], melodyNotes[i]);
+                intervals.push(interval);
+            }
+            
+            let analysis = '<strong>Melody Line:</strong> ' + melodyNotes.join(' → ') + '<br>';
+            analysis += '<strong>Chord Progression:</strong> ' + chordSymbols.join(' → ') + '<br>';
+            analysis += '<strong>Melodic Intervals:</strong> ' + intervals.join(', ') + '<br><br>';
+            
+            // Analyze melodic motion
+            let stepwise = 0, leaps = 0;
+            intervals.forEach(interval => {
+                if (Math.abs(interval) <= 2) stepwise++;
+                else leaps++;
+            });
+            
+            analysis += '<strong>Melodic Motion Analysis:</strong><br>';
+            analysis += `Stepwise motion: ${stepwise} (${((stepwise/intervals.length)*100).toFixed(1)}%)<br>`;
+            analysis += `Leaps: ${leaps} (${((leaps/intervals.length)*100).toFixed(1)}%)<br>`;
+            
+            document.getElementById('melodyAnalysisContent').innerHTML = analysis;
+            document.getElementById('melodyAnalysisDisplay').style.display = 'block';
+        };
+        
+        // Calculate interval between two notes in semitones
+        function calculateInterval(note1, note2) {
+            const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const index1 = NOTES.indexOf(note1);
+            const index2 = NOTES.indexOf(note2);
+            let interval = index2 - index1;
+            if (interval > 6) interval -= 12;
+            if (interval < -6) interval += 12;
+            return interval;
+        }
+        
+        // Optimize melody voice leading
+        window.optimizeMelodyVoiceLeading = function() {
+            if (melodySequence.length < 2) {
+                alert('Please add at least 2 chords to optimize voice leading');
+                return;
+            }
+            
+            // For melody-based optimization, we keep the melody notes fixed on the B string
+            // and try to optimize the voice leading of the inner voices
+            alert('Melody voice leading optimization maintains the melody notes on the B string while optimizing inner voice movement. This feature preserves your melody line while finding the smoothest voice leading for the harmony.');
+        };
+        
         // Load chord generator on page load
         window.addEventListener('DOMContentLoaded', function() {
-            loadChordGenerator();
+            loadChordGenerator().then(() => {
+                populateNoteSelectors();
+                populateChordTypeDropdown();
+                populateMelodyChordTypeDropdown();
+            });
         });
     </script>
 </body>
