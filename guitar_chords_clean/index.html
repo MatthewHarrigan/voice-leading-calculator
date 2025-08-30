@@ -214,79 +214,120 @@
         }
         
         .sequence-display {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            flex-wrap: wrap;
+            width: 100%;
             margin-bottom: 20px;
             min-height: 100px;
-            padding: 10px;
+            padding: 20px;
             border: 1px solid #ccc;
             background: white;
+            font-family: 'Courier New', monospace;
+            box-sizing: border-box;
         }
         
-        .sequence-chord {
-            text-align: center;
+        .chord-sheet-row {
+            display: flex;
+            width: 100%;
+            margin-bottom: 20px;
+            border: 2px solid #333;
+            background: #fafafa;
+            clear: both;
+            flex-wrap: nowrap;
+        }
+        
+        .chord-bar {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 120px;
+            min-width: 25%;
+            max-width: 25%;
+            border-right: 2px solid #333;
             position: relative;
+            padding: 10px;
+            background: white;
+            box-sizing: border-box;
+        }
+        
+        .chord-bar:last-child {
+            border-right: none;
+        }
+        
+        .chord-in-bar {
+            text-align: center;
             cursor: pointer;
+            margin: 0 5px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         
-        .sequence-chord .chord-diagram {
-            width: 80px;
-            height: auto;
-            border: 1px solid #000;
+        .chord-in-bar.selected {
+            background-color: rgba(76, 175, 80, 0.3);
+            border-radius: 3px;
+            padding: 2px 4px;
         }
         
-        .sequence-chord .chord-label {
-            font-size: 12px;
-            margin-top: 5px;
+        
+        .chord-symbol {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
         }
         
-        .sequence-chord .remove-btn {
+        .chord-duration {
+            font-size: 10px;
+            color: #666;
+            margin-top: 2px;
+        }
+        
+        .remove-btn {
             position: absolute;
-            top: -5px;
-            right: -5px;
+            top: -8px;
+            right: -8px;
             background: red;
             color: white;
             border: none;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 12px;
+            width: 16px;
+            height: 16px;
+            font-size: 10px;
             cursor: pointer;
+            z-index: 10;
         }
 
-        .sequence-chord.selected {
-            background-color: rgba(76, 175, 80, 0.3);
+        .optimized-chord-in-bar {
+            background-color: white;
+            flex-direction: column;
+            padding: 5px;
+            border-radius: 5px;
+            cursor: default;
         }
         
-        .sequence-chord:hover {
-            background-color: rgba(200, 200, 200, 0.2);
-            cursor: pointer;
+        .optimized-chord-in-bar:hover {
+            background-color: white;
         }
 
-        .sequence-chord.dragging {
-            opacity: 0.5;
-            transform: scale(0.95);
+        .optimized-chord-in-bar .chord-diagram {
+            margin-bottom: 5px;
         }
 
-        .sequence-chord.drag-over {
-            border: 2px dashed #4CAF50;
+        .optimized-chord-in-bar .chord-symbol {
+            font-size: 14px;
+            margin-bottom: 2px;
         }
 
-        .sequence-chord {
-            cursor: grab;
+        .optimized-chord-in-bar .chord-duration {
+            font-size: 9px;
         }
 
-        .sequence-chord:active {
-            cursor: grabbing;
-        }
-
-        
-        .sequence-arrow {
-            font-size: 18px;
+        .inversion-info {
+            font-size: 8px;
             color: #666;
+            margin-top: 1px;
         }
+        
         
         .voice-leading-info {
             background: #f0f0f0;
@@ -455,20 +496,6 @@
             border-radius: 4px;
         }
         
-        /* Key information display */
-        .key-info {
-            background: #e8f5e8;
-            padding: 12px;
-            margin: 15px 0;
-            border: 1px solid #4caf50;
-            border-radius: 4px;
-            font-size: 14px;
-            text-align: center;
-        }
-        
-        .key-info strong {
-            color: #2e7d32;
-        }
         
         /* Enhanced dropdown styling for enharmonic notes */
         .chord-selector select {
@@ -1008,6 +1035,15 @@
                         <!-- Populated by JavaScript with enharmonic spellings -->
                     </select>
                     
+                    <label>Duration:</label>
+                    <select id="durationSelect">
+                        <option value="0.25">1/4 bar (4 per beat)</option>
+                        <option value="0.5">1/2 bar (2 per beat)</option>
+                        <option value="1" selected>1 bar</option>
+                        <option value="2">2 bars</option>
+                        <option value="4">4 bars</option>
+                    </select>
+                    
                     <label>Chord Type:</label>
                     <select id="chordTypeSelect">
                         <!-- Major Chords -->
@@ -1061,10 +1097,6 @@
                 </div>
             </div>
             
-            <div class="voice-leading-info" id="voiceLeadingInfo" style="display: none;">
-                <h3>Voice Leading Analysis</h3>
-                <div id="analysisContent"></div>
-            </div>
             
             <div class="optimization-display" id="optimizationDisplay" style="display: none;">
                 <h3>Optimized Sequence</h3>
@@ -1654,7 +1686,7 @@
                 // - buttons
                 // - form inputs
                 // - remove buttons
-                if (clickedElement.closest('.sequence-chord') || 
+                if (clickedElement.closest('.chord-in-bar') || 
                     clickedElement.tagName === 'BUTTON' ||
                     clickedElement.tagName === 'SELECT' ||
                     clickedElement.tagName === 'INPUT' ||
@@ -1681,10 +1713,12 @@
             
             const root = document.getElementById('rootSelect').value;
             const chordType = document.getElementById('chordTypeSelect').value;
+            const duration = parseFloat(document.getElementById('durationSelect').value);
             
             const chord = {
                 root: root,
                 chordType: chordType,
+                duration: duration,
                 symbol: `${root}${getChordSymbol(chordType)}`,
                 stringSet: currentStringSet,
                 id: Date.now()
@@ -1787,9 +1821,11 @@
             // Populate form fields
             const rootSelect = document.getElementById('rootSelect');
             const chordTypeSelect = document.getElementById('chordTypeSelect');
+            const durationSelect = document.getElementById('durationSelect');
 
             if (rootSelect) rootSelect.value = chord.root;
             if (chordTypeSelect) chordTypeSelect.value = chord.chordType;
+            if (durationSelect) durationSelect.value = chord.duration || 1;
         };
 
         // Show edit mode buttons
@@ -1842,8 +1878,9 @@
 
             const rootSelect = document.getElementById('rootSelect');
             const chordTypeSelect = document.getElementById('chordTypeSelect');
+            const durationSelect = document.getElementById('durationSelect');
             
-            if (!rootSelect || !chordTypeSelect) return;
+            if (!rootSelect || !chordTypeSelect || !durationSelect) return;
 
             // Store the selected chord ID to maintain selection after update
             const selectedChordId = selectedChordForEditing.id;
@@ -1851,6 +1888,7 @@
             // Update the chord
             selectedChordForEditing.root = rootSelect.value;
             selectedChordForEditing.chordType = chordTypeSelect.value;
+            selectedChordForEditing.duration = parseFloat(durationSelect.value);
             selectedChordForEditing.symbol = `${selectedChordForEditing.root}${getChordSymbol(selectedChordForEditing.chordType)}`;
 
             // Update displays
@@ -1880,9 +1918,11 @@
             const originalSelectedId = selectedChordForEditing.id;
 
             // Create new chord from form values
+            const durationSelect = document.getElementById('durationSelect');
             const newChord = {
                 root: rootSelect.value,
                 chordType: chordTypeSelect.value,
+                duration: parseFloat(durationSelect.value),
                 symbol: `${rootSelect.value}${getChordSymbol(chordTypeSelect.value)}`,
                 stringSet: currentStringSet,
                 id: Date.now()
@@ -2018,16 +2058,16 @@
             chordSequence = [];
             clearChordSelection(); // Also clear any selected chord
             updateSequenceDisplay();
-            document.getElementById('voiceLeadingInfo').style.display = 'none';
-            document.getElementById('optimizationDisplay').style.display = 'none';
+            // Hide optimization display if it exists
+            const optimizationDisplay = document.getElementById('optimizationDisplay');
+            if (optimizationDisplay) {
+                optimizationDisplay.style.display = 'none';
+            }
         };
         
         
-        // Update sequence display
+        // Update sequence display with chord sheet layout
         async function updateSequenceDisplay() {
-            await loadChordGenerator();
-            if (!chordGenerator) return;
-            
             const display = document.getElementById('sequenceDisplay');
             
             if (chordSequence.length === 0) {
@@ -2037,61 +2077,163 @@
             
             display.innerHTML = '';
             
-            chordSequence.forEach((chord, index) => {
-                const chordElement = document.createElement('div');
-                chordElement.className = 'sequence-chord';
+            // Convert chord sequence to bar-based layout
+            const rows = createChordSheetLayout(chordSequence);
+            
+            rows.forEach((row, rowIndex) => {
+                const rowElement = document.createElement('div');
+                rowElement.className = 'chord-sheet-row';
                 
-                // Generate SVG - all chords use root inversion in the basic display
-                const chordNotes = chordGenerator.getChordNotes(chord.root, chord.chordType);
-                const voicing = chordGenerator.createDrop2Voicing(chordNotes, 0);
-                const fingering = chordGenerator.findDrop2Fingering(voicing, chord.root);
-                
-                if (fingering) {
-                    const svg = chordGenerator.create6StringChordSVG(fingering, chord.symbol, '', chord.root, chord.chordType);
-                    const blob = new Blob([svg], { type: 'image/svg+xml' });
-                    const url = URL.createObjectURL(blob);
+                // Create 4 bars per row
+                for (let barIndex = 0; barIndex < 4; barIndex++) {
+                    const barElement = document.createElement('div');
+                    barElement.className = 'chord-bar';
                     
-                    // Get preferred spelling for display
-                    const preferredSymbol = getChordSymbolWithPreferredSpelling(chord.root, chord.chordType, inferredKey);
-                    const showBothSpellings = chord.symbol !== preferredSymbol;
+                    const barChords = row[barIndex] || [];
                     
-                    chordElement.innerHTML = `
-                        <img src="${url}" class="chord-diagram" alt="${chord.symbol}" onclick="selectChordForEditing(${chord.id})">
-                        <div class="chord-label">
-                            ${preferredSymbol}
-                            ${showBothSpellings ? `<br><small style="color: #999;">(${chord.symbol})</small>` : ''}
-                        </div>
-                        <button class="remove-btn" onclick="removeChordFromSequence(${chord.id})">×</button>
-                    `;
-                    
-                    // Add click handler to the entire chord element for selection
-                    chordElement.onclick = function(e) {
-                        // Don't trigger if clicking the remove button
-                        if (!e.target.classList.contains('remove-btn')) {
-                            selectChordForEditing(chord.id);
+                    barChords.forEach(chord => {
+                        const chordElement = document.createElement('div');
+                        chordElement.className = 'chord-in-bar';
+                        chordElement.dataset.chordId = chord.id;
+                        
+                        // Check if this chord is selected
+                        if (selectedChordForEditing && selectedChordForEditing.id === chord.id) {
+                            chordElement.classList.add('selected');
                         }
-                    };
+                        
+                        // Get preferred spelling for display
+                        const preferredSymbol = getChordSymbolWithPreferredSpelling(chord.root, chord.chordType, inferredKey);
+                        
+                        chordElement.innerHTML = `
+                            <div class="chord-symbol">${preferredSymbol}</div>
+                            <div class="chord-duration">${getDurationText(chord.duration)}</div>
+                            <button class="remove-btn" onclick="removeChordFromSequence(${chord.id})">×</button>
+                        `;
+                        
+                        // Add click handler for selection
+                        chordElement.onclick = function(e) {
+                            if (!e.target.classList.contains('remove-btn')) {
+                                selectChordForEditing(chord.id);
+                            }
+                        };
+                        
+                        barElement.appendChild(chordElement);
+                    });
                     
-                    // Add drag-and-drop attributes
-                    chordElement.draggable = true;
-                    chordElement.dataset.chordId = chord.id;
-                    chordElement.addEventListener('dragstart', handleDragStart);
-                    chordElement.addEventListener('dragover', handleDragOver);
-                    chordElement.addEventListener('dragenter', handleDragEnter);
-                    chordElement.addEventListener('dragleave', handleDragLeave);
-                    chordElement.addEventListener('drop', handleDrop);
-                    chordElement.addEventListener('dragend', handleDragEnd);
+                    // If bar is empty, add placeholder
+                    if (barChords.length === 0) {
+                        barElement.innerHTML = '<div style="color: #ccc;">|</div>';
+                    }
+                    
+                    rowElement.appendChild(barElement);
                 }
                 
-                display.appendChild(chordElement);
+                display.appendChild(rowElement);
+            });
+        }
+        
+        // Create chord sheet layout organized by bars and rows
+        function createChordSheetLayout(chords) {
+            const rows = [];
+            let currentRow = [[], [], [], []]; // 4 bars per row
+            let currentBarInRow = 0;
+            let currentBarTime = 0; // Track time within current bar
+            
+            chords.forEach(chord => {
+                // Ensure backward compatibility - add default duration if missing
+                if (!chord.hasOwnProperty('duration')) {
+                    chord.duration = 1;
+                }
+                const duration = chord.duration;
                 
-                if (index < chordSequence.length - 1) {
-                    const arrow = document.createElement('div');
-                    arrow.className = 'sequence-arrow';
-                    arrow.textContent = '→';
-                    display.appendChild(arrow);
+                // Handle different duration cases
+                if (duration >= 4) {
+                    // Chord lasts 4+ bars - fill entire row
+                    if (currentBarTime > 0 || currentBarInRow > 0) {
+                        // Finish current row and start new one
+                        rows.push(currentRow);
+                        currentRow = [[], [], [], []];
+                        currentBarInRow = 0;
+                        currentBarTime = 0;
+                    }
+                    // Place chord in first bar of row
+                    currentRow[0].push(chord);
+                    rows.push(currentRow);
+                    currentRow = [[], [], [], []];
+                    currentBarInRow = 0;
+                    currentBarTime = 0;
+                    
+                } else if (duration >= 2) {
+                    // Chord lasts 2 bars
+                    if (currentBarTime > 0) {
+                        // Move to next bar if current bar has content
+                        currentBarInRow++;
+                        currentBarTime = 0;
+                    }
+                    if (currentBarInRow >= 3) {
+                        // Need new row
+                        rows.push(currentRow);
+                        currentRow = [[], [], [], []];
+                        currentBarInRow = 0;
+                    }
+                    currentRow[currentBarInRow].push(chord);
+                    // Skip next bar (chord occupies 2 bars)
+                    currentBarInRow += 2;
+                    if (currentBarInRow >= 4) {
+                        rows.push(currentRow);
+                        currentRow = [[], [], [], []];
+                        currentBarInRow = 0;
+                        currentBarTime = 0;
+                    }
+                    
+                } else {
+                    // Chord lasts 1 bar or less
+                    const spaceNeeded = duration;
+                    
+                    if (currentBarTime + spaceNeeded > 1) {
+                        // Move to next bar
+                        currentBarInRow++;
+                        currentBarTime = 0;
+                        if (currentBarInRow >= 4) {
+                            // Need new row
+                            rows.push(currentRow);
+                            currentRow = [[], [], [], []];
+                            currentBarInRow = 0;
+                        }
+                    }
+                    
+                    currentRow[currentBarInRow].push(chord);
+                    currentBarTime += spaceNeeded;
+                    
+                    if (currentBarTime >= 1) {
+                        // Bar is full, move to next
+                        currentBarInRow++;
+                        currentBarTime = 0;
+                        if (currentBarInRow >= 4) {
+                            rows.push(currentRow);
+                            currentRow = [[], [], [], []];
+                            currentBarInRow = 0;
+                        }
+                    }
                 }
             });
+            
+            // Add final row if it has content
+            if (currentRow.some(bar => bar.length > 0)) {
+                rows.push(currentRow);
+            }
+            
+            return rows;
+        }
+        
+        // Get duration text for display
+        function getDurationText(duration) {
+            if (duration === 0.25) return '1/4';
+            if (duration === 0.5) return '1/2';
+            if (duration === 1) return '1';
+            if (duration === 2) return '2';
+            if (duration === 4) return '4';
+            return duration.toString();
         }
         
         // Voice leading optimization
@@ -2194,7 +2336,7 @@
             return totalDistance;
         }
         
-        // Display optimized sequence
+        // Display optimized sequence using chord sheet layout
         function displayOptimizedSequence(optimizedSequence) {
             const display = document.getElementById('optimizedSequence');
             const analysisDisplay = document.getElementById('movementAnalysis');
@@ -2204,33 +2346,88 @@
             let totalMovement = 0;
             const movements = [];
             
+            // Calculate movements for analysis
             optimizedSequence.forEach((chord, index) => {
-                const chordElement = document.createElement('div');
-                chordElement.className = 'optimized-chord';
-                
-                const svg = chordGenerator.create6StringChordSVG(chord.fingering, chord.symbol, '', chord.root, chord.chordType);
-                const blob = new Blob([svg], { type: 'image/svg+xml' });
-                const url = URL.createObjectURL(blob);
-                
-                chordElement.innerHTML = `
-                    <img src="${url}" class="chord-diagram" alt="${chord.symbol}">
-                    <div class="chord-label">${chord.symbol}</div>
-                    <div class="inversion-label">${getInversionName(chord.inversion)}</div>
-                `;
-                
-                display.appendChild(chordElement);
-                
-                if (index < optimizedSequence.length - 1) {
-                    const arrow = document.createElement('div');
-                    arrow.className = 'sequence-arrow';
-                    arrow.textContent = '→';
-                    display.appendChild(arrow);
-                    
-                    if (chord.distance !== undefined) {
-                        totalMovement += chord.distance;
-                        movements.push(`${chord.symbol}: ${chord.distance} semitones`);
-                    }
+                if (index < optimizedSequence.length - 1 && chord.distance !== undefined) {
+                    totalMovement += chord.distance;
+                    movements.push(`${chord.symbol}: ${chord.distance} semitones`);
                 }
+            });
+            
+            // Convert optimized sequence to chord sheet layout
+            const rows = createChordSheetLayout(optimizedSequence);
+            
+            rows.forEach((row, rowIndex) => {
+                const rowElement = document.createElement('div');
+                rowElement.className = 'chord-sheet-row';
+                
+                // Create 4 bars per row
+                for (let barIndex = 0; barIndex < 4; barIndex++) {
+                    const barElement = document.createElement('div');
+                    barElement.className = 'chord-bar';
+                    
+                    const barChords = row[barIndex] || [];
+                    
+                    if (barChords.length === 1) {
+                        // Single chord - center it in the bar
+                        const chord = barChords[0];
+                        const chordElement = document.createElement('div');
+                        chordElement.className = 'chord-in-bar optimized-chord-in-bar';
+                        
+                        // Get preferred spelling for display
+                        const preferredSymbol = getChordSymbolWithPreferredSpelling(chord.root, chord.chordType, inferredKey);
+                        
+                        // Generate chord diagram SVG
+                        const svg = chordGenerator.create6StringChordSVG(chord.fingering, chord.symbol, '', chord.root, chord.chordType);
+                        const blob = new Blob([svg], { type: 'image/svg+xml' });
+                        const url = URL.createObjectURL(blob);
+                        
+                        chordElement.innerHTML = `
+                            <img src="${url}" class="chord-diagram" alt="${chord.symbol}" style="width: 60px; height: auto; border: 1px solid #000;">
+                            <div class="chord-symbol">${preferredSymbol}</div>
+                            <div class="chord-duration">${getDurationText(chord.duration)}</div>
+                            <div class="inversion-info">${getInversionName(chord.inversion)}</div>
+                        `;
+                        
+                        // Left-justify the single chord in the bar
+                        barElement.style.justifyContent = 'flex-start';
+                        barElement.appendChild(chordElement);
+                    } else if (barChords.length > 1) {
+                        // Multiple chords - distribute them evenly
+                        barElement.style.justifyContent = 'space-evenly';
+                        
+                        barChords.forEach(chord => {
+                            const chordElement = document.createElement('div');
+                            chordElement.className = 'chord-in-bar optimized-chord-in-bar';
+                            
+                            // Get preferred spelling for display
+                            const preferredSymbol = getChordSymbolWithPreferredSpelling(chord.root, chord.chordType, inferredKey);
+                            
+                            // Generate chord diagram SVG
+                            const svg = chordGenerator.create6StringChordSVG(chord.fingering, chord.symbol, '', chord.root, chord.chordType);
+                            const blob = new Blob([svg], { type: 'image/svg+xml' });
+                            const url = URL.createObjectURL(blob);
+                            
+                            chordElement.innerHTML = `
+                                <img src="${url}" class="chord-diagram" alt="${chord.symbol}" style="width: 60px; height: auto; border: 1px solid #000;">
+                                <div class="chord-symbol">${preferredSymbol}</div>
+                                <div class="chord-duration">${getDurationText(chord.duration)}</div>
+                                <div class="inversion-info">${getInversionName(chord.inversion)}</div>
+                            `;
+                            
+                            barElement.appendChild(chordElement);
+                        });
+                    }
+                    
+                    // If bar is empty, add placeholder
+                    if (barChords.length === 0) {
+                        barElement.innerHTML = '<div style="color: #ccc;">|</div>';
+                    }
+                    
+                    rowElement.appendChild(barElement);
+                }
+                
+                display.appendChild(rowElement);
             });
             
             // Display movement analysis
@@ -2243,29 +2440,10 @@
             document.getElementById('optimizationDisplay').style.display = 'block';
         }
         
-        // Update voice leading analysis
+        // Placeholder for removed voice leading analysis function
         function updateVoiceLeadingAnalysis() {
-            if (chordSequence.length < 2) {
-                document.getElementById('voiceLeadingInfo').style.display = 'none';
-                return;
-            }
-            
-            let analysis = '<strong>Current Sequence:</strong><br>';
-            
-            chordSequence.forEach((chord, index) => {
-                analysis += `${index + 1}. ${chord.symbol}`;
-                if (index < chordSequence.length - 1) {
-                    analysis += ' → ';
-                }
-            });
-            
-            analysis += '<br><br><strong>Recommendations:</strong><br>';
-            analysis += '• Click "Optimize Voice Leading" to find the best inversions<br>';
-            analysis += '• Each chord will be positioned for minimal finger movement<br>';
-            analysis += '• Root positions will be marked with black dots<br>';
-            
-            document.getElementById('analysisContent').innerHTML = analysis;
-            document.getElementById('voiceLeadingInfo').style.display = 'block';
+            // Function removed - voice leading analysis section no longer exists
+            return;
         }
         
         // Save and load presets
@@ -2547,8 +2725,6 @@
             // Update dropdown displays to show preferred spellings
             updateDropdownSpellings(keyContext);
             
-            // Display key information
-            displayKeyInformation(keyContext);
         }
         
         // Update dropdown displays to show key-appropriate spellings
@@ -2584,40 +2760,6 @@
             });
         }
         
-        // Display key information
-        function displayKeyInformation(keyContext) {
-            // Add key info to sequence builder
-            let keyInfoElement = document.getElementById('keyInfo');
-            if (!keyInfoElement) {
-                keyInfoElement = document.createElement('div');
-                keyInfoElement.id = 'keyInfo';
-                keyInfoElement.className = 'key-info';
-                document.querySelector('#sequence-builder .builder-section').appendChild(keyInfoElement);
-            }
-            
-            if (keyContext) {
-                keyInfoElement.innerHTML = `<strong>Inferred Key:</strong> ${keyContext} major`;
-                keyInfoElement.style.display = 'block';
-            } else {
-                keyInfoElement.style.display = 'none';
-            }
-            
-            // Add key info to melody builder
-            let melodyKeyInfoElement = document.getElementById('melodyKeyInfo');
-            if (!melodyKeyInfoElement) {
-                melodyKeyInfoElement = document.createElement('div');
-                melodyKeyInfoElement.id = 'melodyKeyInfo';
-                melodyKeyInfoElement.className = 'key-info';
-                document.querySelector('#melody-builder .builder-section').appendChild(melodyKeyInfoElement);
-            }
-            
-            if (keyContext) {
-                melodyKeyInfoElement.innerHTML = `<strong>Inferred Key:</strong> ${keyContext} major`;
-                melodyKeyInfoElement.style.display = 'block';
-            } else {
-                melodyKeyInfoElement.style.display = 'none';
-            }
-        }
         
         // Populate melody chord type dropdown
         function populateMelodyChordTypeDropdown() {
