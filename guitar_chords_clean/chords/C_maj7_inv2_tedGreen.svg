@@ -48,12 +48,6 @@
     
     <!-- Title -->
     <text x="100" y="15" class="chord-title">Cmaj7 1st Inversion</text>
-    <text x="25" y="30" class="string-label">E</text>
-    <text x="55" y="30" class="string-label">A</text>
-    <text x="85" y="30" class="string-label">D</text>
-    <text x="115" y="30" class="string-label">G</text>
-    <text x="145" y="30" class="string-label">B</text>
-    <text x="175" y="30" class="string-label">E</text>
     <line x1="25" y1="35" x2="25" y2="220" class="string-line"/>
     <line x1="55" y1="35" x2="55" y2="220" class="string-line"/>
     <line x1="85" y1="35" x2="85" y2="220" class="string-line"/>

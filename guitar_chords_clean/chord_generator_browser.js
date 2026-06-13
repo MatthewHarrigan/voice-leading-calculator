@@ -186,7 +186,6 @@ function getNoteAtFret(stringIndex, fret, tuning) {
 
 function create6StringChordSVG(chordData, chordSymbol, subtitle = '', root = 'C', chordType = '', stringSet = 'middle') {
     const strings = [0, 1, 2, 3, 4, 5];
-    const stringNames = ['E', 'A', 'D', 'G', 'B', 'E'];
     const activeStrings = stringSet === 'upper' ? [2, 3, 4, 5] : [1, 2, 3, 4]; // D, G, B, E (upper 4) or A, D, G, B (middle 4)
     
     // Find fret range
@@ -255,12 +254,6 @@ function create6StringChordSVG(chordData, chordSymbol, subtitle = '', root = 'C'
     
     <!-- Title -->
     <text x="${width/2}" y="15" class="chord-title">${chordSymbol}${subtitle ? ' ' + subtitle : ''}</text>`;
-    
-    // String labels  
-    for (let i = 0; i < 6; i++) {
-        const x = marginLeft + i * stringSpacing;
-        svg += `\n    <text x="${x}" y="30" class="string-label">${stringNames[i]}</text>`;
-    }
     
     // Strings (vertical lines)
     for (let i = 0; i < 6; i++) {

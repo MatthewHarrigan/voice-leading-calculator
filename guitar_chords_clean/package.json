@@ -6,9 +6,20 @@
   "scripts": {
     "generate": "node scripts/chord-generator.js",
     "serve": "python3 -m http.server 8080",
-    "build": "npm run generate"
+    "build": "npm run generate",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "install:browsers": "playwright install chromium"
   },
-  "keywords": ["guitar", "chords", "drop2", "jazz"],
+  "keywords": [
+    "guitar",
+    "chords",
+    "drop2",
+    "jazz"
+  ],
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
 }
