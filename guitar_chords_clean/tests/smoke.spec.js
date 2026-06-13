@@ -65,3 +65,47 @@ test('keeps string set highlight while changing sections', async ({ page }) => {
   await expect(page.locator('#string-set-upper')).toHaveClass(/active/);
   await expect(page.getByRole('button', { name: 'Build Sequence' })).toHaveClass(/active/);
 });
+
+test('loads built-in song presets into the sequence builder', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Build Sequence' }).click();
+
+  await expect(page.locator('#presetSelect')).toContainText('All The Things Study');
+  await page.locator('#presetSelect').selectOption('built-in:all-the-things-study');
+  await page.getByRole('button', { name: 'Load Preset' }).click();
+
+  await expect(page.locator('#chartMeta')).toContainText('All The Things Study');
+  await expect(page.locator('#chartMeta')).toContainText('Ab');
+  await expect(page.locator('#sequenceDisplay .chord-in-bar')).toHaveCount(32);
+
+  await page.getByRole('button', { name: 'Optimize Voice Leading' }).click();
+  await expect(page.locator('#optimizedSequence img.chord-diagram')).toHaveCount(32);
+  await expect(page.locator('#optimizedSequence .chord-symbol')).toHaveCount(0);
+
+  expect(pageErrors).toEqual([]);
+});
+
+test('filters adjacent minor second voicings globally', async ({ page }) => {
+  await page.goto('/');
+
+  await expect(page.locator('#avoidMinorSecondsToggle')).toBeChecked();
+
+  let filteredMiddleCount = 0;
+  await expect.poll(async () => {
+    filteredMiddleCount = await page.locator('#all-chords .chord-card.voicing-filtered').count();
+    return filteredMiddleCount;
+  }).toBeGreaterThan(0);
+
+  await page.locator('#avoidMinorSecondsToggle').uncheck();
+  await expect(page.locator('#all-chords .chord-card.voicing-filtered')).toHaveCount(0);
+
+  await page.locator('#avoidMinorSecondsToggle').check();
+  await expect(page.locator('#all-chords .chord-card.voicing-filtered')).toHaveCount(filteredMiddleCount);
+
+  await page.getByRole('button', { name: 'Major ii-V-I' }).click();
+  await expect(page.locator('#major-progressions .progression')).toHaveCount(4);
+  await expect(page.locator('#major-progressions svg')).not.toHaveCount(0);
+});

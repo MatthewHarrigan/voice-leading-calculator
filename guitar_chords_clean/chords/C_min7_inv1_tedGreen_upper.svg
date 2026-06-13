@@ -17,7 +17,7 @@
             }
             .fret-label { 
                 font-family: Times, serif; 
-                font-size: 9px; 
+                font-size: 12px; 
                 fill: #000000; 
                 text-anchor: middle; 
             }

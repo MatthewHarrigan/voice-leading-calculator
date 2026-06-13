@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-13T16:00:08.570Z",
+  "generated": "2026-06-13T18:48:39.236Z",
   "root": "C",
   "totalChords": 120,
   "chordTypes": [
@@ -39,7 +39,8 @@
         12,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7",
@@ -60,7 +61,8 @@
         13,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7",
@@ -81,7 +83,8 @@
         5,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7",
@@ -102,7 +105,8 @@
         8,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": true
     },
     {
       "symbol": "C6",
@@ -123,7 +127,8 @@
         10,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C6",
@@ -144,7 +149,8 @@
         13,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C6",
@@ -165,7 +171,8 @@
         5,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C6",
@@ -186,7 +193,8 @@
         8,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7♯5",
@@ -207,7 +215,8 @@
         12,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7♯5",
@@ -228,7 +237,8 @@
         1,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7♯5",
@@ -249,7 +259,8 @@
         5,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7♯5",
@@ -270,7 +281,8 @@
         9,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": true
     },
     {
       "symbol": "Cmaj7♭5",
@@ -291,7 +303,8 @@
         12,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7♭5",
@@ -312,7 +325,8 @@
         13,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7♭5",
@@ -333,7 +347,8 @@
         5,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7♭5",
@@ -354,7 +369,8 @@
         7,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": true
     },
     {
       "symbol": "C7",
@@ -375,7 +391,8 @@
         11,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7",
@@ -396,7 +413,8 @@
         13,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7",
@@ -417,7 +435,8 @@
         5,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7",
@@ -438,7 +457,8 @@
         8,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7sus4",
@@ -459,7 +479,8 @@
         11,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7sus4",
@@ -480,7 +501,8 @@
         13,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7sus4",
@@ -501,7 +523,8 @@
         6,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7sus4",
@@ -522,7 +545,8 @@
         8,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7♯5",
@@ -543,7 +567,8 @@
         11,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7♯5",
@@ -564,7 +589,8 @@
         1,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7♯5",
@@ -585,7 +611,8 @@
         5,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7♯5",
@@ -606,7 +633,8 @@
         9,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7♭5",
@@ -627,7 +655,8 @@
         11,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7♭5",
@@ -648,7 +677,8 @@
         13,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7♭5",
@@ -669,7 +699,8 @@
         5,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7♭5",
@@ -690,7 +721,8 @@
         7,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm6",
@@ -711,7 +743,8 @@
         10,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm6",
@@ -732,7 +765,8 @@
         13,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm6",
@@ -753,7 +787,8 @@
         4,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm6",
@@ -774,7 +809,8 @@
         8,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7",
@@ -795,7 +831,8 @@
         11,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7",
@@ -816,7 +853,8 @@
         13,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7",
@@ -837,7 +875,8 @@
         4,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7",
@@ -858,7 +897,8 @@
         8,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7♭5",
@@ -879,7 +919,8 @@
         11,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7♭5",
@@ -900,7 +941,8 @@
         13,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7♭5",
@@ -921,7 +963,8 @@
         4,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7♭5",
@@ -942,7 +985,8 @@
         7,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7♯5",
@@ -963,7 +1007,8 @@
         11,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7♯5",
@@ -984,7 +1029,8 @@
         1,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7♯5",
@@ -1005,7 +1051,8 @@
         4,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7♯5",
@@ -1026,7 +1073,8 @@
         9,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm(maj7)",
@@ -1047,7 +1095,8 @@
         12,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm(maj7)",
@@ -1068,7 +1117,8 @@
         13,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm(maj7)",
@@ -1089,7 +1139,8 @@
         4,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm(maj7)",
@@ -1110,7 +1161,8 @@
         8,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": true
     },
     {
       "symbol": "C°7",
@@ -1131,7 +1183,8 @@
         10,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C°7",
@@ -1152,7 +1205,8 @@
         13,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C°7",
@@ -1173,7 +1227,8 @@
         4,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C°7",
@@ -1194,7 +1249,8 @@
         7,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C°maj7",
@@ -1215,7 +1271,8 @@
         12,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C°maj7",
@@ -1236,7 +1293,8 @@
         13,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C°maj7",
@@ -1257,7 +1315,8 @@
         4,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C°maj7",
@@ -1278,7 +1337,8 @@
         7,
         null
       ],
-      "stringSet": "middle"
+      "stringSet": "middle",
+      "hasMinorSecond": true
     },
     {
       "symbol": "Cmaj7",
@@ -1299,7 +1359,8 @@
         5,
         7
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7",
@@ -1320,7 +1381,8 @@
         8,
         8
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7",
@@ -1341,7 +1403,8 @@
         12,
         12
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7",
@@ -1362,7 +1425,8 @@
         1,
         3
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": true
     },
     {
       "symbol": "C6",
@@ -1383,7 +1447,8 @@
         5,
         5
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C6",
@@ -1404,7 +1469,8 @@
         8,
         8
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C6",
@@ -1425,7 +1491,8 @@
         10,
         12
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C6",
@@ -1446,7 +1513,8 @@
         1,
         3
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7♯5",
@@ -1467,7 +1535,8 @@
         5,
         7
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7♯5",
@@ -1488,7 +1557,8 @@
         9,
         8
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7♯5",
@@ -1509,7 +1579,8 @@
         12,
         12
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7♯5",
@@ -1530,7 +1601,8 @@
         1,
         4
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": true
     },
     {
       "symbol": "Cmaj7♭5",
@@ -1551,7 +1623,8 @@
         5,
         7
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7♭5",
@@ -1572,7 +1645,8 @@
         7,
         8
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7♭5",
@@ -1593,7 +1667,8 @@
         12,
         12
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cmaj7♭5",
@@ -1614,7 +1689,8 @@
         1,
         2
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": true
     },
     {
       "symbol": "C7",
@@ -1635,7 +1711,8 @@
         5,
         6
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7",
@@ -1656,7 +1733,8 @@
         8,
         8
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7",
@@ -1677,7 +1755,8 @@
         11,
         12
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7",
@@ -1698,7 +1777,8 @@
         1,
         3
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7sus4",
@@ -1719,7 +1799,8 @@
         6,
         6
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7sus4",
@@ -1740,7 +1821,8 @@
         8,
         8
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7sus4",
@@ -1761,7 +1843,8 @@
         11,
         13
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7sus4",
@@ -1782,7 +1865,8 @@
         1,
         3
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7♯5",
@@ -1803,7 +1887,8 @@
         5,
         6
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7♯5",
@@ -1824,7 +1909,8 @@
         9,
         8
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7♯5",
@@ -1845,7 +1931,8 @@
         11,
         12
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7♯5",
@@ -1866,7 +1953,8 @@
         1,
         4
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7♭5",
@@ -1887,7 +1975,8 @@
         5,
         6
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7♭5",
@@ -1908,7 +1997,8 @@
         7,
         8
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7♭5",
@@ -1929,7 +2019,8 @@
         11,
         12
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C7♭5",
@@ -1950,7 +2041,8 @@
         1,
         2
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm6",
@@ -1971,7 +2063,8 @@
         4,
         5
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm6",
@@ -1992,7 +2085,8 @@
         8,
         8
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm6",
@@ -2013,7 +2107,8 @@
         10,
         11
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm6",
@@ -2034,7 +2129,8 @@
         1,
         3
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7",
@@ -2055,7 +2151,8 @@
         4,
         6
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7",
@@ -2076,7 +2173,8 @@
         8,
         8
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7",
@@ -2097,7 +2195,8 @@
         11,
         11
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7",
@@ -2118,7 +2217,8 @@
         1,
         3
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7♭5",
@@ -2139,7 +2239,8 @@
         4,
         6
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7♭5",
@@ -2160,7 +2261,8 @@
         7,
         8
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7♭5",
@@ -2181,7 +2283,8 @@
         11,
         11
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7♭5",
@@ -2202,7 +2305,8 @@
         1,
         2
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7♯5",
@@ -2223,7 +2327,8 @@
         4,
         6
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7♯5",
@@ -2244,7 +2349,8 @@
         9,
         8
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7♯5",
@@ -2265,7 +2371,8 @@
         11,
         11
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm7♯5",
@@ -2286,7 +2393,8 @@
         1,
         4
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm(maj7)",
@@ -2307,7 +2415,8 @@
         4,
         7
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm(maj7)",
@@ -2328,7 +2437,8 @@
         8,
         8
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm(maj7)",
@@ -2349,7 +2459,8 @@
         12,
         11
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "Cm(maj7)",
@@ -2370,7 +2481,8 @@
         1,
         3
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": true
     },
     {
       "symbol": "C°7",
@@ -2391,7 +2503,8 @@
         4,
         5
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C°7",
@@ -2412,7 +2525,8 @@
         7,
         8
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C°7",
@@ -2433,7 +2547,8 @@
         10,
         11
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C°7",
@@ -2454,7 +2569,8 @@
         1,
         2
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C°maj7",
@@ -2475,7 +2591,8 @@
         4,
         7
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C°maj7",
@@ -2496,7 +2613,8 @@
         7,
         8
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C°maj7",
@@ -2517,7 +2635,8 @@
         12,
         11
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": false
     },
     {
       "symbol": "C°maj7",
@@ -2538,7 +2657,8 @@
         1,
         2
       ],
-      "stringSet": "upper"
+      "stringSet": "upper",
+      "hasMinorSecond": true
     }
   ]
 }

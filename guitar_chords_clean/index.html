@@ -46,6 +46,25 @@
             background: black;
             color: white;
         }
+
+        .global-options {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+
+        .global-options label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+        }
+
+        .global-options input {
+            margin: 0;
+        }
         
         .section {
             display: none;
@@ -79,6 +98,10 @@
         
         .chord-card {
             text-align: center;
+        }
+
+        .chord-card.voicing-filtered {
+            display: none;
         }
         
         .chord-card h4 {
@@ -192,6 +215,29 @@
             margin-bottom: 15px;
             flex-wrap: wrap;
         }
+
+        .preset-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .preset-selector select {
+            min-width: 240px;
+            padding: 5px;
+            font-family: Times, serif;
+            font-size: 14px;
+            border: 1px solid #000;
+            background: white;
+        }
+
+        .chart-meta {
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #444;
+        }
         
         .chord-selector select {
             padding: 5px;
@@ -218,8 +264,9 @@
             width: 100%;
             margin-bottom: 20px;
             min-height: 100px;
-            padding: 20px;
-            border: 1px solid #ccc;
+            padding: 14px 0;
+            border-top: 1px solid #ccc;
+            border-bottom: 1px solid #ccc;
             background: white;
             font-family: 'Courier New', monospace;
             box-sizing: border-box;
@@ -229,8 +276,9 @@
             display: flex;
             width: 100%;
             margin-bottom: 20px;
-            border: 2px solid #333;
-            background: #fafafa;
+            border-top: 1px solid #333;
+            border-bottom: 1px solid #333;
+            background: white;
             clear: both;
             flex-wrap: nowrap;
         }
@@ -240,10 +288,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 120px;
+            min-height: 95px;
             min-width: 25%;
             max-width: 25%;
-            border-right: 2px solid #333;
+            border-right: 1px solid #333;
             position: relative;
             padding: 10px;
             background: white;
@@ -301,8 +349,7 @@
         .optimized-chord-in-bar {
             background-color: white;
             flex-direction: column;
-            padding: 5px;
-            border-radius: 5px;
+            padding: 0;
             cursor: default;
         }
         
@@ -311,7 +358,8 @@
         }
 
         .optimized-chord-in-bar .chord-diagram {
-            margin-bottom: 5px;
+            margin-bottom: 6px;
+            border: none;
         }
 
         .optimized-chord-in-bar .chord-symbol {
@@ -369,21 +417,18 @@
         
         .optimization-display {
             margin-top: 20px;
-            padding: 15px;
-            background: #e8f4f8;
-            border: 1px solid #ccc;
+            padding: 0;
+            background: white;
+            border-top: 1px solid #ccc;
         }
         
         .optimization-display h3 {
-            margin-top: 0;
+            margin: 18px 0 12px;
         }
         
         .optimized-sequence {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-top: 15px;
+            display: block;
+            margin-top: 10px;
         }
         
         .optimized-chord {
@@ -404,6 +449,36 @@
         .optimized-chord .inversion-label {
             font-size: 10px;
             color: #666;
+        }
+
+        .optimized-row {
+            border: none;
+            margin-bottom: 16px;
+        }
+
+        .optimized-row .chord-bar {
+            min-height: 230px;
+            border-right: 1px solid #aaa;
+            justify-content: center;
+            padding: 8px 14px;
+        }
+
+        .optimized-row .chord-bar:first-child {
+            border-left: 1px solid #aaa;
+        }
+
+        .optimized-row .chord-symbol {
+            font-size: 14px;
+        }
+
+        .optimized-row .chord-duration,
+        .optimized-row .inversion-info {
+            font-size: 9px;
+        }
+
+        .empty-bar {
+            width: 100%;
+            height: 1px;
         }
 
         /* Melody Builder Styles */
@@ -578,6 +653,13 @@
             <label style="font-size: 14px; margin-right: 15px;">String Set:</label>
             <button id="string-set-middle" class="nav-button active" onclick="setStringSet('middle')" style="margin-right: 5px;">Middle (A-D-G-B)</button>
             <button id="string-set-upper" class="nav-button" onclick="setStringSet('upper')">Upper (D-G-B-E)</button>
+        </div>
+
+        <div class="global-options">
+            <label>
+                <input id="avoidMinorSecondsToggle" type="checkbox" checked onchange="setAvoidMinorSeconds(this.checked)">
+                Avoid adjacent minor seconds
+            </label>
         </div>
         
         <!-- Sort Options for All Chords -->
@@ -1029,6 +1111,18 @@
         <div id="sequence-builder" class="section">
             <div class="builder-section">
                 <h2>Build Custom Sequence</h2>
+
+                <div class="preset-selector">
+                    <label>Preset:</label>
+                    <select id="presetSelect">
+                        <option value="">Choose a chart...</option>
+                    </select>
+                    <button onclick="loadSelectedPreset()">Load Preset</button>
+                </div>
+
+                <div class="chart-meta" id="chartMeta">
+                    Untitled chart · 4/4
+                </div>
                 
                 <div class="chord-selector">
                     <label>Root:</label>
@@ -1094,7 +1188,6 @@
                     <button onclick="optimizeSequence()">Optimize Voice Leading</button>
                     <button onclick="clearSequence()">Clear All</button>
                     <button onclick="saveAsPreset()">Save as Preset</button>
-                    <button onclick="loadPreset()">Load Preset</button>
                 </div>
             </div>
             
@@ -1180,7 +1273,33 @@
         </div>
     </div>
 
+    <script src="presets/song-presets.js"></script>
     <script>
+        const APP_STATE_KEY = 'voiceLeadingAppState';
+        const CURRENT_SONG_KEY = 'voiceLeadingCurrentSong';
+
+        function getSavedAppState() {
+            return JSON.parse(localStorage.getItem(APP_STATE_KEY) || '{}');
+        }
+
+        function saveAppState(partialState) {
+            const existingState = getSavedAppState();
+            localStorage.setItem(APP_STATE_KEY, JSON.stringify({
+                ...existingState,
+                ...partialState
+            }));
+        }
+
+        function getSavedCurrentSong() {
+            return JSON.parse(localStorage.getItem(CURRENT_SONG_KEY) || 'null');
+        }
+
+        function saveCurrentSong() {
+            if (currentSong) {
+                localStorage.setItem(CURRENT_SONG_KEY, JSON.stringify(currentSong));
+            }
+        }
+
         async function showSection(sectionId, navButton = null) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.navigation .nav-button').forEach(b => b.classList.remove('active'));
@@ -1209,6 +1328,8 @@
                 await loadChordGenerator();
                 populateMelodyChordTypeDropdown();
             }
+
+            saveAppState({ activeSection: sectionId });
         }
         
         window.showModal = function showModal(svgFile, title) {
@@ -1229,11 +1350,15 @@
         
         window.setStringSet = function setStringSet(stringSet) {
             currentStringSet = stringSet;
+            chordSequence.forEach(chord => {
+                chord.stringSet = stringSet;
+            });
             
             // Update button styles
             document.getElementById('string-set-middle').classList.remove('active');
             document.getElementById('string-set-upper').classList.remove('active');
             document.getElementById('string-set-' + stringSet).classList.add('active');
+            saveAppState({ stringSet });
             
             // Update chord displays based on current section
             const activeSection = document.querySelector('.section.active');
@@ -1249,6 +1374,7 @@
             document.getElementById('sort-default').classList.remove('active');
             document.getElementById('sort-string').classList.remove('active');
             document.getElementById('sort-' + sortMode).classList.add('active');
+            saveAppState({ sortMode });
             
             // Regenerate all chords with new sort order
             const activeSection = document.querySelector('.section.active');
@@ -1297,6 +1423,8 @@
                 
                 object.setAttribute('data', newPath);
             });
+
+            applyVoicingFilterToChordLibrary();
         }
         
         // Helper function to find which string the root note is on
@@ -1419,7 +1547,7 @@
                     roots[i], chordTypes[i], inversions[i], stringSetPattern[i]
                 );
                 
-                if (!chordData) {
+                if (!chordData || !shouldUseVoicing(chordData, stringSetPattern[i])) {
                     valid = false;
                     break;
                 }
@@ -1511,6 +1639,16 @@
         
         // Display the generated progressions
         function displayProgressions(progressions, section, progressionType) {
+            if (progressions.length === 0) {
+                section.innerHTML = `
+                    <div class="progression">
+                        <h3>${progressionType === 'major' ? 'Major ii-V-I' : 'Minor ii-V-i'}</h3>
+                        <p style="color: #666;">No voicings found with the current interval filter.</p>
+                    </div>
+                `;
+                return;
+            }
+
             progressions.forEach((progression, index) => {
                 const progressionDiv = document.createElement('div');
                 progressionDiv.className = 'progression';
@@ -1586,9 +1724,232 @@
         
         // Global sequence state
         let chordSequence = [];
+        let currentSong = null;
+        let sequenceIdCounter = Date.now();
         let chordGenerator = null;
+        let chordManifest = null;
+        let avoidMinorSeconds = true;
         let currentStringSet = 'middle'; // Track current string set
         let currentSortMode = 'default'; // Track current sort mode
+
+        function nextSequenceId() {
+            sequenceIdCounter += 1;
+            return sequenceIdCounter;
+        }
+
+        function cloneData(value) {
+            return JSON.parse(JSON.stringify(value));
+        }
+
+        function createEmptySong() {
+            return {
+                id: 'untitled',
+                title: 'Untitled chart',
+                key: 'C',
+                timeSignature: [4, 4],
+                sections: [
+                    {
+                        id: 'main',
+                        name: 'Main',
+                        bars: []
+                    }
+                ]
+            };
+        }
+
+        function getBuiltInPresets() {
+            return Array.isArray(window.SONG_PRESETS) ? window.SONG_PRESETS : [];
+        }
+
+        function getSavedSongPresets() {
+            return JSON.parse(localStorage.getItem('songPresets') || '[]');
+        }
+
+        function chordEventToSequenceChord(chordEvent, barBeats = 4, source = {}) {
+            const chromaticRoot = getChromaticNote(chordEvent.root);
+            const duration = Math.max(0.25, (chordEvent.duration || barBeats) / barBeats);
+            return {
+                id: nextSequenceId(),
+                root: chromaticRoot,
+                displayRoot: chordEvent.root,
+                chordType: chordEvent.chordType,
+                duration,
+                beat: chordEvent.beat || 1,
+                barId: source.barId,
+                sectionId: source.sectionId,
+                symbol: `${chordEvent.root}${getChordSymbol(chordEvent.chordType)}`,
+                stringSet: currentStringSet
+            };
+        }
+
+        function songToChordSequence(song) {
+            const sequence = [];
+            song.sections.forEach(section => {
+                section.bars.forEach(bar => {
+                    const sortedChords = [...bar.chords].sort((a, b) => (a.beat || 1) - (b.beat || 1));
+                    sortedChords.forEach(chordEvent => {
+                        sequence.push(chordEventToSequenceChord(chordEvent, bar.beats || 4, {
+                            sectionId: section.id,
+                            barId: bar.id
+                        }));
+                    });
+                });
+            });
+            return sequence;
+        }
+
+        function sequenceToSong(sequence, baseSong = currentSong) {
+            const song = baseSong ? cloneData(baseSong) : createEmptySong();
+            song.sections = [
+                {
+                    id: 'main',
+                    name: 'Main',
+                    bars: sequence.map((chord, index) => ({
+                        id: `b${index + 1}`,
+                        beats: 4,
+                        chords: [
+                            {
+                                beat: 1,
+                                duration: Math.max(1, Math.round((chord.duration || 1) * 4)),
+                                root: chord.displayRoot || chord.root,
+                                chordType: chord.chordType
+                            }
+                        ]
+                    }))
+                }
+            ];
+            return song;
+        }
+
+        function renderChartMeta() {
+            const meta = document.getElementById('chartMeta');
+            if (!meta) return;
+            const song = currentSong || createEmptySong();
+            const timeSignature = song.timeSignature ? song.timeSignature.join('/') : '4/4';
+            const barCount = song.sections.reduce((count, section) => count + section.bars.length, 0);
+            meta.textContent = `${song.title} · ${song.key || 'No key'} · ${timeSignature} · ${barCount} bars`;
+        }
+
+        function populatePresetDropdown() {
+            const presetSelect = document.getElementById('presetSelect');
+            if (!presetSelect) return;
+
+            const builtIns = getBuiltInPresets();
+            const saved = getSavedSongPresets();
+            presetSelect.innerHTML = '<option value="">Choose a chart...</option>';
+
+            if (builtIns.length > 0) {
+                const group = document.createElement('optgroup');
+                group.label = 'Built-in charts';
+                builtIns.forEach(preset => {
+                    const option = document.createElement('option');
+                    option.value = `built-in:${preset.id}`;
+                    option.textContent = preset.title;
+                    group.appendChild(option);
+                });
+                presetSelect.appendChild(group);
+            }
+
+            if (saved.length > 0) {
+                const group = document.createElement('optgroup');
+                group.label = 'Saved charts';
+                saved.forEach(preset => {
+                    const option = document.createElement('option');
+                    option.value = `saved:${preset.id}`;
+                    option.textContent = preset.title;
+                    group.appendChild(option);
+                });
+                presetSelect.appendChild(group);
+            }
+        }
+
+        function loadSong(song) {
+            currentSong = cloneData(song);
+            chordSequence = songToChordSequence(currentSong);
+            selectedChordForEditing = null;
+            inferredKey = currentSong.key && !currentSong.key.includes('minor') ? currentSong.key : inferKeyFromChords(chordSequence);
+            updateSequenceDisplay();
+            updateVoiceLeadingAnalysis();
+            renderChartMeta();
+            const optimizationDisplay = document.getElementById('optimizationDisplay');
+            if (optimizationDisplay) {
+                optimizationDisplay.style.display = 'none';
+            }
+            saveCurrentSong();
+        }
+
+        function syncSongFromSequence() {
+            currentSong = sequenceToSong(chordSequence, currentSong);
+            renderChartMeta();
+            saveCurrentSong();
+        }
+
+        async function loadChordManifest() {
+            if (chordManifest) return chordManifest;
+
+            try {
+                const response = await fetch('chords/chord-manifest.json?v=7');
+                chordManifest = await response.json();
+            } catch (error) {
+                console.warn('Could not load chord manifest for voicing filtering:', error);
+                chordManifest = { chords: [] };
+            }
+
+            return chordManifest;
+        }
+
+        function getChordManifestEntry(filename) {
+            if (!chordManifest || !Array.isArray(chordManifest.chords)) return null;
+            return chordManifest.chords.find(chord => chord.filename === filename) || null;
+        }
+
+        function getChordFilenameFromObject(objectElement) {
+            const currentPath = objectElement.getAttribute('data');
+            if (!currentPath) return '';
+            return currentPath
+                .replace('chords/', '')
+                .replace('?v=7', '');
+        }
+
+        function shouldUseVoicing(chordData, stringSet = chordData?.stringSet || currentStringSet) {
+            return !avoidMinorSeconds || !chordGenerator.hasAdjacentMinorSecond(chordData, stringSet);
+        }
+
+        function applyVoicingFilterToChordLibrary() {
+            if (!chordManifest) return;
+
+            document.querySelectorAll('#all-chords .chord-card').forEach(card => {
+                const object = card.querySelector('object.chord-diagram');
+                const filename = object ? getChordFilenameFromObject(object) : '';
+                const manifestEntry = getChordManifestEntry(filename);
+                const isFiltered = avoidMinorSeconds && manifestEntry?.hasMinorSecond;
+                card.classList.toggle('voicing-filtered', Boolean(isFiltered));
+            });
+        }
+
+        async function refreshVoicingDependentViews() {
+            await loadChordGenerator();
+            await loadChordManifest();
+            applyVoicingFilterToChordLibrary();
+
+            const activeSection = document.querySelector('.section.active');
+            if (activeSection?.id === 'major-progressions') {
+                await generateDynamicProgressions('major', currentStringSet);
+            } else if (activeSection?.id === 'minor-progressions') {
+                await generateDynamicProgressions('minor', currentStringSet);
+            }
+
+            const optimizationDisplay = document.getElementById('optimizationDisplay');
+            if (optimizationDisplay?.style.display !== 'none' && chordSequence.length >= 2) {
+                await optimizeSequence();
+            }
+        }
+
+        window.setAvoidMinorSeconds = async function(shouldAvoid) {
+            avoidMinorSeconds = shouldAvoid;
+            saveAppState({ avoidMinorSeconds });
+            await refreshVoicingDependentViews();
+        };
         
         // Load the chord generator module
         async function loadChordGenerator() {
@@ -1663,14 +2024,38 @@
         document.addEventListener('DOMContentLoaded', async function() {
             // Show sort options since All Chords is the default active section
             document.getElementById('sort-options').style.display = 'block';
+            currentSong = createEmptySong();
+            populatePresetDropdown();
+            renderChartMeta();
+            const savedSong = getSavedCurrentSong();
+            if (savedSong && savedSong.sections) {
+                loadSong(savedSong);
+            }
+            const savedState = getSavedAppState();
+            avoidMinorSeconds = savedState.avoidMinorSeconds !== undefined ? savedState.avoidMinorSeconds : true;
+            const avoidMinorSecondsToggle = document.getElementById('avoidMinorSecondsToggle');
+            if (avoidMinorSecondsToggle) {
+                avoidMinorSecondsToggle.checked = avoidMinorSeconds;
+            }
             
             // Always load initial chords for middle string set when All Chords is active
             await loadChordGenerator();
+            await loadChordManifest();
             updateChordPaths('middle');
             
             // Also generate progressions with larger default size
             generateDynamicProgressions('major', 'middle');
             generateDynamicProgressions('minor', 'middle');
+
+            if (savedState.stringSet && savedState.stringSet !== currentStringSet) {
+                setStringSet(savedState.stringSet);
+            }
+            if (savedState.sortMode && savedState.sortMode !== currentSortMode) {
+                setSortMode(savedState.sortMode);
+            }
+            if (savedState.activeSection && savedState.activeSection !== 'all-chords') {
+                await showSection(savedState.activeSection);
+            }
             
             // Add background click handler for sequence builder section
             setupBackgroundClickHandler();
@@ -1721,15 +2106,17 @@
             const duration = parseFloat(document.getElementById('durationSelect').value);
             
             const chord = {
-                root: root,
+                root: getChromaticNote(root),
+                displayRoot: root,
                 chordType: chordType,
                 duration: duration,
                 symbol: `${root}${getChordSymbol(chordType)}`,
                 stringSet: currentStringSet,
-                id: Date.now()
+                id: nextSequenceId()
             };
             
             chordSequence.push(chord);
+            syncSongFromSequence();
             updateSequenceDisplay();
             updateVoiceLeadingAnalysis();
             
@@ -1752,12 +2139,16 @@
                 const chordInfo = parseChordFromTitle(title);
                 if (chordInfo) {
                     const chord = {
-                        root: chordInfo.root,
+                        root: getChromaticNote(chordInfo.root),
+                        displayRoot: chordInfo.root,
                         chordType: chordInfo.chordType,
                         symbol: chordInfo.symbol,
-                        id: Date.now()
+                        duration: 1,
+                        stringSet: currentStringSet,
+                        id: nextSequenceId()
                     };
                     chordSequence.push(chord);
+                    syncSongFromSequence();
                     updateSequenceDisplay();
                     updateVoiceLeadingAnalysis();
                 }
@@ -1796,6 +2187,7 @@
         // Remove chord from sequence
         window.removeChordFromSequence = function(id) {
             chordSequence = chordSequence.filter(chord => chord.id !== id);
+            syncSongFromSequence();
             updateSequenceDisplay();
             updateVoiceLeadingAnalysis();
         };
@@ -1891,12 +2283,14 @@
             const selectedChordId = selectedChordForEditing.id;
 
             // Update the chord
-            selectedChordForEditing.root = rootSelect.value;
+            selectedChordForEditing.root = getChromaticNote(rootSelect.value);
             selectedChordForEditing.chordType = chordTypeSelect.value;
             selectedChordForEditing.duration = parseFloat(durationSelect.value);
-            selectedChordForEditing.symbol = `${selectedChordForEditing.root}${getChordSymbol(selectedChordForEditing.chordType)}`;
+            selectedChordForEditing.displayRoot = rootSelect.value;
+            selectedChordForEditing.symbol = `${selectedChordForEditing.displayRoot}${getChordSymbol(selectedChordForEditing.chordType)}`;
 
             // Update displays
+            syncSongFromSequence();
             updateSequenceDisplay();
             updateVoiceLeadingAnalysis();
             
@@ -1925,12 +2319,13 @@
             // Create new chord from form values
             const durationSelect = document.getElementById('durationSelect');
             const newChord = {
-                root: rootSelect.value,
+                root: getChromaticNote(rootSelect.value),
                 chordType: chordTypeSelect.value,
                 duration: parseFloat(durationSelect.value),
+                displayRoot: rootSelect.value,
                 symbol: `${rootSelect.value}${getChordSymbol(chordTypeSelect.value)}`,
                 stringSet: currentStringSet,
-                id: Date.now()
+                id: nextSequenceId()
             };
 
             // Find the position to insert after
@@ -1940,6 +2335,7 @@
             }
 
             // Update displays
+            syncSongFromSequence();
             updateSequenceDisplay();
             updateVoiceLeadingAnalysis();
             
@@ -2053,6 +2449,7 @@
                 chordSequence.splice(newTargetIndex, 0, draggedChord);
                 
                 // Update display and analysis
+                syncSongFromSequence();
                 updateSequenceDisplay();
                 updateVoiceLeadingAnalysis();
             }
@@ -2061,8 +2458,11 @@
         // Clear sequence
         window.clearSequence = function() {
             chordSequence = [];
+            currentSong = createEmptySong();
+            localStorage.removeItem(CURRENT_SONG_KEY);
             clearChordSelection(); // Also clear any selected chord
             updateSequenceDisplay();
+            renderChartMeta();
             // Hide optimization display if it exists
             const optimizationDisplay = document.getElementById('optimizationDisplay');
             if (optimizationDisplay) {
@@ -2252,6 +2652,10 @@
             }
             
             const optimizedSequence = optimizeVoiceLeading(chordSequence);
+            if (!optimizedSequence) {
+                alert('No complete voicing path found with the current interval filter.');
+                return;
+            }
             displayOptimizedSequence(optimizedSequence);
         };
         
@@ -2271,16 +2675,21 @@
             bestFirstFingering = chordGenerator.findDrop2Fingering(voicing, firstChord.root, 3, 4, firstChord.stringSet || 'middle');
             
             // If the selected inversion doesn't work, try others
-            if (!bestFirstFingering) {
+            if (!bestFirstFingering || !shouldUseVoicing(bestFirstFingering, firstChord.stringSet || 'middle')) {
+                bestFirstFingering = null;
                 for (let inv = 0; inv < 4; inv++) {
                     const voicing = chordGenerator.createDrop2Voicing(firstChordNotes, inv);
                     const fingering = chordGenerator.findDrop2Fingering(voicing, firstChord.root, 3, 4, firstChord.stringSet || 'middle');
-                    if (fingering) {
+                    if (fingering && shouldUseVoicing(fingering, firstChord.stringSet || 'middle')) {
                         bestFirstInversion = inv;
                         bestFirstFingering = fingering;
                         break;
                     }
                 }
+            }
+
+            if (!bestFirstFingering) {
+                return null;
             }
             
             optimized.push({
@@ -2305,7 +2714,7 @@
                     const voicing = chordGenerator.createDrop2Voicing(currentChordNotes, inv);
                     const fingering = chordGenerator.findDrop2Fingering(voicing, currentChord.root, 3, 4, currentChord.stringSet || 'middle');
                     
-                    if (fingering) {
+                    if (fingering && shouldUseVoicing(fingering, currentChord.stringSet || 'middle')) {
                         const distance = calculateVoiceLeadingDistance(previousChord.fingering, fingering, currentChord.stringSet || 'middle');
                         if (distance < bestDistance) {
                             bestDistance = distance;
@@ -2313,6 +2722,10 @@
                             bestFingering = fingering;
                         }
                     }
+                }
+
+                if (!bestFingering) {
+                    return null;
                 }
                 
                 optimized.push({
@@ -2365,6 +2778,7 @@
             rows.forEach((row, rowIndex) => {
                 const rowElement = document.createElement('div');
                 rowElement.className = 'chord-sheet-row';
+                rowElement.classList.add('optimized-row');
                 
                 // Create 4 bars per row
                 for (let barIndex = 0; barIndex < 4; barIndex++) {
@@ -2379,23 +2793,15 @@
                         const chordElement = document.createElement('div');
                         chordElement.className = 'chord-in-bar optimized-chord-in-bar';
                         
-                        // Get preferred spelling for display
-                        const preferredSymbol = getChordSymbolWithPreferredSpelling(chord.root, chord.chordType, inferredKey);
-                        
                         // Generate chord diagram SVG
                         const svg = chordGenerator.create6StringChordSVG(chord.fingering, `${chord.symbol} ${getInversionName(chord.inversion)}`, '', chord.root, chord.chordType);
                         const blob = new Blob([svg], { type: 'image/svg+xml' });
                         const url = URL.createObjectURL(blob);
                         
                         chordElement.innerHTML = `
-                            <img src="${url}" class="chord-diagram" alt="${chord.symbol}" style="width: 100px; height: auto; border: 1px solid #000;">
-                            <div class="chord-symbol">${preferredSymbol}</div>
-                            <div class="chord-duration">${getDurationText(chord.duration)}</div>
-                            <div class="inversion-info">${getInversionName(chord.inversion)}</div>
+                            <img src="${url}" class="chord-diagram" alt="${chord.symbol}" style="width: 140px; height: auto;">
                         `;
                         
-                        // Left-justify the single chord in the bar
-                        barElement.style.justifyContent = 'flex-start';
                         barElement.appendChild(chordElement);
                     } else if (barChords.length > 1) {
                         // Multiple chords - distribute them evenly
@@ -2405,19 +2811,13 @@
                             const chordElement = document.createElement('div');
                             chordElement.className = 'chord-in-bar optimized-chord-in-bar';
                             
-                            // Get preferred spelling for display
-                            const preferredSymbol = getChordSymbolWithPreferredSpelling(chord.root, chord.chordType, inferredKey);
-                            
                             // Generate chord diagram SVG
                             const svg = chordGenerator.create6StringChordSVG(chord.fingering, `${chord.symbol} ${getInversionName(chord.inversion)}`, '', chord.root, chord.chordType);
                             const blob = new Blob([svg], { type: 'image/svg+xml' });
                             const url = URL.createObjectURL(blob);
                             
                             chordElement.innerHTML = `
-                                <img src="${url}" class="chord-diagram" alt="${chord.symbol}" style="width: 100px; height: auto; border: 1px solid #000;">
-                                <div class="chord-symbol">${preferredSymbol}</div>
-                                <div class="chord-duration">${getDurationText(chord.duration)}</div>
-                                <div class="inversion-info">${getInversionName(chord.inversion)}</div>
+                                <img src="${url}" class="chord-diagram" alt="${chord.symbol}" style="width: 140px; height: auto;">
                             `;
                             
                             barElement.appendChild(chordElement);
@@ -2426,7 +2826,7 @@
                     
                     // If bar is empty, add placeholder
                     if (barChords.length === 0) {
-                        barElement.innerHTML = '<div style="color: #ccc;">|</div>';
+                        barElement.innerHTML = '<div class="empty-bar"></div>';
                     }
                     
                     rowElement.appendChild(barElement);
@@ -2460,29 +2860,46 @@
             
             const name = prompt('Enter a name for this preset:');
             if (name) {
-                const presets = JSON.parse(localStorage.getItem('chordPresets') || '{}');
-                presets[name] = chordSequence;
-                localStorage.setItem('chordPresets', JSON.stringify(presets));
+                const presets = getSavedSongPresets();
+                const song = sequenceToSong(chordSequence, currentSong);
+                song.id = `saved-${Date.now()}`;
+                song.title = name;
+                const existingIndex = presets.findIndex(preset => preset.title === name);
+                if (existingIndex >= 0) {
+                    presets[existingIndex] = song;
+                } else {
+                    presets.push(song);
+                }
+                localStorage.setItem('songPresets', JSON.stringify(presets));
+                currentSong = song;
+                populatePresetDropdown();
+                renderChartMeta();
                 alert(`Preset "${name}" saved!`);
             }
         };
         
-        window.loadPreset = function() {
-            const presets = JSON.parse(localStorage.getItem('chordPresets') || '{}');
-            const presetNames = Object.keys(presets);
-            
-            if (presetNames.length === 0) {
-                alert('No presets saved');
+        window.loadSelectedPreset = function() {
+            const presetSelect = document.getElementById('presetSelect');
+            if (!presetSelect || !presetSelect.value) {
+                alert('Choose a preset to load');
                 return;
             }
-            
-            const name = prompt('Available presets:\\n' + presetNames.join('\\n') + '\\n\\nEnter preset name to load:');
-            if (name && presets[name]) {
-                chordSequence = presets[name];
-                updateSequenceDisplay();
-                updateVoiceLeadingAnalysis();
-                alert(`Preset "${name}" loaded!`);
+
+            const [source, presetId] = presetSelect.value.split(':');
+            const preset = source === 'built-in'
+                ? getBuiltInPresets().find(item => item.id === presetId)
+                : getSavedSongPresets().find(item => item.id === presetId);
+
+            if (!preset) {
+                alert('Preset could not be found');
+                return;
             }
+
+            loadSong(preset);
+        };
+
+        window.loadPreset = function() {
+            window.loadSelectedPreset();
         };
         
         // Helper functions
@@ -2917,7 +3334,7 @@
                 const voicing = chordGenerator.createDrop2Voicing(chordNotes, inversion);
                 const fingering = chordGenerator.findDrop2Fingering(voicing, chordRoot, 3, 4, 'middle');
                 
-                if (fingering) {
+                if (fingering && shouldUseVoicing(fingering, 'middle')) {
                     // Check if the note on B string (index 4) matches our melody note
                     const bStringFret = fingering.frets[4]; // B string
                     if (bStringFret !== null) {
@@ -2951,7 +3368,7 @@
                 const voicing = chordGenerator.createDrop2Voicing(chordNotes, inversion);
                 const fingering = chordGenerator.findDrop2Fingering(voicing, chordRoot, 3, 4, 'middle');
                 
-                if (fingering) {
+                if (fingering && shouldUseVoicing(fingering, 'middle')) {
                     // Get the note that's actually on the B string (index 4)
                     const bStringFret = fingering.frets[4]; // B string
                     if (bStringFret !== null) {
@@ -3146,7 +3563,7 @@
                 const voicing = chordGenerator.createDrop2Voicing(chordNotes, chord.inversion);
                 const fingering = chordGenerator.findDrop2Fingering(voicing, chord.root, 3, 4, 'middle');
                 
-                if (fingering) {
+                if (fingering && shouldUseVoicing(fingering, 'middle')) {
                     const svg = chordGenerator.create6StringChordSVG(
                         fingering, 
                         chord.symbol, 

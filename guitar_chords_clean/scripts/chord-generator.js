@@ -36,7 +36,7 @@ const STYLE = {
     titleColor: '#000000',
     stringLabelFont: 'Times, serif',
     stringLabelSize: 11,
-    fretLabelSize: 9,
+    fretLabelSize: 12,
     stringColor: '#000000',
     stringWidth: 1.5,
     fretColor: '#000000',
@@ -184,6 +184,31 @@ function getNoteAtFret(stringIndex, fret, tuning) {
     const openNoteIndex = NOTES.indexOf(openNote);
     const noteIndex = (openNoteIndex + fret) % 12;
     return NOTES[noteIndex];
+}
+
+function getFrettedPitch(stringIndex, fret) {
+    const openStringPitches = [40, 45, 50, 55, 59, 64]; // E2, A2, D3, G3, B3, E4
+    return openStringPitches[stringIndex] + fret;
+}
+
+function hasAdjacentMinorSecond(chordData, stringSet = chordData?.stringSet || 'middle') {
+    if (!chordData || !chordData.frets) return false;
+
+    const activeStrings = stringSet === 'upper' ? [2, 3, 4, 5] : [1, 2, 3, 4];
+    const pitches = activeStrings
+        .map(stringIndex => {
+            const fret = chordData.frets[stringIndex];
+            return fret === null || fret === undefined ? null : getFrettedPitch(stringIndex, fret);
+        })
+        .filter(pitch => pitch !== null);
+
+    for (let i = 1; i < pitches.length; i++) {
+        if (Math.abs(pitches[i] - pitches[i - 1]) === 1) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 function createChordSVG(chordData, chordSymbol, stringSet = 'middle', root = 'C', chordType = '', voicing = [], inversion = 0) {
@@ -352,7 +377,8 @@ function generateAllChords(root = 'C', outputDir = '.') {
                         filename: filename,
                         voicing: voicing,
                         frets: fingering.frets,
-                        stringSet: stringSet
+                        stringSet: stringSet,
+                        hasMinorSecond: hasAdjacentMinorSecond(fingering, stringSet)
                     });
                     
                     console.log(`✓ ${filename}`);
