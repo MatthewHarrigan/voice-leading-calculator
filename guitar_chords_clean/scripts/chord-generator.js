@@ -191,7 +191,7 @@ function getFrettedPitch(stringIndex, fret) {
     return openStringPitches[stringIndex] + fret;
 }
 
-function hasAdjacentMinorSecond(chordData, stringSet = chordData?.stringSet || 'middle') {
+function hasFlatNineAvoidInterval(chordData, stringSet = chordData?.stringSet || 'middle') {
     if (!chordData || !chordData.frets) return false;
 
     const activeStrings = stringSet === 'upper' ? [2, 3, 4, 5] : [1, 2, 3, 4];
@@ -202,13 +202,22 @@ function hasAdjacentMinorSecond(chordData, stringSet = chordData?.stringSet || '
         })
         .filter(pitch => pitch !== null);
 
-    for (let i = 1; i < pitches.length; i++) {
-        if (Math.abs(pitches[i] - pitches[i - 1]) === 1) {
-            return true;
+    for (let lowerIndex = 0; lowerIndex < pitches.length; lowerIndex++) {
+        for (let upperIndex = 0; upperIndex < pitches.length; upperIndex++) {
+            if (lowerIndex === upperIndex) continue;
+
+            const interval = pitches[upperIndex] - pitches[lowerIndex];
+            if (interval > 0 && interval % 12 === 1) {
+                return true;
+            }
         }
     }
 
     return false;
+}
+
+function hasAdjacentMinorSecond(chordData, stringSet = chordData?.stringSet || 'middle') {
+    return hasFlatNineAvoidInterval(chordData, stringSet);
 }
 
 function createChordSVG(chordData, chordSymbol, stringSet = 'middle', root = 'C', chordType = '', voicing = [], inversion = 0) {
@@ -378,6 +387,7 @@ function generateAllChords(root = 'C', outputDir = '.') {
                         voicing: voicing,
                         frets: fingering.frets,
                         stringSet: stringSet,
+                        hasFlatNineAvoidInterval: hasFlatNineAvoidInterval(fingering, stringSet),
                         hasMinorSecond: hasAdjacentMinorSecond(fingering, stringSet)
                     });
                     

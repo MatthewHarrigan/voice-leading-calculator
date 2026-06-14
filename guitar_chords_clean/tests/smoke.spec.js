@@ -46,6 +46,7 @@ test('loads the chord library and core interactions', async ({ page }) => {
   await expect(page.locator('#optimizedSequence img.chord-diagram')).toHaveCount(3);
   await expect(page.locator('#movementAnalysis')).toContainText('Dm7 → G7:');
   await expect(page.locator('#movementAnalysis')).toContainText('G7 → Cmaj7:');
+  await expect(page.locator('#movementAnalysis')).toContainText('Guide line (B string):');
 
   expect(pageErrors).toEqual([]);
 });
@@ -84,11 +85,12 @@ test('loads built-in song presets into the sequence builder', async ({ page }) =
   await page.getByRole('button', { name: 'Optimize Voice Leading' }).click();
   await expect(page.locator('#optimizedSequence img.chord-diagram')).toHaveCount(32);
   await expect(page.locator('#optimizedSequence .chord-symbol')).toHaveCount(0);
+  await expect(page.locator('#movementAnalysis .guide-line-note')).toHaveCount(32);
 
   expect(pageErrors).toEqual([]);
 });
 
-test('filters adjacent minor second voicings globally', async ({ page }) => {
+test('filters b9 avoid-interval voicings globally', async ({ page }) => {
   await page.goto('/');
 
   await expect(page.locator('#avoidMinorSecondsToggle')).toBeChecked();
@@ -108,4 +110,29 @@ test('filters adjacent minor second voicings globally', async ({ page }) => {
   await page.getByRole('button', { name: 'Major ii-V-I' }).click();
   await expect(page.locator('#major-progressions .progression')).toHaveCount(4);
   await expect(page.locator('#major-progressions svg')).not.toHaveCount(0);
+});
+
+test('explains available and avoided voicings for a selected sequence chord', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Build Sequence' }).click();
+
+  await page.locator('#rootSelect').selectOption('C');
+  await page.locator('#chordTypeSelect').selectOption('maj7');
+  await page.getByRole('button', { name: 'Add Chord' }).click();
+  await page.locator('#sequenceDisplay .sequence-chord').click();
+
+  await expect(page.locator('#voicingAnalysisPanel')).toBeVisible();
+  await expect(page.locator('#voicingAnalysisTitle')).toHaveText('Cmaj7 Voicing Analysis');
+  await expect(page.locator('#voicingAnalysisSummary')).toContainText('available');
+  await expect(page.locator('#availableVoicings .voicing-option')).not.toHaveCount(0);
+  await expect(page.locator('#avoidedVoicings')).toContainText('b9 avoid interval');
+
+  await page.locator('#availableVoicings .voicing-option', { hasText: '2nd' }).click();
+  await expect(page.locator('#sequenceDisplay .sequence-chord')).toContainText('2nd locked');
+  await expect(page.locator('#voicingAnalysisSummary')).toContainText('2nd locked');
+  await expect(page.locator('#availableVoicings .voicing-option.selected')).toContainText('2nd');
+
+  await page.getByRole('button', { name: 'Clear lock' }).click();
+  await expect(page.locator('#sequenceDisplay .sequence-chord')).not.toContainText('locked');
+  await expect(page.locator('#voicingAnalysisSummary')).not.toContainText('locked');
 });

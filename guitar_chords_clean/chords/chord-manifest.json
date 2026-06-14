@@ -1,5 +1,5 @@
 {
-  "generated": "2026-06-13T18:48:39.236Z",
+  "generated": "2026-06-13T19:11:16.674Z",
   "root": "C",
   "totalChords": 120,
   "chordTypes": [
@@ -40,6 +40,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -62,7 +63,8 @@
         null
       ],
       "stringSet": "middle",
-      "hasMinorSecond": false
+      "hasFlatNineAvoidInterval": true,
+      "hasMinorSecond": true
     },
     {
       "symbol": "Cmaj7",
@@ -84,6 +86,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -106,6 +109,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": true,
       "hasMinorSecond": true
     },
     {
@@ -128,6 +132,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -150,6 +155,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -172,6 +178,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -194,6 +201,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -216,6 +224,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -238,7 +247,8 @@
         null
       ],
       "stringSet": "middle",
-      "hasMinorSecond": false
+      "hasFlatNineAvoidInterval": true,
+      "hasMinorSecond": true
     },
     {
       "symbol": "Cmaj7♯5",
@@ -260,6 +270,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -282,6 +293,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": true,
       "hasMinorSecond": true
     },
     {
@@ -304,6 +316,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -326,7 +339,8 @@
         null
       ],
       "stringSet": "middle",
-      "hasMinorSecond": false
+      "hasFlatNineAvoidInterval": true,
+      "hasMinorSecond": true
     },
     {
       "symbol": "Cmaj7♭5",
@@ -348,6 +362,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -370,6 +385,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": true,
       "hasMinorSecond": true
     },
     {
@@ -392,6 +408,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -414,6 +431,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -436,6 +454,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -458,6 +477,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -480,6 +500,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -502,6 +523,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -524,6 +546,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -546,6 +569,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -568,6 +592,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -590,6 +615,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -612,6 +638,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -634,6 +661,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -656,6 +684,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -678,6 +707,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -700,6 +730,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -722,6 +753,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -744,6 +776,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -766,6 +799,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -788,6 +822,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -810,6 +845,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -832,6 +868,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -854,6 +891,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -876,6 +914,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -898,6 +937,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -920,6 +960,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -942,6 +983,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -964,6 +1006,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -986,6 +1029,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1008,6 +1052,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1030,6 +1075,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1052,6 +1098,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1074,6 +1121,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1096,6 +1144,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1118,7 +1167,8 @@
         null
       ],
       "stringSet": "middle",
-      "hasMinorSecond": false
+      "hasFlatNineAvoidInterval": true,
+      "hasMinorSecond": true
     },
     {
       "symbol": "Cm(maj7)",
@@ -1140,6 +1190,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1162,6 +1213,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": true,
       "hasMinorSecond": true
     },
     {
@@ -1184,6 +1236,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1206,6 +1259,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1228,6 +1282,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1250,6 +1305,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1272,6 +1328,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1294,7 +1351,8 @@
         null
       ],
       "stringSet": "middle",
-      "hasMinorSecond": false
+      "hasFlatNineAvoidInterval": true,
+      "hasMinorSecond": true
     },
     {
       "symbol": "C°maj7",
@@ -1316,6 +1374,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1338,6 +1397,7 @@
         null
       ],
       "stringSet": "middle",
+      "hasFlatNineAvoidInterval": true,
       "hasMinorSecond": true
     },
     {
@@ -1360,6 +1420,7 @@
         7
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1382,7 +1443,8 @@
         8
       ],
       "stringSet": "upper",
-      "hasMinorSecond": false
+      "hasFlatNineAvoidInterval": true,
+      "hasMinorSecond": true
     },
     {
       "symbol": "Cmaj7",
@@ -1404,6 +1466,7 @@
         12
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1426,6 +1489,7 @@
         3
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": true,
       "hasMinorSecond": true
     },
     {
@@ -1448,6 +1512,7 @@
         5
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1470,6 +1535,7 @@
         8
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1492,6 +1558,7 @@
         12
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1514,6 +1581,7 @@
         3
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1536,6 +1604,7 @@
         7
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1558,7 +1627,8 @@
         8
       ],
       "stringSet": "upper",
-      "hasMinorSecond": false
+      "hasFlatNineAvoidInterval": true,
+      "hasMinorSecond": true
     },
     {
       "symbol": "Cmaj7♯5",
@@ -1580,6 +1650,7 @@
         12
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1602,6 +1673,7 @@
         4
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": true,
       "hasMinorSecond": true
     },
     {
@@ -1624,6 +1696,7 @@
         7
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1646,7 +1719,8 @@
         8
       ],
       "stringSet": "upper",
-      "hasMinorSecond": false
+      "hasFlatNineAvoidInterval": true,
+      "hasMinorSecond": true
     },
     {
       "symbol": "Cmaj7♭5",
@@ -1668,6 +1742,7 @@
         12
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1690,6 +1765,7 @@
         2
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": true,
       "hasMinorSecond": true
     },
     {
@@ -1712,6 +1788,7 @@
         6
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1734,6 +1811,7 @@
         8
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1756,6 +1834,7 @@
         12
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1778,6 +1857,7 @@
         3
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1800,6 +1880,7 @@
         6
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1822,6 +1903,7 @@
         8
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1844,6 +1926,7 @@
         13
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1866,6 +1949,7 @@
         3
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1888,6 +1972,7 @@
         6
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1910,6 +1995,7 @@
         8
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1932,6 +2018,7 @@
         12
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1954,6 +2041,7 @@
         4
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1976,6 +2064,7 @@
         6
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -1998,6 +2087,7 @@
         8
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2020,6 +2110,7 @@
         12
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2042,6 +2133,7 @@
         2
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2064,6 +2156,7 @@
         5
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2086,6 +2179,7 @@
         8
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2108,6 +2202,7 @@
         11
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2130,6 +2225,7 @@
         3
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2152,6 +2248,7 @@
         6
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2174,6 +2271,7 @@
         8
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2196,6 +2294,7 @@
         11
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2218,6 +2317,7 @@
         3
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2240,6 +2340,7 @@
         6
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2262,6 +2363,7 @@
         8
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2284,6 +2386,7 @@
         11
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2306,6 +2409,7 @@
         2
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2328,6 +2432,7 @@
         6
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2350,6 +2455,7 @@
         8
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2372,6 +2478,7 @@
         11
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2394,6 +2501,7 @@
         4
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2416,6 +2524,7 @@
         7
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2438,7 +2547,8 @@
         8
       ],
       "stringSet": "upper",
-      "hasMinorSecond": false
+      "hasFlatNineAvoidInterval": true,
+      "hasMinorSecond": true
     },
     {
       "symbol": "Cm(maj7)",
@@ -2460,6 +2570,7 @@
         11
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2482,6 +2593,7 @@
         3
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": true,
       "hasMinorSecond": true
     },
     {
@@ -2504,6 +2616,7 @@
         5
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2526,6 +2639,7 @@
         8
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2548,6 +2662,7 @@
         11
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2570,6 +2685,7 @@
         2
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2592,6 +2708,7 @@
         7
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2614,7 +2731,8 @@
         8
       ],
       "stringSet": "upper",
-      "hasMinorSecond": false
+      "hasFlatNineAvoidInterval": true,
+      "hasMinorSecond": true
     },
     {
       "symbol": "C°maj7",
@@ -2636,6 +2754,7 @@
         11
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": false,
       "hasMinorSecond": false
     },
     {
@@ -2658,6 +2777,7 @@
         2
       ],
       "stringSet": "upper",
+      "hasFlatNineAvoidInterval": true,
       "hasMinorSecond": true
     }
   ]

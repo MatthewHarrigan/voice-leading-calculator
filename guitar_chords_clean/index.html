@@ -330,6 +330,115 @@
             color: #666;
             margin-top: 2px;
         }
+
+        .voicing-analysis-panel {
+            display: none;
+            margin: 18px 0 20px;
+            padding: 14px 0 0;
+            border-top: 1px solid #ccc;
+            background: white;
+        }
+
+        .voicing-analysis-panel h3 {
+            margin: 0 0 10px;
+            font-size: 16px;
+        }
+
+        .voicing-analysis-summary {
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: #444;
+        }
+
+        .clear-voicing-lock {
+            margin-left: 8px;
+            padding: 3px 7px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #f7f7f7;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .voicing-analysis-groups {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .voicing-analysis-group h4 {
+            margin: 0 0 8px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .voicing-option-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+
+        .voicing-option {
+            font: inherit;
+            color: inherit;
+            min-height: 168px;
+            width: 100%;
+            padding: 9px 8px 8px;
+            border: 1px solid #e1ddd6;
+            border-radius: 4px;
+            background: #fff;
+            text-align: center;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+
+        .voicing-option:hover:not(:disabled) {
+            border-color: #9b8f7f;
+            background: #fffdf8;
+        }
+
+        .voicing-option.selected {
+            border-color: #2f6f5e;
+            background: #f3fbf8;
+        }
+
+        .voicing-option.avoided {
+            border-color: #e3b7ad;
+            background: #fffafa;
+            cursor: default;
+        }
+
+        .voicing-option:disabled {
+            color: #555;
+        }
+
+        .voicing-option .chord-diagram {
+            width: 105px;
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .voicing-option-title {
+            margin-bottom: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .voicing-option-reason {
+            margin-top: 5px;
+            font-size: 11px;
+            color: #666;
+            line-height: 1.25;
+        }
+
+        .preferred-inversion-label {
+            margin-top: 2px;
+            font-size: 10px;
+            color: #2f6f5e;
+            line-height: 1.1;
+        }
         
         .remove-btn {
             position: absolute;
@@ -393,6 +502,38 @@
         .movement-analysis {
             font-size: 12px;
             margin-top: 10px;
+        }
+
+        .guide-line-analysis {
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+        }
+
+        .guide-line-sequence {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .guide-line-note {
+            padding: 4px 7px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #fafafa;
+            line-height: 1.25;
+        }
+
+        .guide-line-note strong {
+            display: block;
+            font-size: 12px;
+        }
+
+        .guide-line-note span {
+            display: block;
+            color: #666;
+            font-size: 10px;
         }
         
         .controls {
@@ -658,7 +799,7 @@
         <div class="global-options">
             <label>
                 <input id="avoidMinorSecondsToggle" type="checkbox" checked onchange="setAvoidMinorSeconds(this.checked)">
-                Avoid adjacent minor seconds
+                Avoid b9 intervals
             </label>
         </div>
         
@@ -1175,6 +1316,21 @@
                 
                 <div class="sequence-display" id="sequenceDisplay">
                     <div style="color: #666; font-style: italic;">Your chord sequence will appear here...</div>
+                </div>
+
+                <div class="voicing-analysis-panel" id="voicingAnalysisPanel">
+                    <h3 id="voicingAnalysisTitle">Voicing Analysis</h3>
+                    <div class="voicing-analysis-summary" id="voicingAnalysisSummary"></div>
+                    <div class="voicing-analysis-groups">
+                        <div class="voicing-analysis-group">
+                            <h4>Available Voicings</h4>
+                            <div class="voicing-option-list" id="availableVoicings"></div>
+                        </div>
+                        <div class="voicing-analysis-group">
+                            <h4>Avoided Voicings</h4>
+                            <div class="voicing-option-list" id="avoidedVoicings"></div>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="controls">
@@ -1768,7 +1924,7 @@
         function chordEventToSequenceChord(chordEvent, barBeats = 4, source = {}) {
             const chromaticRoot = getChromaticNote(chordEvent.root);
             const duration = Math.max(0.25, (chordEvent.duration || barBeats) / barBeats);
-            return {
+            const sequenceChord = {
                 id: nextSequenceId(),
                 root: chromaticRoot,
                 displayRoot: chordEvent.root,
@@ -1780,6 +1936,12 @@
                 symbol: `${chordEvent.root}${getChordSymbol(chordEvent.chordType)}`,
                 stringSet: currentStringSet
             };
+
+            if (Number.isInteger(chordEvent.preferredInversion)) {
+                sequenceChord.preferredInversion = chordEvent.preferredInversion;
+            }
+
+            return sequenceChord;
         }
 
         function songToChordSequence(song) {
@@ -1804,18 +1966,24 @@
                 {
                     id: 'main',
                     name: 'Main',
-                    bars: sequence.map((chord, index) => ({
-                        id: `b${index + 1}`,
-                        beats: 4,
-                        chords: [
-                            {
-                                beat: 1,
-                                duration: Math.max(1, Math.round((chord.duration || 1) * 4)),
-                                root: chord.displayRoot || chord.root,
-                                chordType: chord.chordType
-                            }
-                        ]
-                    }))
+                    bars: sequence.map((chord, index) => {
+                        const chordEvent = {
+                            beat: 1,
+                            duration: Math.max(1, Math.round((chord.duration || 1) * 4)),
+                            root: chord.displayRoot || chord.root,
+                            chordType: chord.chordType
+                        };
+
+                        if (Number.isInteger(chord.preferredInversion)) {
+                            chordEvent.preferredInversion = chord.preferredInversion;
+                        }
+
+                        return {
+                            id: `b${index + 1}`,
+                            beats: 4,
+                            chords: [chordEvent]
+                        };
+                    })
                 }
             ];
             return song;
@@ -1912,7 +2080,180 @@
         }
 
         function shouldUseVoicing(chordData, stringSet = chordData?.stringSet || currentStringSet) {
-            return !avoidMinorSeconds || !chordGenerator.hasAdjacentMinorSecond(chordData, stringSet);
+            return !avoidMinorSeconds || !chordGenerator.hasFlatNineAvoidInterval(chordData, stringSet);
+        }
+
+        function analyzeVoicing(chord, inversion) {
+            const stringSet = chord.stringSet || currentStringSet;
+            const chordNotes = chordGenerator.getChordNotes(chord.root, chord.chordType);
+            const voicing = chordGenerator.createDrop2Voicing(chordNotes, inversion);
+            const fingering = chordGenerator.findDrop2Fingering(voicing, chord.root, 3, 4, stringSet);
+            const reasons = [];
+
+            if (!fingering) {
+                reasons.push('No fingering found in range');
+                return {
+                    inversion,
+                    voicing,
+                    fingering: null,
+                    available: false,
+                    reasons
+                };
+            }
+
+            const hasB9 = avoidMinorSeconds && chordGenerator.hasFlatNineAvoidInterval(fingering, stringSet);
+            if (hasB9) {
+                reasons.push('b9 avoid interval');
+            }
+
+            return {
+                inversion,
+                voicing,
+                fingering,
+                available: reasons.length === 0,
+                reasons
+            };
+        }
+
+        function analyzeChordVoicings(chord) {
+            return [0, 1, 2, 3].map(inversion => analyzeVoicing(chord, inversion));
+        }
+
+        function createVoicingOptionElement(chord, analysis) {
+            const option = document.createElement('button');
+            option.type = 'button';
+            option.className = `voicing-option ${analysis.available ? 'available' : 'avoided'}`;
+            option.disabled = !analysis.available;
+            if (chord.preferredInversion === analysis.inversion) {
+                option.classList.add('selected');
+            }
+
+            const title = `${getInversionName(analysis.inversion)}${analysis.available ? '' : ' avoided'}`;
+            const titleElement = document.createElement('div');
+            titleElement.className = 'voicing-option-title';
+            titleElement.textContent = title;
+            option.appendChild(titleElement);
+
+            if (analysis.fingering) {
+                const svg = chordGenerator.create6StringChordSVG(
+                    analysis.fingering,
+                    `${chord.symbol} ${getInversionName(analysis.inversion)}`,
+                    '',
+                    chord.root,
+                    chord.chordType,
+                    chord.stringSet || currentStringSet
+                );
+                const diagram = document.createElement('img');
+                diagram.className = 'chord-diagram';
+                diagram.alt = `${chord.symbol} ${getInversionName(analysis.inversion)}`;
+                diagram.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+                option.appendChild(diagram);
+            }
+
+            const reason = document.createElement('div');
+            reason.className = 'voicing-option-reason';
+            if (chord.preferredInversion === analysis.inversion) {
+                reason.textContent = 'Locked for optimization';
+            } else {
+                reason.textContent = analysis.reasons.join(', ') || 'Click to lock this inversion';
+            }
+            option.appendChild(reason);
+
+            if (analysis.available) {
+                option.addEventListener('click', event => {
+                    event.stopPropagation();
+                    setPreferredInversionForSelectedChord(chord.id, analysis.inversion);
+                });
+            }
+
+            return option;
+        }
+
+        async function renderVoicingAnalysisPanel(chord) {
+            await loadChordGenerator();
+            if (!chordGenerator) return;
+
+            const panel = document.getElementById('voicingAnalysisPanel');
+            const title = document.getElementById('voicingAnalysisTitle');
+            const summary = document.getElementById('voicingAnalysisSummary');
+            const availableList = document.getElementById('availableVoicings');
+            const avoidedList = document.getElementById('avoidedVoicings');
+            if (!panel || !title || !summary || !availableList || !avoidedList) return;
+
+            const analyses = analyzeChordVoicings(chord);
+            const available = analyses.filter(item => item.available);
+            const avoided = analyses.filter(item => !item.available);
+            title.textContent = `${chord.symbol} Voicing Analysis`;
+            summary.textContent = `${available.length} available, ${avoided.length} avoided on ${chord.stringSet || currentStringSet} strings`;
+            if (Number.isInteger(chord.preferredInversion)) {
+                summary.appendChild(document.createTextNode(` · ${getInversionName(chord.preferredInversion)} locked`));
+                const clearButton = document.createElement('button');
+                clearButton.type = 'button';
+                clearButton.className = 'clear-voicing-lock';
+                clearButton.textContent = 'Clear lock';
+                clearButton.onclick = event => {
+                    event.stopPropagation();
+                    clearPreferredInversionForSelectedChord();
+                };
+                summary.appendChild(document.createTextNode(' '));
+                summary.appendChild(clearButton);
+            }
+            availableList.innerHTML = '';
+            avoidedList.innerHTML = '';
+
+            available.forEach(analysis => {
+                availableList.appendChild(createVoicingOptionElement(chord, analysis));
+            });
+            avoided.forEach(analysis => {
+                avoidedList.appendChild(createVoicingOptionElement(chord, analysis));
+            });
+
+            if (available.length === 0) {
+                availableList.innerHTML = '<div class="voicing-option-reason">No available voicings under current rules.</div>';
+            }
+            if (avoided.length === 0) {
+                avoidedList.innerHTML = '<div class="voicing-option-reason">No avoided voicings for this chord.</div>';
+            }
+
+            panel.style.display = 'block';
+        }
+
+        function setPreferredInversionForSelectedChord(chordId, inversion) {
+            const chord = chordSequence.find(item => item.id === chordId);
+            if (!chord) return;
+
+            chord.preferredInversion = inversion;
+            syncSongFromSequence();
+            updateSequenceDisplay();
+            updateVoiceLeadingAnalysis();
+            selectChordForEditing(chordId);
+
+            const optimizationDisplay = document.getElementById('optimizationDisplay');
+            if (optimizationDisplay?.style.display !== 'none' && chordSequence.length >= 2) {
+                optimizeSequence();
+            }
+        }
+
+        window.clearPreferredInversionForSelectedChord = function() {
+            if (!selectedChordForEditing) return;
+
+            delete selectedChordForEditing.preferredInversion;
+            syncSongFromSequence();
+            updateSequenceDisplay();
+            updateVoiceLeadingAnalysis();
+            selectChordForEditing(selectedChordForEditing.id);
+
+            const optimizationDisplay = document.getElementById('optimizationDisplay');
+            if (optimizationDisplay?.style.display !== 'none' && chordSequence.length >= 2) {
+                optimizeSequence();
+            }
+        };
+
+        function hideVoicingAnalysisPanel() {
+            const panel = document.getElementById('voicingAnalysisPanel');
+            if (panel) {
+                panel.style.display = 'none';
+            }
         }
 
         function applyVoicingFilterToChordLibrary() {
@@ -1922,7 +2263,7 @@
                 const object = card.querySelector('object.chord-diagram');
                 const filename = object ? getChordFilenameFromObject(object) : '';
                 const manifestEntry = getChordManifestEntry(filename);
-                const isFiltered = avoidMinorSeconds && manifestEntry?.hasMinorSecond;
+                const isFiltered = avoidMinorSeconds && (manifestEntry?.hasFlatNineAvoidInterval || manifestEntry?.hasMinorSecond);
                 card.classList.toggle('voicing-filtered', Boolean(isFiltered));
             });
         }
@@ -1942,6 +2283,10 @@
             const optimizationDisplay = document.getElementById('optimizationDisplay');
             if (optimizationDisplay?.style.display !== 'none' && chordSequence.length >= 2) {
                 await optimizeSequence();
+            }
+
+            if (selectedChordForEditing) {
+                await renderVoicingAnalysisPanel(selectedChordForEditing);
             }
         }
 
@@ -2147,6 +2492,9 @@
                         stringSet: currentStringSet,
                         id: nextSequenceId()
                     };
+                    if (Number.isInteger(chordInfo.preferredInversion)) {
+                        chord.preferredInversion = chordInfo.preferredInversion;
+                    }
                     chordSequence.push(chord);
                     syncSongFromSequence();
                     updateSequenceDisplay();
@@ -2175,18 +2523,43 @@
                     'm7♯5': 'min7s5', 'm(maj7)': 'minmaj7', '°maj7': 'dimmaj7'
                 };
                 
-                return {
+                const preferredInversion = parsePreferredInversionFromTitle(title);
+                const chordInfo = {
                     root: root + accidental,
                     chordType: chordTypeMap[chordTypeStr] || chordTypeStr,
                     symbol: chordSymbol
                 };
+
+                if (Number.isInteger(preferredInversion)) {
+                    chordInfo.preferredInversion = preferredInversion;
+                }
+
+                return chordInfo;
             }
+            return null;
+        }
+
+        function parsePreferredInversionFromTitle(title) {
+            const staticMatch = title.match(/\bInv\s+([1-4])\b/i);
+            if (staticMatch) {
+                return Math.max(0, Math.min(3, parseInt(staticMatch[1], 10) - 1));
+            }
+
+            if (/Root Position|Root$/i.test(title)) return 0;
+            if (/\b1st Inversion\b/i.test(title)) return 1;
+            if (/\b2nd Inversion\b/i.test(title)) return 2;
+            if (/\b3rd Inversion\b/i.test(title)) return 3;
+            if (/\b4th Inversion\b/i.test(title)) return 3;
+
             return null;
         }
         
         // Remove chord from sequence
         window.removeChordFromSequence = function(id) {
             chordSequence = chordSequence.filter(chord => chord.id !== id);
+            if (selectedChordForEditing && selectedChordForEditing.id === id) {
+                clearChordSelection();
+            }
             syncSongFromSequence();
             updateSequenceDisplay();
             updateVoiceLeadingAnalysis();
@@ -2223,6 +2596,8 @@
             if (rootSelect) rootSelect.value = chord.root;
             if (chordTypeSelect) chordTypeSelect.value = chord.chordType;
             if (durationSelect) durationSelect.value = chord.duration || 1;
+
+            renderVoicingAnalysisPanel(chord);
         };
 
         // Show edit mode buttons
@@ -2367,6 +2742,8 @@
             if (addButton) {
                 addButton.style.display = '';
             }
+
+            hideVoicingAnalysisPanel();
         }
 
         // Drag and drop variables
@@ -2468,11 +2845,12 @@
             if (optimizationDisplay) {
                 optimizationDisplay.style.display = 'none';
             }
+            hideVoicingAnalysisPanel();
         };
         
         
         // Update sequence display with chord sheet layout
-        async function updateSequenceDisplay() {
+        function updateSequenceDisplay() {
             const display = document.getElementById('sequenceDisplay');
             
             if (chordSequence.length === 0) {
@@ -2498,8 +2876,9 @@
                     
                     barChords.forEach(chord => {
                         const chordElement = document.createElement('div');
-                        chordElement.className = 'chord-in-bar';
+                        chordElement.className = 'chord-in-bar sequence-chord';
                         chordElement.dataset.chordId = chord.id;
+                        chordElement.draggable = true;
                         
                         // Check if this chord is selected
                         if (selectedChordForEditing && selectedChordForEditing.id === chord.id) {
@@ -2511,6 +2890,7 @@
                         
                         chordElement.innerHTML = `
                             <div class="chord-symbol">${preferredSymbol}</div>
+                            ${Number.isInteger(chord.preferredInversion) ? `<div class="preferred-inversion-label">${getInversionName(chord.preferredInversion)} locked</div>` : ''}
                             <div class="chord-duration">${getDurationText(chord.duration)}</div>
                             <button class="remove-btn" onclick="removeChordFromSequence(${chord.id})">×</button>
                         `;
@@ -2521,6 +2901,13 @@
                                 selectChordForEditing(chord.id);
                             }
                         };
+
+                        chordElement.addEventListener('dragstart', handleDragStart);
+                        chordElement.addEventListener('dragover', handleDragOver);
+                        chordElement.addEventListener('dragenter', handleDragEnter);
+                        chordElement.addEventListener('dragleave', handleDragLeave);
+                        chordElement.addEventListener('drop', handleDrop);
+                        chordElement.addEventListener('dragend', handleDragEnd);
                         
                         barElement.appendChild(chordElement);
                     });
@@ -2662,64 +3049,75 @@
         // Voice leading optimization algorithm
         function optimizeVoiceLeading(sequence) {
             const optimized = [];
+
+            function getUsableFingeringForInversion(chord, inversion) {
+                const chordNotes = chordGenerator.getChordNotes(chord.root, chord.chordType);
+                const voicing = chordGenerator.createDrop2Voicing(chordNotes, inversion);
+                const fingering = chordGenerator.findDrop2Fingering(voicing, chord.root, 3, 4, chord.stringSet || 'middle');
+
+                if (!fingering || !shouldUseVoicing(fingering, chord.stringSet || 'middle')) {
+                    return null;
+                }
+
+                return {
+                    inversion,
+                    fingering,
+                    voicing
+                };
+            }
             
             // Start with first chord using the selected starting inversion
             const firstChord = sequence[0];
-            const firstChordNotes = chordGenerator.getChordNotes(firstChord.root, firstChord.chordType);
             const startingInversion = parseInt(document.getElementById('startingInversionSelect').value);
-            let bestFirstInversion = startingInversion;
-            let bestFirstFingering = null;
-            
-            // Use the selected starting inversion
-            const voicing = chordGenerator.createDrop2Voicing(firstChordNotes, startingInversion);
-            bestFirstFingering = chordGenerator.findDrop2Fingering(voicing, firstChord.root, 3, 4, firstChord.stringSet || 'middle');
-            
-            // If the selected inversion doesn't work, try others
-            if (!bestFirstFingering || !shouldUseVoicing(bestFirstFingering, firstChord.stringSet || 'middle')) {
-                bestFirstFingering = null;
+            const firstInversion = Number.isInteger(firstChord.preferredInversion) ? firstChord.preferredInversion : startingInversion;
+            let bestFirstVoicing = getUsableFingeringForInversion(firstChord, firstInversion);
+
+            // If an unlocked starting inversion doesn't work, try others.
+            if (!bestFirstVoicing && !Number.isInteger(firstChord.preferredInversion)) {
                 for (let inv = 0; inv < 4; inv++) {
-                    const voicing = chordGenerator.createDrop2Voicing(firstChordNotes, inv);
-                    const fingering = chordGenerator.findDrop2Fingering(voicing, firstChord.root, 3, 4, firstChord.stringSet || 'middle');
-                    if (fingering && shouldUseVoicing(fingering, firstChord.stringSet || 'middle')) {
-                        bestFirstInversion = inv;
-                        bestFirstFingering = fingering;
+                    bestFirstVoicing = getUsableFingeringForInversion(firstChord, inv);
+                    if (bestFirstVoicing) {
                         break;
                     }
                 }
             }
 
-            if (!bestFirstFingering) {
+            if (!bestFirstVoicing) {
                 return null;
             }
             
             optimized.push({
                 ...firstChord,
-                inversion: bestFirstInversion,
-                fingering: bestFirstFingering,
-                voicing: chordGenerator.createDrop2Voicing(firstChordNotes, bestFirstInversion)
+                inversion: bestFirstVoicing.inversion,
+                fingering: bestFirstVoicing.fingering,
+                voicing: bestFirstVoicing.voicing
             });
             
             // Optimize each subsequent chord
             for (let i = 1; i < sequence.length; i++) {
                 const currentChord = sequence[i];
                 const previousChord = optimized[i - 1];
-                const currentChordNotes = chordGenerator.getChordNotes(currentChord.root, currentChord.chordType);
                 
                 let bestInversion = 0;
                 let bestFingering = null;
+                let bestVoicing = null;
                 let bestDistance = Infinity;
                 
-                // Try all inversions for current chord
-                for (let inv = 0; inv < 4; inv++) {
-                    const voicing = chordGenerator.createDrop2Voicing(currentChordNotes, inv);
-                    const fingering = chordGenerator.findDrop2Fingering(voicing, currentChord.root, 3, 4, currentChord.stringSet || 'middle');
-                    
-                    if (fingering && shouldUseVoicing(fingering, currentChord.stringSet || 'middle')) {
-                        const distance = calculateVoiceLeadingDistance(previousChord.fingering, fingering, currentChord.stringSet || 'middle');
+                const candidateInversions = Number.isInteger(currentChord.preferredInversion)
+                    ? [currentChord.preferredInversion]
+                    : [0, 1, 2, 3];
+
+                // Try every allowed inversion for current chord.
+                for (const inv of candidateInversions) {
+                    const candidate = getUsableFingeringForInversion(currentChord, inv);
+
+                    if (candidate) {
+                        const distance = calculateVoiceLeadingDistance(previousChord.fingering, candidate.fingering, currentChord.stringSet || 'middle');
                         if (distance < bestDistance) {
                             bestDistance = distance;
-                            bestInversion = inv;
-                            bestFingering = fingering;
+                            bestInversion = candidate.inversion;
+                            bestFingering = candidate.fingering;
+                            bestVoicing = candidate.voicing;
                         }
                     }
                 }
@@ -2732,7 +3130,7 @@
                     ...currentChord,
                     inversion: bestInversion,
                     fingering: bestFingering,
-                    voicing: chordGenerator.createDrop2Voicing(currentChordNotes, bestInversion),
+                    voicing: bestVoicing,
                     distance: bestDistance
                 });
             }
@@ -2752,6 +3150,75 @@
             }
             
             return totalDistance;
+        }
+
+        function getFrettedPitchBrowser(stringIndex, fret) {
+            const openStringPitches = [40, 45, 50, 55, 59, 64]; // E2, A2, D3, G3, B3, E4
+            return openStringPitches[stringIndex] + fret;
+        }
+
+        function getTopVoiceInfo(chord) {
+            const stringSet = chord.stringSet || currentStringSet;
+            const topString = stringSet === 'upper' ? 5 : 4;
+            const fret = chord.fingering?.frets?.[topString];
+
+            if (fret === null || fret === undefined) {
+                return null;
+            }
+
+            return {
+                chordSymbol: chord.symbol,
+                note: getNoteAtFretBrowser(topString, fret),
+                fret,
+                pitch: getFrettedPitchBrowser(topString, fret),
+                stringLabel: stringSet === 'upper' ? 'E string' : 'B string'
+            };
+        }
+
+        function describeGuideLineMotion(previous, current) {
+            if (!previous || !current) return 'start';
+
+            const delta = current.pitch - previous.pitch;
+            const absDelta = Math.abs(delta);
+            if (absDelta === 0) return 'common tone';
+
+            const direction = delta > 0 ? 'up' : 'down';
+            if (absDelta <= 2) return `step ${direction}`;
+            return `leap ${direction} ${absDelta}`;
+        }
+
+        function createGuideLineAnalysis(optimizedSequence) {
+            const topVoices = optimizedSequence.map(getTopVoiceInfo);
+            const visibleVoices = topVoices.filter(Boolean);
+
+            if (visibleVoices.length === 0) {
+                return '';
+            }
+
+            const noteItems = topVoices.map((voice, index) => {
+                if (!voice) return '';
+                const motion = describeGuideLineMotion(topVoices[index - 1], voice);
+                return `
+                    <div class="guide-line-note">
+                        <strong>${voice.note}${voice.fret}</strong>
+                        <span>${voice.chordSymbol}</span>
+                        <span>${motion}</span>
+                    </div>
+                `;
+            }).join('');
+
+            const motions = topVoices
+                .map((voice, index) => index === 0 || !voice ? null : describeGuideLineMotion(topVoices[index - 1], voice))
+                .filter(Boolean);
+            const commonOrStepCount = motions.filter(motion => motion === 'common tone' || motion.startsWith('step')).length;
+            const stringLabel = visibleVoices[0].stringLabel;
+
+            return `
+                <div class="guide-line-analysis">
+                    <strong>Guide line (${stringLabel}):</strong> ${commonOrStepCount}/${Math.max(1, motions.length)} moves are common tones or steps
+                    <div class="guide-line-sequence">${noteItems}</div>
+                </div>
+            `;
         }
         
         // Display optimized sequence using chord sheet layout
@@ -2794,12 +3261,12 @@
                         chordElement.className = 'chord-in-bar optimized-chord-in-bar';
                         
                         // Generate chord diagram SVG
-                        const svg = chordGenerator.create6StringChordSVG(chord.fingering, `${chord.symbol} ${getInversionName(chord.inversion)}`, '', chord.root, chord.chordType);
+                        const svg = chordGenerator.create6StringChordSVG(chord.fingering, `${chord.symbol} ${getInversionName(chord.inversion)}`, '', chord.root, chord.chordType, chord.stringSet || currentStringSet);
                         const blob = new Blob([svg], { type: 'image/svg+xml' });
                         const url = URL.createObjectURL(blob);
                         
                         chordElement.innerHTML = `
-                            <img src="${url}" class="chord-diagram" alt="${chord.symbol}" style="width: 140px; height: auto;">
+                            <img src="${url}" class="chord-diagram" alt="${chord.symbol} ${getInversionName(chord.inversion)}" style="width: 140px; height: auto;">
                         `;
                         
                         barElement.appendChild(chordElement);
@@ -2812,12 +3279,12 @@
                             chordElement.className = 'chord-in-bar optimized-chord-in-bar';
                             
                             // Generate chord diagram SVG
-                            const svg = chordGenerator.create6StringChordSVG(chord.fingering, `${chord.symbol} ${getInversionName(chord.inversion)}`, '', chord.root, chord.chordType);
+                            const svg = chordGenerator.create6StringChordSVG(chord.fingering, `${chord.symbol} ${getInversionName(chord.inversion)}`, '', chord.root, chord.chordType, chord.stringSet || currentStringSet);
                             const blob = new Blob([svg], { type: 'image/svg+xml' });
                             const url = URL.createObjectURL(blob);
                             
                             chordElement.innerHTML = `
-                                <img src="${url}" class="chord-diagram" alt="${chord.symbol}" style="width: 140px; height: auto;">
+                                <img src="${url}" class="chord-diagram" alt="${chord.symbol} ${getInversionName(chord.inversion)}" style="width: 140px; height: auto;">
                             `;
                             
                             barElement.appendChild(chordElement);
@@ -2840,6 +3307,7 @@
                 <strong>Total Voice Movement:</strong> ${totalMovement}<br>
                 <strong>Transitions:</strong> ${movements.join(', ')}<br>
                 <strong>Average Movement:</strong> ${(totalMovement / Math.max(1, movements.length)).toFixed(1)}
+                ${createGuideLineAnalysis(optimizedSequence)}
             `;
             
             document.getElementById('optimizationDisplay').style.display = 'block';
