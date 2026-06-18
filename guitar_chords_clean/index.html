@@ -98,10 +98,24 @@
         
         .chord-card {
             text-align: center;
+            position: relative;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            padding: 4px;
         }
 
         .chord-card.voicing-filtered {
-            display: none;
+            border-color: #e3b7ad;
+            background: #fffafa;
+        }
+
+        .chord-card.voicing-filtered::after {
+            content: "b9 avoid";
+            display: inline-block;
+            margin-top: 4px;
+            font-size: 10px;
+            line-height: 1;
+            color: #9a3d2f;
         }
         
         .chord-card h4 {
@@ -127,6 +141,94 @@
         .chord-diagram-container svg {
             width: 100%;
             height: auto;
+        }
+
+        .chord-note {
+            max-width: 560px;
+            margin: -4px auto 18px;
+            text-align: center;
+            font-size: 11px;
+            line-height: 1.35;
+            color: #555;
+        }
+
+        .assignment-controls {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 0 0 28px;
+        }
+
+        .assignment-section {
+            margin-bottom: 44px;
+        }
+
+        .assignment-section h2 {
+            font-size: 18px;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .assignment-note {
+            max-width: 760px;
+            margin: 0 auto 22px;
+            text-align: center;
+            color: #555;
+            font-size: 13px;
+            line-height: 1.35;
+        }
+
+        .assignment-group {
+            margin-bottom: 32px;
+            border-top: 1px solid #ddd;
+            padding-top: 18px;
+        }
+
+        .assignment-group h3 {
+            font-size: 15px;
+            text-align: center;
+            margin: 0 0 14px;
+            font-weight: normal;
+        }
+
+        .assignment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+            gap: 14px;
+            align-items: start;
+        }
+
+        .assignment-card {
+            text-align: center;
+            cursor: pointer;
+            min-height: 190px;
+        }
+
+        .assignment-card svg {
+            width: 100%;
+            max-width: 138px;
+            height: auto;
+        }
+
+        .assignment-card.missing {
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border: 1px solid #ddd;
+            color: #777;
+            font-size: 12px;
+            padding: 10px;
+            box-sizing: border-box;
+            cursor: default;
+        }
+
+        .assignment-card-label {
+            margin-top: 3px;
+            font-size: 11px;
+            line-height: 1.2;
+            color: #333;
         }
         
         /* Progressions */
@@ -182,16 +284,108 @@
         
         .modal-content {
             background-color: white;
-            margin: 10% auto;
+            margin: 6% auto;
             padding: 20px;
             border: 2px solid black;
-            width: 300px;
+            box-sizing: border-box;
+            width: min(720px, calc(100vw - 48px));
             text-align: center;
+            max-height: 86vh;
+            overflow: auto;
         }
         
         .modal-chord {
             width: 200px;
             height: auto;
+        }
+
+        .modal-body {
+            display: grid;
+            grid-template-columns: minmax(210px, 240px) 1fr;
+            gap: 18px;
+            align-items: start;
+            margin-top: 10px;
+            text-align: left;
+        }
+
+        .modal-diagram {
+            text-align: center;
+        }
+
+        .voicing-inspector {
+            border-left: 1px solid #ddd;
+            padding-left: 18px;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+
+        .voicing-inspector h4 {
+            margin: 0 0 8px;
+            font-size: 14px;
+        }
+
+        .inspector-summary {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 6px 12px;
+            margin-bottom: 12px;
+        }
+
+        .inspector-summary div,
+        .voice-row {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .voice-list {
+            margin-top: 8px;
+        }
+
+        .voice-row {
+            display: grid;
+            grid-template-columns: 44px 1fr 54px;
+            gap: 8px;
+            align-items: baseline;
+        }
+
+        .voice-row strong {
+            font-size: 13px;
+        }
+
+        .inspector-status {
+            margin-top: 10px;
+            padding: 7px 8px;
+            border: 1px solid #d8d8d8;
+            background: #fafafa;
+        }
+
+        .inspector-status.avoid {
+            border-color: #e3b7ad;
+            background: #fffafa;
+        }
+
+        @media (max-width: 640px) {
+            .modal-content {
+                margin: 4% auto;
+                width: min(360px, calc(100vw - 24px));
+                padding: 14px;
+            }
+
+            .modal-body {
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+
+            .voicing-inspector {
+                border-left: 0;
+                border-top: 1px solid #ddd;
+                padding-left: 0;
+                padding-top: 14px;
+            }
+
+            .inspector-summary {
+                grid-template-columns: 1fr;
+            }
         }
         
         .close {
@@ -285,7 +479,8 @@
         
         .chord-bar {
             flex: 1;
-            display: flex;
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             align-items: center;
             justify-content: center;
             min-height: 95px;
@@ -294,8 +489,26 @@
             border-right: 1px solid #333;
             position: relative;
             padding: 10px;
-            background: white;
+            background:
+                repeating-linear-gradient(
+                    to right,
+                    transparent 0,
+                    transparent calc(25% - 1px),
+                    #ededed calc(25% - 1px),
+                    #ededed 25%
+                ),
+                white;
             box-sizing: border-box;
+            cursor: crosshair;
+            gap: 4px;
+            justify-items: center;
+            grid-auto-rows: minmax(0, auto);
+        }
+
+        .chord-bar.multi-lane {
+            align-items: start;
+            row-gap: 6px;
+            min-height: 128px;
         }
         
         .chord-bar:last-child {
@@ -305,11 +518,13 @@
         .chord-in-bar {
             text-align: center;
             cursor: pointer;
-            margin: 0 5px;
+            margin: 0;
             position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
+            z-index: 1;
+            min-width: 0;
         }
         
         .chord-in-bar.selected {
@@ -439,7 +654,14 @@
             color: #2f6f5e;
             line-height: 1.1;
         }
-        
+
+        .target-top-note-label {
+            margin-top: 2px;
+            font-size: 10px;
+            color: #5f4a84;
+            line-height: 1.1;
+        }
+
         .remove-btn {
             position: absolute;
             top: -8px;
@@ -459,7 +681,12 @@
             background-color: white;
             flex-direction: column;
             padding: 0;
-            cursor: default;
+            cursor: pointer;
+        }
+
+        .optimized-row .chord-bar {
+            min-height: 210px;
+            align-items: center;
         }
         
         .optimized-chord-in-bar:hover {
@@ -602,6 +829,7 @@
             border-right: 1px solid #aaa;
             justify-content: center;
             padding: 8px 14px;
+            cursor: default;
         }
 
         .optimized-row .chord-bar:first-child {
@@ -618,8 +846,10 @@
         }
 
         .empty-bar {
+            grid-column: 1 / -1;
             width: 100%;
             height: 1px;
+            pointer-events: none;
         }
 
         /* Melody Builder Styles */
@@ -785,6 +1015,7 @@
             <button class="nav-button active" data-section="all-chords" onclick="showSection('all-chords', this)">All Chords</button>
             <button class="nav-button" data-section="major-progressions" onclick="showSection('major-progressions', this)">Major ii-V-I</button>
             <button class="nav-button" data-section="minor-progressions" onclick="showSection('minor-progressions', this)">Minor ii-V-i</button>
+            <button class="nav-button" data-section="chapter-1-assignment" onclick="showSection('chapter-1-assignment', this)">Chapter 1</button>
             <button class="nav-button" data-section="sequence-builder" onclick="showSection('sequence-builder', this)">Build Sequence</button>
             <button class="nav-button" data-section="melody-builder" onclick="showSection('melody-builder', this)">Melody Builder</button>
         </div>
@@ -1102,6 +1333,38 @@
                     </div>
                 </div>
             </div>
+
+            <!-- FOURTH VOICINGS -->
+            <div class="chord-category">
+                <h2>Fourths</h2>
+                <p class="chord-note">
+                    Common fourth voicings: root inversion maj7♭5 and 2nd inversion dominant 7sus4.
+                </p>
+
+                <div class="chord-grid">
+                    <div class="chord-card" onclick="showModal('chords/C_maj7b5_inv1_tedGreen.svg?v=7', 'Cmaj7♭5 Root')">
+                        <object data="chords/C_maj7b5_inv1_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        <h4>Cmaj7♭5 Root</h4>
+                    </div>
+                    <div class="chord-card" onclick="showModal('chords/C_dom7sus4_inv3_tedGreen.svg?v=7', 'C7sus4 2nd')">
+                        <object data="chords/C_dom7sus4_inv3_tedGreen.svg?v=7" type="image/svg+xml" class="chord-diagram"></object>
+                        <h4>C7sus4 2nd</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHAPTER 1 ASSIGNMENT -->
+        <div id="chapter-1-assignment" class="section">
+            <div class="assignment-controls">
+                <button class="nav-button" onclick="scrollToAssignmentBlock('chapter1-approach-1')">Approach 1</button>
+                <button class="nav-button" onclick="scrollToAssignmentBlock('chapter1-approach-2')">Approach 2</button>
+                <button class="nav-button" onclick="scrollToAssignmentBlock('chapter1-approach-3')">Approach 3</button>
+            </div>
+
+            <div id="chapter1AssignmentContent">
+                <!-- Generated by JavaScript -->
+            </div>
         </div>
         
         <!-- MAJOR PROGRESSIONS -->
@@ -1266,6 +1529,19 @@
                 </div>
                 
                 <div class="chord-selector">
+                    <label>Bar:</label>
+                    <select id="barSelect">
+                        <!-- Populated by JavaScript based on chart length -->
+                    </select>
+
+                    <label>Beat:</label>
+                    <select id="beatSelect">
+                        <option value="1" selected>1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                    </select>
+
                     <label>Root:</label>
                     <select id="rootSelect">
                         <!-- Populated by JavaScript with enharmonic spellings -->
@@ -1273,11 +1549,11 @@
                     
                     <label>Duration:</label>
                     <select id="durationSelect">
-                        <option value="0.25">1/4 bar (4 per beat)</option>
-                        <option value="0.5">1/2 bar (2 per beat)</option>
-                        <option value="1" selected>1 bar</option>
-                        <option value="2">2 bars</option>
-                        <option value="4">4 bars</option>
+                        <option value="1">1 beat</option>
+                        <option value="2">2 beats</option>
+                        <option value="4" selected>1 bar</option>
+                        <option value="8">2 bars</option>
+                        <option value="16">4 bars</option>
                     </select>
                     
                     <label>Chord Type:</label>
@@ -1309,6 +1585,11 @@
                             <option value="dim7">Diminished 7</option>
                             <option value="dimmaj7">Diminished Major 7</option>
                         </optgroup>
+                    </select>
+
+                    <label>Lead Note:</label>
+                    <select id="targetTopNoteSelect">
+                        <option value="">Any</option>
                     </select>
                     
                     <button onclick="addChordToSequence()">Add Chord</button>
@@ -1425,7 +1706,12 @@
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
             <h3 id="modalTitle"></h3>
-            <object id="modalChord" data="" type="image/svg+xml" class="modal-chord"></object>
+            <div class="modal-body">
+                <div class="modal-diagram">
+                    <object id="modalChord" data="" type="image/svg+xml" class="modal-chord"></object>
+                </div>
+                <div class="voicing-inspector" id="voicingInspector"></div>
+            </div>
         </div>
     </div>
 
@@ -1485,13 +1771,44 @@
                 populateMelodyChordTypeDropdown();
             }
 
+            if (sectionId === 'major-progressions') {
+                await generateDynamicProgressions('major', currentStringSet);
+            }
+
+            if (sectionId === 'minor-progressions') {
+                await generateDynamicProgressions('minor', currentStringSet);
+            }
+
+            if (sectionId === 'chapter-1-assignment') {
+                await renderChapter1Assignment(currentStringSet);
+            }
+
             saveAppState({ activeSection: sectionId });
         }
         
-        window.showModal = function showModal(svgFile, title) {
+        function clearModalDiagram() {
+            document.querySelectorAll('#modalSVG').forEach(element => element.remove());
+            const modalChord = document.getElementById('modalChord');
+            modalChord.style.display = 'block';
+        }
+
+        function replaceModalChordObject(svgFile) {
+            const currentModalChord = document.getElementById('modalChord');
+            const nextModalChord = document.createElement('object');
+            nextModalChord.id = 'modalChord';
+            nextModalChord.type = 'image/svg+xml';
+            nextModalChord.className = 'modal-chord';
+            nextModalChord.data = svgFile;
+            currentModalChord.replaceWith(nextModalChord);
+            return nextModalChord;
+        }
+
+        window.showModal = async function showModal(svgFile, title) {
+            clearModalDiagram();
             document.getElementById('modalTitle').textContent = title;
-            document.getElementById('modalChord').data = svgFile;
+            replaceModalChordObject(svgFile);
             document.getElementById('modal').style.display = 'block';
+            await renderModalVoicingInspector(title);
         }
         
         function closeModal() {
@@ -1559,6 +1876,10 @@
             if (sectionId === 'minor-progressions') {
                 await generateDynamicProgressions('minor', stringSet);
             }
+
+            if (sectionId === 'chapter-1-assignment') {
+                await renderChapter1Assignment(stringSet);
+            }
         }
         
         // Update chord file paths for string set switching (uses static SVG files)
@@ -1580,7 +1901,7 @@
                 object.setAttribute('data', newPath);
             });
 
-            applyVoicingFilterToChordLibrary();
+            applyVoicingFilterToChordLibraryWhenReady();
         }
         
         // Helper function to find which string the root note is on
@@ -1597,21 +1918,22 @@
         }
         
         // Show modal with dynamically generated SVG
-        function showModalWithSVG(svgContent, title) {
+        async function showModalWithSVG(svgContent, title, voicingContext = null) {
+            clearModalDiagram();
             document.getElementById('modalTitle').textContent = title;
             const modalChord = document.getElementById('modalChord');
             modalChord.style.display = 'none'; // Hide object element
             modalChord.insertAdjacentHTML('afterend', `<div id="modalSVG" class="modal-chord">${svgContent}</div>`);
             document.getElementById('modal').style.display = 'block';
+            await renderModalVoicingInspector(title, voicingContext);
         }
         
         // Update close modal to clean up dynamic SVG
         const originalCloseModal = window.closeModal;
         window.closeModal = function() {
-            const modalSVG = document.getElementById('modalSVG');
-            if (modalSVG) modalSVG.remove();
-            const modalChord = document.getElementById('modalChord');
-            modalChord.style.display = 'block';
+            clearModalDiagram();
+            const inspector = document.getElementById('voicingInspector');
+            if (inspector) inspector.innerHTML = '';
             originalCloseModal();
         };
         
@@ -1703,7 +2025,7 @@
                     roots[i], chordTypes[i], inversions[i], stringSetPattern[i]
                 );
                 
-                if (!chordData || !shouldUseVoicing(chordData, stringSetPattern[i])) {
+                if (!chordData || !shouldUseVoicing(chordData, stringSetPattern[i], chordTypes[i])) {
                     valid = false;
                     break;
                 }
@@ -1792,6 +2114,176 @@
             const names = ['Root', '1st', '2nd', '3rd'];
             return names[inversionIndex] || 'Unknown';
         }
+
+        const CHAPTER_1_ASSIGNMENT_TYPES = [
+            { type: 'maj7', source: 'Cmaj7', formula: '1 3 5 7' },
+            { type: 'min6', source: 'Cm6', formula: '1 ♭3 5 6' },
+            { type: 'dom7sus4', source: 'C7sus4', formula: '1 4 5 ♭7' },
+            { type: 'maj7b5', source: 'Cmaj7♭5', formula: '1 3 ♭5 7' },
+            { type: 'maj7s5', source: 'Cmaj7♯5', formula: '1 3 ♯5 7' },
+            { type: 'min7', source: 'Cm7', formula: '1 ♭3 5 ♭7' },
+            { type: 'min7b5', source: 'Cm7♭5', formula: '1 ♭3 ♭5 ♭7' },
+            { type: 'min7s5', source: 'Cm7♯5', formula: '1 ♭3 ♯5 ♭7' },
+            { type: 'maj6', source: 'C6', formula: '1 3 5 6' },
+            { type: 'dom7', source: 'C7', formula: '1 3 5 ♭7' },
+            { type: 'dom7s5', source: 'C7♯5', formula: '1 3 ♯5 ♭7' },
+            { type: 'dim7', source: 'C°7', formula: '1 ♭3 ♭5 ♭♭7' },
+            { type: 'dimmaj7', source: 'C°maj7', formula: '1 ♭3 ♭5 7' },
+            { type: 'minmaj7', source: 'Cm(maj7)', formula: '1 ♭3 5 7' },
+            { type: 'dom7b5', source: 'C7♭5', formula: '1 3 ♭5 ♭7' }
+        ];
+
+        function buildAssignmentChord(rootDisplay, chordType, inversion, stringSet) {
+            const internalRoot = getChromaticNote(rootDisplay);
+            const chordData = chordGenerator.generateChordForStringSet(internalRoot, chordType, inversion, stringSet);
+            if (!chordData) return null;
+
+            const symbol = chordGenerator.getChordDisplaySymbol(rootDisplay, chordType);
+            const inversionName = getInversionName(inversion);
+            const title = `${symbol} ${inversionName}`;
+            const svg = chordGenerator.create6StringChordSVG(
+                chordData,
+                title,
+                '',
+                internalRoot,
+                chordType,
+                stringSet
+            );
+
+            return {
+                root: internalRoot,
+                displayRoot: rootDisplay,
+                chordType,
+                inversion,
+                symbol,
+                title,
+                svg,
+                data: chordData,
+                stringSet
+            };
+        }
+
+        function createAssignmentCard(rootDisplay, chordType, inversion, stringSet, detailText = '') {
+            const chord = buildAssignmentChord(rootDisplay, chordType, inversion, stringSet);
+            const card = document.createElement('div');
+
+            if (!chord) {
+                card.className = 'assignment-card missing';
+                card.innerHTML = `
+                    <strong>${rootDisplay}${getChordSymbol(chordType)} ${getInversionName(inversion)}</strong>
+                    <span>No practical voicing found on this string set.</span>
+                `;
+                return card;
+            }
+
+            card.className = 'assignment-card';
+            card.innerHTML = `
+                ${chord.svg}
+                ${detailText ? `<div class="assignment-card-label">${detailText}</div>` : ''}
+            `;
+            card.onclick = () => showModalWithSVG(chord.svg, chord.title, {
+                root: chord.root,
+                chordType: chord.chordType,
+                symbol: chord.symbol,
+                inversion: chord.inversion,
+                fingering: chord.data,
+                stringSet: chord.stringSet,
+                source: 'chapter-1-assignment'
+            });
+            return card;
+        }
+
+        function appendAssignmentGroup(parent, title, cards) {
+            const group = document.createElement('div');
+            group.className = 'assignment-group';
+            group.innerHTML = `<h3>${title}</h3>`;
+            const grid = document.createElement('div');
+            grid.className = 'assignment-grid';
+            cards.forEach(card => grid.appendChild(card));
+            group.appendChild(grid);
+            parent.appendChild(group);
+        }
+
+        function createAssignmentSection(id, title, note) {
+            const section = document.createElement('section');
+            section.id = id;
+            section.className = 'assignment-section';
+            section.innerHTML = `
+                <h2>${title}</h2>
+                <p class="assignment-note">${note}</p>
+            `;
+            return section;
+        }
+
+        async function renderChapter1Assignment(stringSet = currentStringSet) {
+            await loadChordGenerator();
+            const container = document.getElementById('chapter1AssignmentContent');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const approach1 = createAssignmentSection(
+                'chapter1-approach-1',
+                'Approach 1',
+                'All 15 chord types: root inversion in D, 1st inversion in C, 2nd inversion in Bb, and 3rd inversion in G. b9 avoid voicings are included for this exercise.'
+            );
+            [
+                { root: 'D', inversion: 0, label: 'D - Root inversion' },
+                { root: 'C', inversion: 1, label: 'C - 1st inversion' },
+                { root: 'Bb', inversion: 2, label: 'Bb - 2nd inversion' },
+                { root: 'G', inversion: 3, label: 'G - 3rd inversion' }
+            ].forEach(group => {
+                appendAssignmentGroup(
+                    approach1,
+                    group.label,
+                    CHAPTER_1_ASSIGNMENT_TYPES.map(chordType =>
+                        createAssignmentCard(group.root, chordType.type, group.inversion, stringSet, `${chordType.source}: ${chordType.formula}`)
+                    )
+                );
+            });
+            container.appendChild(approach1);
+
+            const approach2 = createAssignmentSection(
+                'chapter1-approach-2',
+                'Approach 2',
+                'In F: all four inversions of one chord type, then move to the next chord type.'
+            );
+            CHAPTER_1_ASSIGNMENT_TYPES.forEach(chordType => {
+                appendAssignmentGroup(
+                    approach2,
+                    `F${getChordSymbol(chordType.type)} - ${chordType.formula}`,
+                    [0, 1, 2, 3].map(inversion =>
+                        createAssignmentCard('F', chordType.type, inversion, stringSet, getInversionName(inversion))
+                    )
+                );
+            });
+            container.appendChild(approach2);
+
+            const approach3 = createAssignmentSection(
+                'chapter1-approach-3',
+                'Approach 3',
+                'Symmetrical voice-led drill for each chord type: C 1st inversion, A 2nd inversion, Gb 3rd inversion, Eb root inversion.'
+            );
+            CHAPTER_1_ASSIGNMENT_TYPES.forEach(chordType => {
+                const pattern = [
+                    { root: 'C', inversion: 1 },
+                    { root: 'A', inversion: 2 },
+                    { root: 'Gb', inversion: 3 },
+                    { root: 'Eb', inversion: 0 }
+                ];
+                appendAssignmentGroup(
+                    approach3,
+                    `${chordType.source} symmetrical pattern`,
+                    pattern.map(step =>
+                        createAssignmentCard(step.root, chordType.type, step.inversion, stringSet, `${step.root} ${getInversionName(step.inversion)}`)
+                    )
+                );
+            });
+            container.appendChild(approach3);
+        }
+
+        window.scrollToAssignmentBlock = function(id) {
+            document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
         
         // Display the generated progressions
         function displayProgressions(progressions, section, progressionType) {
@@ -1832,7 +2324,15 @@
                     const chordElement = document.createElement('div');
                     chordElement.className = 'progression-chord';
                     chordElement.innerHTML = svg;
-                    chordElement.onclick = () => showModalWithSVG(svg, chordTitle);
+                    chordElement.onclick = () => showModalWithSVG(svg, chordTitle, {
+                        root: chord.root,
+                        chordType: chord.type,
+                        symbol: chordSymbol,
+                        inversion: chord.inversion,
+                        fingering: chord.data,
+                        stringSet: chord.stringSet,
+                        source: `${progressionType}-progression`
+                    });
                     
                     chordsDiv.appendChild(chordElement);
                     
@@ -1858,17 +2358,26 @@
                 'maj6': '6',
                 'maj7s5': 'maj7♯5',
                 'maj7b5': 'maj7♭5',
+                'maj9': 'maj9',
+                'maj69': '6/9',
                 // Dominant chords  
                 'dom7': '7',
                 'dom7sus4': '7sus4',
                 'dom7s5': '7♯5',
                 'dom7b5': '7♭5',
+                'dom9': '9',
+                'dom7b9': '7♭9',
+                'dom7s9': '7♯9',
                 // Minor chords
                 'min6': 'm6',
                 'min7': 'm7',
                 'min7b5': 'm7♭5',
                 'min7s5': 'm7♯5',
                 'minmaj7': 'm(maj7)',
+                'min9': 'm9',
+                'min7b5b9': 'm7♭5(♭9)',
+                'min7b59': 'm7♭5(9)',
+                'min69': 'm6/9',
                 // Diminished chords
                 'dim7': '°7',
                 'dimmaj7': '°maj7'
@@ -1884,6 +2393,28 @@
         let sequenceIdCounter = Date.now();
         let chordGenerator = null;
         let chordManifest = null;
+        const STATIC_B9_AVOID_FILENAMES = new Set([
+            'C_dimmaj7_inv2_tedGreen.svg',
+            'C_dimmaj7_inv2_tedGreen_upper.svg',
+            'C_dimmaj7_inv4_tedGreen.svg',
+            'C_dimmaj7_inv4_tedGreen_upper.svg',
+            'C_maj7_inv2_tedGreen.svg',
+            'C_maj7_inv2_tedGreen_upper.svg',
+            'C_maj7_inv4_tedGreen.svg',
+            'C_maj7_inv4_tedGreen_upper.svg',
+            'C_maj7b5_inv2_tedGreen.svg',
+            'C_maj7b5_inv2_tedGreen_upper.svg',
+            'C_maj7b5_inv4_tedGreen.svg',
+            'C_maj7b5_inv4_tedGreen_upper.svg',
+            'C_maj7s5_inv2_tedGreen.svg',
+            'C_maj7s5_inv2_tedGreen_upper.svg',
+            'C_maj7s5_inv4_tedGreen.svg',
+            'C_maj7s5_inv4_tedGreen_upper.svg',
+            'C_minmaj7_inv2_tedGreen.svg',
+            'C_minmaj7_inv2_tedGreen_upper.svg',
+            'C_minmaj7_inv4_tedGreen.svg',
+            'C_minmaj7_inv4_tedGreen_upper.svg'
+        ]);
         let avoidMinorSeconds = true;
         let currentStringSet = 'middle'; // Track current string set
         let currentSortMode = 'default'; // Track current sort mode
@@ -1921,16 +2452,202 @@
             return JSON.parse(localStorage.getItem('songPresets') || '[]');
         }
 
+        function getChordDurationBeats(chord, barBeats = 4) {
+            if (Number.isFinite(chord.durationBeats)) {
+                return chord.durationBeats;
+            }
+
+            const duration = Number.isFinite(chord.duration) ? chord.duration : 1;
+            return Math.max(1, Math.round(duration * barBeats));
+        }
+
+        function getChordBarIndex(chord) {
+            return Number.isInteger(chord.barIndex) ? chord.barIndex : 0;
+        }
+
+        function getChordBeat(chord) {
+            return Number.isFinite(chord.beat) ? chord.beat : 1;
+        }
+
+        function normalizeChordTiming(chord, fallbackBarIndex = 0, barBeats = 4) {
+            if (!Number.isInteger(chord.barIndex)) {
+                chord.barIndex = fallbackBarIndex;
+            }
+            if (!Number.isFinite(chord.beat)) {
+                chord.beat = 1;
+            }
+            chord.durationBeats = getChordDurationBeats(chord, barBeats);
+            chord.duration = chord.durationBeats / barBeats;
+            return chord;
+        }
+
+        function getSequenceInPlaybackOrder(sequence = chordSequence) {
+            return [...sequence].sort((a, b) => {
+                const barDelta = getChordBarIndex(a) - getChordBarIndex(b);
+                if (barDelta !== 0) return barDelta;
+
+                const beatDelta = getChordBeat(a) - getChordBeat(b);
+                if (beatDelta !== 0) return beatDelta;
+
+                return a.id - b.id;
+            });
+        }
+
+        function sortChordSequenceByTime() {
+            chordSequence = getSequenceInPlaybackOrder(chordSequence);
+        }
+
+        function getSequenceBarCount(sequence = chordSequence) {
+            const songBarCount = currentSong?.sections?.reduce((count, section) => count + (section.bars?.length || 0), 0) || 0;
+            const sequenceBarCount = sequence.reduce((max, chord) => Math.max(max, getChordBarIndex(chord) + 1), 0);
+            return Math.max(1, songBarCount, sequenceBarCount);
+        }
+
+        function populateBarSelect() {
+            const barSelect = document.getElementById('barSelect');
+            if (!barSelect) return;
+
+            const previousValue = parseInt(barSelect.value || '1', 10);
+            const barCount = getSequenceBarCount();
+            const optionCount = Math.max(barCount + 1, previousValue, 8);
+            barSelect.innerHTML = '';
+
+            for (let barNumber = 1; barNumber <= optionCount; barNumber++) {
+                const option = document.createElement('option');
+                option.value = String(barNumber);
+                option.textContent = String(barNumber);
+                barSelect.appendChild(option);
+            }
+
+            barSelect.value = String(Math.min(previousValue || 1, optionCount));
+        }
+
+        function populateTargetTopNoteSelect() {
+            const select = document.getElementById('targetTopNoteSelect');
+            if (!select) return;
+
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">Any</option>';
+
+            CHROMATIC_NOTES_FOR_DISPLAY.forEach(noteInfo => {
+                const option = document.createElement('option');
+                option.value = noteInfo.chromatic;
+                option.textContent = noteInfo.display;
+                option.setAttribute('data-spellings', noteInfo.values.join(','));
+                select.appendChild(option);
+            });
+
+            select.value = currentValue || '';
+        }
+
+        function setInsertionPoint(barNumber, beat) {
+            const barSelect = document.getElementById('barSelect');
+            const beatSelect = document.getElementById('beatSelect');
+            if (barSelect) {
+                populateBarSelect();
+                barSelect.value = String(barNumber);
+            }
+            if (beatSelect) {
+                beatSelect.value = String(Math.max(1, Math.min(4, beat)));
+            }
+        }
+
+        function setInsertionPointFromBarClick(event, barElement) {
+            if (event.target.closest('.sequence-chord')) {
+                return;
+            }
+
+            const rect = barElement.getBoundingClientRect();
+            const relativeX = Math.max(0, Math.min(rect.width - 1, event.clientX - rect.left));
+            const beat = Math.floor(relativeX / (rect.width / 4)) + 1;
+            setInsertionPoint(parseInt(barElement.dataset.barNumber || '1', 10), beat);
+            clearChordSelection();
+        }
+
+        function timingRangesOverlap(startA, durationA, startB, durationB) {
+            const endA = startA + durationA;
+            const endB = startB + durationB;
+            return startA < endB && startB < endA;
+        }
+
+        function chordOverlapsSlot(chord, barIndex, beat, durationBeats) {
+            if (getChordBarIndex(chord) !== barIndex) return false;
+            return timingRangesOverlap(
+                getChordBeat(chord),
+                getChordDurationBeats(chord),
+                beat,
+                durationBeats
+            );
+        }
+
+        function findNextOpenSlot(startBarIndex, startBeat, durationBeats) {
+            let barIndex = Math.max(0, startBarIndex);
+            let beat = Math.max(1, Math.min(4, Math.round(startBeat)));
+            const duration = Math.max(1, Math.min(4, Math.round(durationBeats)));
+
+            for (let attempt = 0; attempt < 256; attempt++) {
+                if (beat + duration > 5) {
+                    barIndex += 1;
+                    beat = 1;
+                    continue;
+                }
+
+                const isOccupied = chordSequence.some(chord => chordOverlapsSlot(chord, barIndex, beat, duration));
+                if (!isOccupied) {
+                    return { barIndex, beat };
+                }
+
+                beat += 1;
+                if (beat > 4) {
+                    barIndex += 1;
+                    beat = 1;
+                }
+            }
+
+            return { barIndex: startBarIndex, beat: startBeat };
+        }
+
+        function assignChordDisplayLanes(barChords) {
+            const laneEndBeats = [];
+            return barChords.map(chord => {
+                const beat = Math.max(1, Math.min(4, Math.round(getChordBeat(chord))));
+                const span = Math.max(1, Math.min(5 - beat, Math.round(getChordDurationBeats(chord))));
+                let lane = laneEndBeats.findIndex(endBeat => endBeat <= beat);
+                if (lane === -1) {
+                    lane = laneEndBeats.length;
+                    laneEndBeats.push(1);
+                }
+                laneEndBeats[lane] = beat + span;
+                return {
+                    chord,
+                    beat,
+                    span,
+                    lane: lane + 1,
+                    laneCount: laneEndBeats.length
+                };
+            });
+        }
+
+        function advanceInsertionPointAfterChord(chord) {
+            const nextBeatPosition = getChordBeat(chord) + getChordDurationBeats(chord);
+            const nextBarIndex = getChordBarIndex(chord) + Math.floor((nextBeatPosition - 1) / 4);
+            const nextBeat = ((nextBeatPosition - 1) % 4) + 1;
+            const nextSlot = findNextOpenSlot(nextBarIndex, nextBeat, getChordDurationBeats(chord));
+            setInsertionPoint(nextSlot.barIndex + 1, nextSlot.beat);
+        }
+
         function chordEventToSequenceChord(chordEvent, barBeats = 4, source = {}) {
             const chromaticRoot = getChromaticNote(chordEvent.root);
-            const duration = Math.max(0.25, (chordEvent.duration || barBeats) / barBeats);
+            const durationBeats = Math.max(1, chordEvent.duration || barBeats);
             const sequenceChord = {
                 id: nextSequenceId(),
                 root: chromaticRoot,
                 displayRoot: chordEvent.root,
                 chordType: chordEvent.chordType,
-                duration,
+                duration: durationBeats / barBeats,
+                durationBeats,
                 beat: chordEvent.beat || 1,
+                barIndex: source.barIndex || 0,
                 barId: source.barId,
                 sectionId: source.sectionId,
                 symbol: `${chordEvent.root}${getChordSymbol(chordEvent.chordType)}`,
@@ -1941,20 +2658,27 @@
                 sequenceChord.preferredInversion = chordEvent.preferredInversion;
             }
 
+            if (chordEvent.targetTopNote) {
+                sequenceChord.targetTopNote = getChromaticNote(chordEvent.targetTopNote);
+            }
+
             return sequenceChord;
         }
 
         function songToChordSequence(song) {
             const sequence = [];
+            let barIndex = 0;
             song.sections.forEach(section => {
                 section.bars.forEach(bar => {
                     const sortedChords = [...bar.chords].sort((a, b) => (a.beat || 1) - (b.beat || 1));
                     sortedChords.forEach(chordEvent => {
                         sequence.push(chordEventToSequenceChord(chordEvent, bar.beats || 4, {
+                            barIndex,
                             sectionId: section.id,
                             barId: bar.id
                         }));
                     });
+                    barIndex += 1;
                 });
             });
             return sequence;
@@ -1962,28 +2686,44 @@
 
         function sequenceToSong(sequence, baseSong = currentSong) {
             const song = baseSong ? cloneData(baseSong) : createEmptySong();
+            const orderedSequence = getSequenceInPlaybackOrder(sequence);
+            const barCount = Math.max(getSequenceBarCount(orderedSequence), 1);
+            const bars = Array.from({ length: barCount }, (_, index) => ({
+                id: `b${index + 1}`,
+                beats: 4,
+                chords: []
+            }));
+
+            orderedSequence.forEach((chord, index) => {
+                normalizeChordTiming(chord, index, 4);
+                const barIndex = Math.max(0, Math.min(bars.length - 1, getChordBarIndex(chord)));
+                const chordEvent = {
+                    beat: Math.max(1, Math.min(4, getChordBeat(chord))),
+                    duration: getChordDurationBeats(chord),
+                    root: chord.displayRoot || chord.root,
+                    chordType: chord.chordType
+                };
+
+                if (Number.isInteger(chord.preferredInversion)) {
+                    chordEvent.preferredInversion = chord.preferredInversion;
+                }
+
+                if (chord.targetTopNote) {
+                    chordEvent.targetTopNote = chord.targetTopNote;
+                }
+
+                bars[barIndex].chords.push(chordEvent);
+            });
+
+            bars.forEach(bar => {
+                bar.chords.sort((a, b) => (a.beat || 1) - (b.beat || 1));
+            });
+
             song.sections = [
                 {
                     id: 'main',
                     name: 'Main',
-                    bars: sequence.map((chord, index) => {
-                        const chordEvent = {
-                            beat: 1,
-                            duration: Math.max(1, Math.round((chord.duration || 1) * 4)),
-                            root: chord.displayRoot || chord.root,
-                            chordType: chord.chordType
-                        };
-
-                        if (Number.isInteger(chord.preferredInversion)) {
-                            chordEvent.preferredInversion = chord.preferredInversion;
-                        }
-
-                        return {
-                            id: `b${index + 1}`,
-                            beats: 4,
-                            chords: [chordEvent]
-                        };
-                    })
+                    bars
                 }
             ];
             return song;
@@ -2034,21 +2774,26 @@
         function loadSong(song) {
             currentSong = cloneData(song);
             chordSequence = songToChordSequence(currentSong);
+            sortChordSequenceByTime();
             selectedChordForEditing = null;
             inferredKey = currentSong.key && !currentSong.key.includes('minor') ? currentSong.key : inferKeyFromChords(chordSequence);
             updateSequenceDisplay();
             updateVoiceLeadingAnalysis();
             renderChartMeta();
+            populateBarSelect();
             const optimizationDisplay = document.getElementById('optimizationDisplay');
             if (optimizationDisplay) {
                 optimizationDisplay.style.display = 'none';
             }
             saveCurrentSong();
+            autoOptimizeSequence();
         }
 
         function syncSongFromSequence() {
+            sortChordSequenceByTime();
             currentSong = sequenceToSong(chordSequence, currentSong);
             renderChartMeta();
+            populateBarSelect();
             saveCurrentSong();
         }
 
@@ -2067,20 +2812,33 @@
         }
 
         function getChordManifestEntry(filename) {
-            if (!chordManifest || !Array.isArray(chordManifest.chords)) return null;
-            return chordManifest.chords.find(chord => chord.filename === filename) || null;
+            const manifestEntry = chordManifest?.chords?.find(chord => chord.filename === filename);
+            if (manifestEntry) return manifestEntry;
+            if (STATIC_B9_AVOID_FILENAMES.has(filename)) {
+                return {
+                    filename,
+                    hasFlatNineAvoidInterval: true,
+                    hasMinorSecond: true
+                };
+            }
+            return null;
         }
 
         function getChordFilenameFromObject(objectElement) {
             const currentPath = objectElement.getAttribute('data');
             if (!currentPath) return '';
             return currentPath
+                .split('?')[0]
                 .replace('chords/', '')
-                .replace('?v=7', '');
+                .replace(/^.*\//, '');
         }
 
-        function shouldUseVoicing(chordData, stringSet = chordData?.stringSet || currentStringSet) {
-            return !avoidMinorSeconds || !chordGenerator.hasFlatNineAvoidInterval(chordData, stringSet);
+        function allowsDominantFlatNine(chordType) {
+            return chordType === 'dom7b9';
+        }
+
+        function shouldUseVoicing(chordData, stringSet = chordData?.stringSet || currentStringSet, chordType = chordData?.chordType) {
+            return !avoidMinorSeconds || allowsDominantFlatNine(chordType) || !chordGenerator.hasFlatNineAvoidInterval(chordData, stringSet);
         }
 
         function analyzeVoicing(chord, inversion) {
@@ -2102,21 +2860,197 @@
             }
 
             const hasB9 = avoidMinorSeconds && chordGenerator.hasFlatNineAvoidInterval(fingering, stringSet);
+            const dominantFlatNineAllowed = hasB9 && allowsDominantFlatNine(chord.chordType);
             if (hasB9) {
-                reasons.push('b9 avoid interval');
+                reasons.push(dominantFlatNineAllowed ? 'dominant b9 exception' : 'b9 avoid interval');
             }
 
             return {
                 inversion,
                 voicing,
                 fingering,
-                available: reasons.length === 0,
+                available: reasons.length === 0 || dominantFlatNineAllowed,
                 reasons
             };
         }
 
         function analyzeChordVoicings(chord) {
             return [0, 1, 2, 3].map(inversion => analyzeVoicing(chord, inversion));
+        }
+
+        function getActiveStringIndexes(stringSet = currentStringSet) {
+            return stringSet === 'upper' ? [2, 3, 4, 5] : [1, 2, 3, 4];
+        }
+
+        function getFretSpan(fingering, stringSet = currentStringSet) {
+            const usedFrets = getActiveStringIndexes(stringSet)
+                .map(stringIndex => fingering?.frets?.[stringIndex])
+                .filter(fret => fret !== null && fret !== undefined && fret > 0);
+
+            if (usedFrets.length === 0) return 0;
+            return Math.max(...usedFrets) - Math.min(...usedFrets);
+        }
+
+        function getVoicingVoiceRows(fingering, chord, stringSet = currentStringSet) {
+            return getActiveStringIndexes(stringSet).map((stringIndex, voiceIndex) => {
+                const fret = fingering.frets[stringIndex];
+                const note = getNoteAtFretBrowser(stringIndex, fret);
+                return {
+                    voice: voiceIndex + 1,
+                    stringIndex,
+                    stringName: ['E', 'A', 'D', 'G', 'B', 'E'][stringIndex],
+                    fret,
+                    note,
+                    interval: chordGenerator.getIntervalName(note, chord.root, chord.chordType)
+                };
+            });
+        }
+
+        function inspectVoicing(chord, inversion) {
+            const analysis = analyzeVoicing(chord, inversion);
+            if (!analysis.fingering) {
+                return {
+                    ...analysis,
+                    chord,
+                    stringSet: chord.stringSet || currentStringSet,
+                    voices: [],
+                    fretSpan: null,
+                    topVoice: null,
+                    hasB9: false
+                };
+            }
+
+            const stringSet = chord.stringSet || currentStringSet;
+            const voices = getVoicingVoiceRows(analysis.fingering, chord, stringSet);
+            return {
+                ...analysis,
+                chord,
+                stringSet,
+                voices,
+                fretSpan: getFretSpan(analysis.fingering, stringSet),
+                topVoice: voices[voices.length - 1],
+                hasB9: chordGenerator.hasFlatNineAvoidInterval(analysis.fingering, stringSet)
+            };
+        }
+
+        function createVoicingInspection(context) {
+            if (!context) return null;
+
+            const chord = {
+                root: context.root,
+                displayRoot: context.displayRoot || context.root,
+                chordType: context.chordType || context.type,
+                symbol: context.symbol || `${context.displayRoot || context.root}${getChordSymbol(context.chordType || context.type)}`,
+                stringSet: context.stringSet || currentStringSet,
+                targetTopNote: context.targetTopNote
+            };
+            const inversion = Number.isInteger(context.inversion) ? context.inversion : 0;
+            const fingering = context.fingering || context.data || null;
+            if (!fingering) {
+                return null;
+            }
+
+            const voices = getVoicingVoiceRows(fingering, chord, chord.stringSet);
+            return {
+                chord,
+                inversion,
+                fingering,
+                voicing: context.voicing || null,
+                stringSet: chord.stringSet,
+                voices,
+                fretSpan: getFretSpan(fingering, chord.stringSet),
+                topVoice: voices[voices.length - 1],
+                hasB9: chordGenerator.hasFlatNineAvoidInterval(fingering, chord.stringSet),
+                distance: context.distance,
+                source: context.source || 'voicing-data'
+            };
+        }
+
+        function renderVoicingInspectorHTML(inspection) {
+            const chord = inspection.chord;
+            const voiceRows = inspection.voices.map(voice => `
+                <div class="voice-row">
+                    <span>${voice.stringName}</span>
+                    <strong>${voice.note}${voice.fret}</strong>
+                    <span>${voice.interval}</span>
+                </div>
+            `).join('');
+
+            const statusClass = inspection.hasB9 ? 'inspector-status avoid' : 'inspector-status';
+            const statusText = inspection.hasB9
+                ? 'Contains a b9 avoid interval under the current Willmott rule.'
+                : 'No b9 avoid interval detected.';
+            const movement = inspection.distance !== undefined
+                ? `<div><strong>Move in:</strong> ${inspection.distance}</div>`
+                : '';
+            const targetTopNote = inspection.chord.targetTopNote
+                ? `<div><strong>Lead target:</strong> ${inspection.chord.targetTopNote}</div>`
+                : '';
+
+            return `
+                <h4>Voicing Inspector</h4>
+                <div class="inspector-summary">
+                    <div><strong>Chord:</strong> ${chord.symbol}</div>
+                    <div><strong>Inversion:</strong> ${getInversionName(inspection.inversion)}</div>
+                    <div><strong>String set:</strong> ${inspection.stringSet}</div>
+                    <div><strong>Fret span:</strong> ${inspection.fretSpan}</div>
+                    <div><strong>Top voice:</strong> ${inspection.topVoice.note}${inspection.topVoice.fret}</div>
+                    <div><strong>Top tone:</strong> ${inspection.topVoice.interval}</div>
+                    ${targetTopNote}
+                    ${movement}
+                </div>
+                <strong>Low to high voices</strong>
+                <div class="voice-list">${voiceRows}</div>
+                <div class="${statusClass}">${statusText}</div>
+            `;
+        }
+
+        function createChordFromModalTitle(title) {
+            const chordInfo = parseChordFromTitle(title);
+            if (!chordInfo) return null;
+
+            return {
+                root: getChromaticNote(chordInfo.root),
+                displayRoot: chordInfo.root,
+                chordType: chordInfo.chordType,
+                symbol: chordInfo.symbol,
+                stringSet: currentStringSet
+            };
+        }
+
+        function getModalInversionFromTitle(title) {
+            const parsed = parsePreferredInversionFromTitle(title);
+            return Number.isInteger(parsed) ? parsed : 0;
+        }
+
+        async function renderModalVoicingInspector(title, voicingContext = null) {
+            await loadChordGenerator();
+            const inspector = document.getElementById('voicingInspector');
+            if (!inspector || !chordGenerator) return;
+
+            const contextInspection = createVoicingInspection(voicingContext);
+            if (contextInspection) {
+                inspector.innerHTML = renderVoicingInspectorHTML(contextInspection);
+                return;
+            }
+
+            const chord = createChordFromModalTitle(title);
+            if (!chord) {
+                inspector.innerHTML = '<h4>Voicing Inspector</h4><div class="inspector-status">No voicing data available.</div>';
+                return;
+            }
+
+            const inversion = getModalInversionFromTitle(title);
+            const inspection = inspectVoicing(chord, inversion);
+            if (!inspection.fingering) {
+                inspector.innerHTML = `
+                    <h4>Voicing Inspector</h4>
+                    <div class="inspector-status avoid">No fingering found for ${chord.symbol} ${getInversionName(inversion)} on ${inspection.stringSet} strings.</div>
+                `;
+                return;
+            }
+
+            inspector.innerHTML = renderVoicingInspectorHTML(inspection);
         }
 
         function createVoicingOptionElement(chord, analysis) {
@@ -2257,7 +3191,9 @@
         }
 
         function applyVoicingFilterToChordLibrary() {
-            if (!chordManifest) return;
+            if (!chordManifest) {
+                loadChordManifest().then(() => applyVoicingFilterToChordLibrary());
+            }
 
             document.querySelectorAll('#all-chords .chord-card').forEach(card => {
                 const object = card.querySelector('object.chord-diagram');
@@ -2266,6 +3202,13 @@
                 const isFiltered = avoidMinorSeconds && (manifestEntry?.hasFlatNineAvoidInterval || manifestEntry?.hasMinorSecond);
                 card.classList.toggle('voicing-filtered', Boolean(isFiltered));
             });
+        }
+
+        function applyVoicingFilterToChordLibraryWhenReady() {
+            applyVoicingFilterToChordLibrary();
+            requestAnimationFrame(() => applyVoicingFilterToChordLibrary());
+            setTimeout(() => applyVoicingFilterToChordLibrary(), 100);
+            setTimeout(() => applyVoicingFilterToChordLibrary(), 500);
         }
 
         async function refreshVoicingDependentViews() {
@@ -2323,24 +3266,33 @@
                 'maj6': 'Major 6', 
                 'maj7s5': 'Major 7♯5',
                 'maj7b5': 'Major 7♭5',
+                'maj9': 'Major 9',
+                'maj69': 'Major 6/9',
                 'dom7': 'Dominant 7',
                 'dom7sus4': 'Dominant 7sus4',
                 'dom7s5': 'Dominant 7♯5',
                 'dom7b5': 'Dominant 7♭5',
+                'dom9': 'Dominant 9',
+                'dom7b9': 'Dominant 7♭9',
+                'dom7s9': 'Dominant 7♯9',
                 'min6': 'Minor 6',
                 'min7': 'Minor 7',
                 'min7b5': 'Minor 7♭5',
                 'min7s5': 'Minor 7♯5',
                 'minmaj7': 'Minor Major 7',
+                'min9': 'Minor 9',
+                'min7b5b9': 'Minor 7♭5(♭9)',
+                'min7b59': 'Minor 7♭5(9)',
+                'min69': 'Minor 6/9',
                 'dim7': 'Diminished 7',
                 'dimmaj7': 'Diminished Major 7'
             };
             
             // Group chord types by category
             const chordCategories = [
-                { name: 'Major Chords', chords: ['maj7', 'maj6', 'maj7s5', 'maj7b5'] },
-                { name: 'Dominant Chords', chords: ['dom7', 'dom7sus4', 'dom7s5', 'dom7b5'] },
-                { name: 'Minor Chords', chords: ['min6', 'min7', 'min7b5', 'min7s5', 'minmaj7'] },
+                { name: 'Major Chords', chords: ['maj7', 'maj6', 'maj7s5', 'maj7b5', 'maj9', 'maj69'] },
+                { name: 'Dominant Chords', chords: ['dom7', 'dom7sus4', 'dom7s5', 'dom7b5', 'dom9', 'dom7b9', 'dom7s9'] },
+                { name: 'Minor Chords', chords: ['min6', 'min7', 'min7b5', 'min7s5', 'minmaj7', 'min9', 'min7b5b9', 'min7b59', 'min69'] },
                 { name: 'Diminished Chords', chords: ['dim7', 'dimmaj7'] }
             ];
             
@@ -2371,7 +3323,10 @@
             document.getElementById('sort-options').style.display = 'block';
             currentSong = createEmptySong();
             populatePresetDropdown();
+            populateBarSelect();
+            populateTargetTopNoteSelect();
             renderChartMeta();
+            await loadChordGenerator();
             const savedSong = getSavedCurrentSong();
             if (savedSong && savedSong.sections) {
                 loadSong(savedSong);
@@ -2382,9 +3337,9 @@
             if (avoidMinorSecondsToggle) {
                 avoidMinorSecondsToggle.checked = avoidMinorSeconds;
             }
+            applyVoicingFilterToChordLibraryWhenReady();
             
             // Always load initial chords for middle string set when All Chords is active
-            await loadChordGenerator();
             await loadChordManifest();
             updateChordPaths('middle');
             
@@ -2401,6 +3356,8 @@
             if (savedState.activeSection && savedState.activeSection !== 'all-chords') {
                 await showSection(savedState.activeSection);
             }
+
+            applyVoicingFilterToChordLibraryWhenReady();
             
             // Add background click handler for sequence builder section
             setupBackgroundClickHandler();
@@ -2448,17 +3405,30 @@
             
             const root = document.getElementById('rootSelect').value;
             const chordType = document.getElementById('chordTypeSelect').value;
-            const duration = parseFloat(document.getElementById('durationSelect').value);
+            const durationBeats = parseFloat(document.getElementById('durationSelect').value);
+            const requestedBarIndex = Math.max(0, parseInt(document.getElementById('barSelect')?.value || '1', 10) - 1);
+            const requestedBeat = parseFloat(document.getElementById('beatSelect')?.value || '1');
+            const openSlot = findNextOpenSlot(requestedBarIndex, requestedBeat, durationBeats);
+            const barIndex = openSlot.barIndex;
+            const beat = openSlot.beat;
+            const targetTopNote = document.getElementById('targetTopNoteSelect')?.value || '';
             
             const chord = {
                 root: getChromaticNote(root),
                 displayRoot: root,
                 chordType: chordType,
-                duration: duration,
+                duration: durationBeats / 4,
+                durationBeats,
+                barIndex,
+                beat,
                 symbol: `${root}${getChordSymbol(chordType)}`,
                 stringSet: currentStringSet,
                 id: nextSequenceId()
             };
+
+            if (targetTopNote) {
+                chord.targetTopNote = getChromaticNote(targetTopNote);
+            }
             
             chordSequence.push(chord);
             syncSongFromSequence();
@@ -2468,6 +3438,8 @@
             // Update key inference
             inferredKey = inferKeyFromChords(chordSequence);
             updateChordSpellingsForKey(inferredKey);
+            advanceInsertionPointAfterChord(chord);
+            autoOptimizeSequence();
         };
         
         // Add chord from library (clicking on chord diagrams)
@@ -2488,10 +3460,17 @@
                         displayRoot: chordInfo.root,
                         chordType: chordInfo.chordType,
                         symbol: chordInfo.symbol,
-                        duration: 1,
+                        barIndex: Math.max(0, parseInt(document.getElementById('barSelect')?.value || '1', 10) - 1),
+                        beat: parseFloat(document.getElementById('beatSelect')?.value || '1'),
+                        durationBeats: parseFloat(document.getElementById('durationSelect')?.value || '4'),
+                        duration: parseFloat(document.getElementById('durationSelect')?.value || '4') / 4,
                         stringSet: currentStringSet,
                         id: nextSequenceId()
                     };
+                    const targetTopNote = document.getElementById('targetTopNoteSelect')?.value || '';
+                    if (targetTopNote) {
+                        chord.targetTopNote = getChromaticNote(targetTopNote);
+                    }
                     if (Number.isInteger(chordInfo.preferredInversion)) {
                         chord.preferredInversion = chordInfo.preferredInversion;
                     }
@@ -2499,10 +3478,12 @@
                     syncSongFromSequence();
                     updateSequenceDisplay();
                     updateVoiceLeadingAnalysis();
+                    advanceInsertionPointAfterChord(chord);
+                    autoOptimizeSequence();
                 }
             } else {
                 // Normal modal behavior
-                originalShowModal(svgFile, title);
+                return originalShowModal(svgFile, title);
             }
         };
         
@@ -2520,7 +3501,9 @@
                     'maj7': 'maj7', 'm7': 'min7', '7': 'dom7', 'm7♭5': 'min7b5', '°7': 'dim7',
                     '6': 'maj6', 'm6': 'min6', 'maj7♯5': 'maj7s5', 'maj7♭5': 'maj7b5',
                     '7sus4': 'dom7sus4', '7♯5': 'dom7s5', '7♭5': 'dom7b5',
-                    'm7♯5': 'min7s5', 'm(maj7)': 'minmaj7', '°maj7': 'dimmaj7'
+                    'm7♯5': 'min7s5', 'm(maj7)': 'minmaj7', '°maj7': 'dimmaj7',
+                    'maj9': 'maj9', '6/9': 'maj69', '9': 'dom9', '7♭9': 'dom7b9', '7♯9': 'dom7s9',
+                    'm9': 'min9', 'm7♭5(♭9)': 'min7b5b9', 'm7♭5(9)': 'min7b59', 'm6/9': 'min69'
                 };
                 
                 const preferredInversion = parsePreferredInversionFromTitle(title);
@@ -2546,10 +3529,10 @@
             }
 
             if (/Root Position|Root$/i.test(title)) return 0;
-            if (/\b1st Inversion\b/i.test(title)) return 1;
-            if (/\b2nd Inversion\b/i.test(title)) return 2;
-            if (/\b3rd Inversion\b/i.test(title)) return 3;
-            if (/\b4th Inversion\b/i.test(title)) return 3;
+            if (/\b1st(?:\s+Inversion)?\b/i.test(title)) return 1;
+            if (/\b2nd(?:\s+Inversion)?\b/i.test(title)) return 2;
+            if (/\b3rd(?:\s+Inversion)?\b/i.test(title)) return 3;
+            if (/\b4th(?:\s+Inversion)?\b/i.test(title)) return 3;
 
             return null;
         }
@@ -2563,6 +3546,7 @@
             syncSongFromSequence();
             updateSequenceDisplay();
             updateVoiceLeadingAnalysis();
+            autoOptimizeSequence();
         };
 
         // Variables for chord editing
@@ -2592,10 +3576,16 @@
             const rootSelect = document.getElementById('rootSelect');
             const chordTypeSelect = document.getElementById('chordTypeSelect');
             const durationSelect = document.getElementById('durationSelect');
+            const barSelect = document.getElementById('barSelect');
+            const beatSelect = document.getElementById('beatSelect');
+            const targetTopNoteSelect = document.getElementById('targetTopNoteSelect');
 
             if (rootSelect) rootSelect.value = chord.root;
             if (chordTypeSelect) chordTypeSelect.value = chord.chordType;
-            if (durationSelect) durationSelect.value = chord.duration || 1;
+            if (durationSelect) durationSelect.value = String(getChordDurationBeats(chord));
+            if (barSelect) barSelect.value = String(getChordBarIndex(chord) + 1);
+            if (beatSelect) beatSelect.value = String(getChordBeat(chord));
+            if (targetTopNoteSelect) targetTopNoteSelect.value = chord.targetTopNote || '';
 
             renderVoicingAnalysisPanel(chord);
         };
@@ -2651,8 +3641,11 @@
             const rootSelect = document.getElementById('rootSelect');
             const chordTypeSelect = document.getElementById('chordTypeSelect');
             const durationSelect = document.getElementById('durationSelect');
+            const barSelect = document.getElementById('barSelect');
+            const beatSelect = document.getElementById('beatSelect');
+            const targetTopNoteSelect = document.getElementById('targetTopNoteSelect');
             
-            if (!rootSelect || !chordTypeSelect || !durationSelect) return;
+            if (!rootSelect || !chordTypeSelect || !durationSelect || !barSelect || !beatSelect || !targetTopNoteSelect) return;
 
             // Store the selected chord ID to maintain selection after update
             const selectedChordId = selectedChordForEditing.id;
@@ -2660,9 +3653,17 @@
             // Update the chord
             selectedChordForEditing.root = getChromaticNote(rootSelect.value);
             selectedChordForEditing.chordType = chordTypeSelect.value;
-            selectedChordForEditing.duration = parseFloat(durationSelect.value);
+            selectedChordForEditing.durationBeats = parseFloat(durationSelect.value);
+            selectedChordForEditing.duration = selectedChordForEditing.durationBeats / 4;
+            selectedChordForEditing.barIndex = Math.max(0, parseInt(barSelect.value, 10) - 1);
+            selectedChordForEditing.beat = parseFloat(beatSelect.value);
             selectedChordForEditing.displayRoot = rootSelect.value;
             selectedChordForEditing.symbol = `${selectedChordForEditing.displayRoot}${getChordSymbol(selectedChordForEditing.chordType)}`;
+            if (targetTopNoteSelect.value) {
+                selectedChordForEditing.targetTopNote = getChromaticNote(targetTopNoteSelect.value);
+            } else {
+                delete selectedChordForEditing.targetTopNote;
+            }
 
             // Update displays
             syncSongFromSequence();
@@ -2672,6 +3673,7 @@
             // Re-infer key with updated chords
             inferredKey = inferKeyFromChords(chordSequence);
             updateChordSpellingsForKey(inferredKey);
+            autoOptimizeSequence();
 
             // Restore selection after the display update
             setTimeout(() => {
@@ -2693,15 +3695,29 @@
 
             // Create new chord from form values
             const durationSelect = document.getElementById('durationSelect');
+            const targetTopNoteSelect = document.getElementById('targetTopNoteSelect');
+            const selectedDuration = getChordDurationBeats(selectedChordForEditing);
+            const selectedBeat = getChordBeat(selectedChordForEditing);
+            const nextBeatPosition = selectedBeat + selectedDuration;
+            const newBarIndex = getChordBarIndex(selectedChordForEditing) + Math.floor((nextBeatPosition - 1) / 4);
+            const newBeat = ((nextBeatPosition - 1) % 4) + 1;
+            const durationBeats = parseFloat(durationSelect.value);
             const newChord = {
                 root: getChromaticNote(rootSelect.value),
                 chordType: chordTypeSelect.value,
-                duration: parseFloat(durationSelect.value),
+                duration: durationBeats / 4,
+                durationBeats,
+                barIndex: newBarIndex,
+                beat: newBeat,
                 displayRoot: rootSelect.value,
                 symbol: `${rootSelect.value}${getChordSymbol(chordTypeSelect.value)}`,
                 stringSet: currentStringSet,
                 id: nextSequenceId()
             };
+
+            if (targetTopNoteSelect?.value) {
+                newChord.targetTopNote = getChromaticNote(targetTopNoteSelect.value);
+            }
 
             // Find the position to insert after
             const selectedIndex = chordSequence.findIndex(c => c.id === selectedChordForEditing.id);
@@ -2717,6 +3733,7 @@
             // Re-infer key with updated chords
             inferredKey = inferKeyFromChords(chordSequence);
             updateChordSpellingsForKey(inferredKey);
+            autoOptimizeSequence();
 
             // Move selection to the newly inserted chord after the display update
             setTimeout(() => {
@@ -2820,6 +3837,11 @@
             if (draggedIndex !== -1 && targetIndex !== -1 && draggedIndex !== targetIndex) {
                 // Remove dragged chord from its current position
                 const draggedChord = chordSequence.splice(draggedIndex, 1)[0];
+                const targetChord = chordSequence.find(c => c.id == targetId);
+                if (targetChord) {
+                    draggedChord.barIndex = getChordBarIndex(targetChord);
+                    draggedChord.beat = getChordBeat(targetChord);
+                }
                 
                 // Insert at target position
                 const newTargetIndex = draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
@@ -2829,6 +3851,7 @@
                 syncSongFromSequence();
                 updateSequenceDisplay();
                 updateVoiceLeadingAnalysis();
+                autoOptimizeSequence();
             }
         }
         
@@ -2840,6 +3863,7 @@
             clearChordSelection(); // Also clear any selected chord
             updateSequenceDisplay();
             renderChartMeta();
+            populateBarSelect();
             // Hide optimization display if it exists
             const optimizationDisplay = document.getElementById('optimizationDisplay');
             if (optimizationDisplay) {
@@ -2855,10 +3879,12 @@
             
             if (chordSequence.length === 0) {
                 display.innerHTML = '<div style="color: #666; font-style: italic;">Your chord sequence will appear here...</div>';
+                populateBarSelect();
                 return;
             }
             
             display.innerHTML = '';
+            populateBarSelect();
             
             // Convert chord sequence to bar-based layout
             const rows = createChordSheetLayout(chordSequence);
@@ -2871,14 +3897,27 @@
                 for (let barIndex = 0; barIndex < 4; barIndex++) {
                     const barElement = document.createElement('div');
                     barElement.className = 'chord-bar';
+                    barElement.dataset.barNumber = String(rowIndex * 4 + barIndex + 1);
+                    barElement.addEventListener('click', event => setInsertionPointFromBarClick(event, barElement));
                     
                     const barChords = row[barIndex] || [];
+                    const positionedChords = assignChordDisplayLanes(barChords);
+                    const laneCount = positionedChords.reduce((max, item) => Math.max(max, item.laneCount), 1);
+                    if (laneCount > 1) {
+                        barElement.classList.add('multi-lane');
+                        barElement.style.gridTemplateRows = `repeat(${laneCount}, minmax(0, auto))`;
+                    }
                     
-                    barChords.forEach(chord => {
+                    positionedChords.forEach(({ chord, beat, span, lane }) => {
                         const chordElement = document.createElement('div');
                         chordElement.className = 'chord-in-bar sequence-chord';
                         chordElement.dataset.chordId = chord.id;
                         chordElement.draggable = true;
+                        chordElement.style.gridColumn = `${beat} / span ${span}`;
+                        chordElement.style.gridRow = String(lane);
+                        chordElement.dataset.beat = String(beat);
+                        chordElement.dataset.beatSpan = String(span);
+                        chordElement.dataset.lane = String(lane);
                         
                         // Check if this chord is selected
                         if (selectedChordForEditing && selectedChordForEditing.id === chord.id) {
@@ -2891,7 +3930,8 @@
                         chordElement.innerHTML = `
                             <div class="chord-symbol">${preferredSymbol}</div>
                             ${Number.isInteger(chord.preferredInversion) ? `<div class="preferred-inversion-label">${getInversionName(chord.preferredInversion)} locked</div>` : ''}
-                            <div class="chord-duration">${getDurationText(chord.duration)}</div>
+                            ${chord.targetTopNote ? `<div class="target-top-note-label">lead ${chord.targetTopNote}</div>` : ''}
+                            <div class="chord-duration">beat ${getChordBeat(chord)} · ${getDurationText(getChordDurationBeats(chord))}</div>
                             <button class="remove-btn" onclick="removeChordFromSequence(${chord.id})">×</button>
                         `;
                         
@@ -2914,7 +3954,7 @@
                     
                     // If bar is empty, add placeholder
                     if (barChords.length === 0) {
-                        barElement.innerHTML = '<div style="color: #ccc;">|</div>';
+                        barElement.innerHTML = '<div class="empty-bar">|</div>';
                     }
                     
                     rowElement.appendChild(barElement);
@@ -2926,121 +3966,82 @@
         
         // Create chord sheet layout organized by bars and rows
         function createChordSheetLayout(chords) {
-            const rows = [];
-            let currentRow = [[], [], [], []]; // 4 bars per row
-            let currentBarInRow = 0;
-            let currentBarTime = 0; // Track time within current bar
-            
-            chords.forEach(chord => {
-                // Ensure backward compatibility - add default duration if missing
-                if (!chord.hasOwnProperty('duration')) {
-                    chord.duration = 1;
+            const orderedChords = getSequenceInPlaybackOrder(chords);
+            const barCount = Math.max(getSequenceBarCount(orderedChords), 1);
+            const rows = Array.from({ length: Math.ceil(barCount / 4) }, () => [[], [], [], []]);
+
+            orderedChords.forEach((chord, fallbackIndex) => {
+                normalizeChordTiming(chord, fallbackIndex, 4);
+                const barIndex = getChordBarIndex(chord);
+                const rowIndex = Math.floor(barIndex / 4);
+                const barInRow = barIndex % 4;
+                if (!rows[rowIndex]) {
+                    rows[rowIndex] = [[], [], [], []];
                 }
-                const duration = chord.duration;
-                
-                // Handle different duration cases
-                if (duration >= 4) {
-                    // Chord lasts 4+ bars - fill entire row
-                    if (currentBarTime > 0 || currentBarInRow > 0) {
-                        // Finish current row and start new one
-                        rows.push(currentRow);
-                        currentRow = [[], [], [], []];
-                        currentBarInRow = 0;
-                        currentBarTime = 0;
-                    }
-                    // Place chord in first bar of row
-                    currentRow[0].push(chord);
-                    rows.push(currentRow);
-                    currentRow = [[], [], [], []];
-                    currentBarInRow = 0;
-                    currentBarTime = 0;
-                    
-                } else if (duration >= 2) {
-                    // Chord lasts 2 bars
-                    if (currentBarTime > 0) {
-                        // Move to next bar if current bar has content
-                        currentBarInRow++;
-                        currentBarTime = 0;
-                    }
-                    if (currentBarInRow >= 3) {
-                        // Need new row
-                        rows.push(currentRow);
-                        currentRow = [[], [], [], []];
-                        currentBarInRow = 0;
-                    }
-                    currentRow[currentBarInRow].push(chord);
-                    // Skip next bar (chord occupies 2 bars)
-                    currentBarInRow += 2;
-                    if (currentBarInRow >= 4) {
-                        rows.push(currentRow);
-                        currentRow = [[], [], [], []];
-                        currentBarInRow = 0;
-                        currentBarTime = 0;
-                    }
-                    
-                } else {
-                    // Chord lasts 1 bar or less
-                    const spaceNeeded = duration;
-                    
-                    if (currentBarTime + spaceNeeded > 1) {
-                        // Move to next bar
-                        currentBarInRow++;
-                        currentBarTime = 0;
-                        if (currentBarInRow >= 4) {
-                            // Need new row
-                            rows.push(currentRow);
-                            currentRow = [[], [], [], []];
-                            currentBarInRow = 0;
-                        }
-                    }
-                    
-                    currentRow[currentBarInRow].push(chord);
-                    currentBarTime += spaceNeeded;
-                    
-                    if (currentBarTime >= 1) {
-                        // Bar is full, move to next
-                        currentBarInRow++;
-                        currentBarTime = 0;
-                        if (currentBarInRow >= 4) {
-                            rows.push(currentRow);
-                            currentRow = [[], [], [], []];
-                            currentBarInRow = 0;
-                        }
-                    }
-                }
+                rows[rowIndex][barInRow].push(chord);
             });
-            
-            // Add final row if it has content
-            if (currentRow.some(bar => bar.length > 0)) {
-                rows.push(currentRow);
+
+            rows.forEach(row => {
+                row.forEach(bar => {
+                    bar.sort((a, b) => getChordBeat(a) - getChordBeat(b));
+                });
+            });
+
+            while (rows.length > 1 && rows[rows.length - 1].every(bar => bar.length === 0)) {
+                rows.pop();
             }
             
             return rows;
         }
         
         // Get duration text for display
-        function getDurationText(duration) {
-            if (duration === 0.25) return '1/4';
-            if (duration === 0.5) return '1/2';
-            if (duration === 1) return '1';
-            if (duration === 2) return '2';
-            if (duration === 4) return '4';
-            return duration.toString();
+        function getDurationText(durationBeats) {
+            if (durationBeats === 1) return '1 beat';
+            if (durationBeats === 2) return '2 beats';
+            if (durationBeats === 4) return '1 bar';
+            if (durationBeats % 4 === 0) return `${durationBeats / 4} bars`;
+            return `${durationBeats} beats`;
         }
         
         // Voice leading optimization
+        async function autoOptimizeSequence() {
+            const optimizationDisplay = document.getElementById('optimizationDisplay');
+
+            if (chordSequence.length < 2) {
+                if (optimizationDisplay) {
+                    optimizationDisplay.style.display = 'none';
+                }
+                return;
+            }
+
+            await loadChordGenerator();
+            if (!chordGenerator) return;
+
+            const optimizedSequence = optimizeVoiceLeading(chordSequence);
+            if (!optimizedSequence) {
+                if (optimizationDisplay) {
+                    optimizationDisplay.style.display = 'none';
+                }
+                return;
+            }
+
+            displayOptimizedSequence(optimizedSequence);
+        }
+
         window.optimizeSequence = async function() {
             await loadChordGenerator();
             if (!chordGenerator) return;
             
-            if (chordSequence.length < 2) {
-                alert('Please add at least 2 chords to optimize voice leading');
+            if (chordSequence.length === 0) {
+                alert('Please add a chord first');
                 return;
             }
             
             const optimizedSequence = optimizeVoiceLeading(chordSequence);
             if (!optimizedSequence) {
-                alert('No complete voicing path found with the current interval filter.');
+                alert(chordSequence.length === 1
+                    ? 'No usable voicing found with the current interval filter.'
+                    : 'No complete voicing path found with the current interval filter.');
                 return;
             }
             displayOptimizedSequence(optimizedSequence);
@@ -3055,7 +4056,7 @@
                 const voicing = chordGenerator.createDrop2Voicing(chordNotes, inversion);
                 const fingering = chordGenerator.findDrop2Fingering(voicing, chord.root, 3, 4, chord.stringSet || 'middle');
 
-                if (!fingering || !shouldUseVoicing(fingering, chord.stringSet || 'middle')) {
+                if (!fingering || !shouldUseVoicing(fingering, chord.stringSet || 'middle', chord.chordType)) {
                     return null;
                 }
 
@@ -3072,8 +4073,22 @@
             const firstInversion = Number.isInteger(firstChord.preferredInversion) ? firstChord.preferredInversion : startingInversion;
             let bestFirstVoicing = getUsableFingeringForInversion(firstChord, firstInversion);
 
-            // If an unlocked starting inversion doesn't work, try others.
-            if (!bestFirstVoicing && !Number.isInteger(firstChord.preferredInversion)) {
+            // If the first chord has a top-note target, choose the best matching available inversion.
+            if (firstChord.targetTopNote && !Number.isInteger(firstChord.preferredInversion)) {
+                let bestFirstScore = Infinity;
+                for (let inv = 0; inv < 4; inv++) {
+                    const candidate = getUsableFingeringForInversion(firstChord, inv);
+                    if (candidate) {
+                        const startingBias = inv === startingInversion ? 0 : 1;
+                        const score = calculateTopNotePenalty(firstChord, candidate.fingering) + startingBias;
+                        if (score < bestFirstScore) {
+                            bestFirstScore = score;
+                            bestFirstVoicing = candidate;
+                        }
+                    }
+                }
+            } else if (!bestFirstVoicing && !Number.isInteger(firstChord.preferredInversion)) {
+                // If an unlocked starting inversion doesn't work, try others.
                 for (let inv = 0; inv < 4; inv++) {
                     bestFirstVoicing = getUsableFingeringForInversion(firstChord, inv);
                     if (bestFirstVoicing) {
@@ -3102,6 +4117,7 @@
                 let bestFingering = null;
                 let bestVoicing = null;
                 let bestDistance = Infinity;
+                let bestVoiceDistance = null;
                 
                 const candidateInversions = Number.isInteger(currentChord.preferredInversion)
                     ? [currentChord.preferredInversion]
@@ -3112,12 +4128,15 @@
                     const candidate = getUsableFingeringForInversion(currentChord, inv);
 
                     if (candidate) {
-                        const distance = calculateVoiceLeadingDistance(previousChord.fingering, candidate.fingering, currentChord.stringSet || 'middle');
-                        if (distance < bestDistance) {
-                            bestDistance = distance;
+                        const voiceDistance = calculateVoiceLeadingDistance(previousChord.fingering, candidate.fingering, currentChord.stringSet || 'middle');
+                        const topNotePenalty = calculateTopNotePenalty(currentChord, candidate.fingering);
+                        const score = voiceDistance + topNotePenalty;
+                        if (score < bestDistance) {
+                            bestDistance = score;
                             bestInversion = candidate.inversion;
                             bestFingering = candidate.fingering;
                             bestVoicing = candidate.voicing;
+                            bestVoiceDistance = voiceDistance;
                         }
                     }
                 }
@@ -3131,7 +4150,8 @@
                     inversion: bestInversion,
                     fingering: bestFingering,
                     voicing: bestVoicing,
-                    distance: bestDistance
+                    distance: bestVoiceDistance ?? bestDistance,
+                    targetTopNote: currentChord.targetTopNote
                 });
             }
             
@@ -3157,9 +4177,31 @@
             return openStringPitches[stringIndex] + fret;
         }
 
+        function getTopStringForStringSet(stringSet = currentStringSet) {
+            return stringSet === 'upper' ? 5 : 4;
+        }
+
+        function getTopNoteForFingering(fingering, stringSet = currentStringSet) {
+            const topString = getTopStringForStringSet(stringSet);
+            const fret = fingering?.frets?.[topString];
+            if (fret === null || fret === undefined) {
+                return null;
+            }
+            return getNoteAtFretBrowser(topString, fret);
+        }
+
+        function calculateTopNotePenalty(chord, fingering) {
+            if (!chord.targetTopNote) return 0;
+
+            const actualTopNote = getTopNoteForFingering(fingering, chord.stringSet || currentStringSet);
+            if (!actualTopNote) return 30;
+
+            return calculateNoteDistance(getChromaticNote(chord.targetTopNote), actualTopNote) * 8;
+        }
+
         function getTopVoiceInfo(chord) {
             const stringSet = chord.stringSet || currentStringSet;
-            const topString = stringSet === 'upper' ? 5 : 4;
+            const topString = getTopStringForStringSet(stringSet);
             const fret = chord.fingering?.frets?.[topString];
 
             if (fret === null || fret === undefined) {
@@ -3220,6 +4262,53 @@
                 </div>
             `;
         }
+
+        function createOptimizedVoicingContext(chord) {
+            return {
+                root: chord.root,
+                displayRoot: chord.displayRoot,
+                chordType: chord.chordType,
+                symbol: chord.symbol,
+                inversion: chord.inversion,
+                fingering: chord.fingering,
+                voicing: chord.voicing,
+                stringSet: chord.stringSet || currentStringSet,
+                distance: chord.distance,
+                targetTopNote: chord.targetTopNote,
+                source: 'optimized-sequence'
+            };
+        }
+
+        function createOptimizedChordElement(chord) {
+            const chordElement = document.createElement('div');
+            chordElement.className = 'chord-in-bar optimized-chord-in-bar';
+            const beat = Math.max(1, Math.min(4, Math.round(getChordBeat(chord))));
+            const span = Math.max(1, Math.min(5 - beat, Math.round(getChordDurationBeats(chord))));
+            chordElement.style.gridColumn = `${beat} / span ${span}`;
+            chordElement.dataset.beat = String(beat);
+            chordElement.dataset.beatSpan = String(span);
+
+            const context = createOptimizedVoicingContext(chord);
+            const title = `${chord.symbol} ${getInversionName(chord.inversion)}`;
+            const leadNote = getTopNoteForFingering(chord.fingering, chord.stringSet || currentStringSet);
+            const svg = chordGenerator.create6StringChordSVG(
+                chord.fingering,
+                title,
+                '',
+                chord.root,
+                chord.chordType,
+                chord.stringSet || currentStringSet,
+                leadNote || ''
+            );
+            const blob = new Blob([svg], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+
+            chordElement.innerHTML = `
+                <img src="${url}" class="chord-diagram" alt="${title}" style="width: 140px; height: auto;">
+            `;
+            chordElement.onclick = () => showModalWithSVG(svg, title, context);
+            return chordElement;
+        }
         
         // Display optimized sequence using chord sheet layout
         function displayOptimizedSequence(optimizedSequence) {
@@ -3251,42 +4340,29 @@
                 for (let barIndex = 0; barIndex < 4; barIndex++) {
                     const barElement = document.createElement('div');
                     barElement.className = 'chord-bar';
+                    barElement.dataset.barNumber = String(rowIndex * 4 + barIndex + 1);
                     
                     const barChords = row[barIndex] || [];
+                    const positionedChords = assignChordDisplayLanes(barChords);
+                    const laneCount = positionedChords.reduce((max, item) => Math.max(max, item.laneCount), 1);
+                    if (laneCount > 1) {
+                        barElement.classList.add('multi-lane');
+                        barElement.style.gridTemplateRows = `repeat(${laneCount}, minmax(0, auto))`;
+                    }
                     
                     if (barChords.length === 1) {
                         // Single chord - center it in the bar
                         const chord = barChords[0];
-                        const chordElement = document.createElement('div');
-                        chordElement.className = 'chord-in-bar optimized-chord-in-bar';
-                        
-                        // Generate chord diagram SVG
-                        const svg = chordGenerator.create6StringChordSVG(chord.fingering, `${chord.symbol} ${getInversionName(chord.inversion)}`, '', chord.root, chord.chordType, chord.stringSet || currentStringSet);
-                        const blob = new Blob([svg], { type: 'image/svg+xml' });
-                        const url = URL.createObjectURL(blob);
-                        
-                        chordElement.innerHTML = `
-                            <img src="${url}" class="chord-diagram" alt="${chord.symbol} ${getInversionName(chord.inversion)}" style="width: 140px; height: auto;">
-                        `;
-                        
+                        const chordElement = createOptimizedChordElement(chord);
+                        const positioned = positionedChords[0];
+                        chordElement.style.gridColumn = `${positioned.beat} / span ${positioned.span}`;
+                        chordElement.style.gridRow = String(positioned.lane);
                         barElement.appendChild(chordElement);
                     } else if (barChords.length > 1) {
-                        // Multiple chords - distribute them evenly
-                        barElement.style.justifyContent = 'space-evenly';
-                        
-                        barChords.forEach(chord => {
-                            const chordElement = document.createElement('div');
-                            chordElement.className = 'chord-in-bar optimized-chord-in-bar';
-                            
-                            // Generate chord diagram SVG
-                            const svg = chordGenerator.create6StringChordSVG(chord.fingering, `${chord.symbol} ${getInversionName(chord.inversion)}`, '', chord.root, chord.chordType, chord.stringSet || currentStringSet);
-                            const blob = new Blob([svg], { type: 'image/svg+xml' });
-                            const url = URL.createObjectURL(blob);
-                            
-                            chordElement.innerHTML = `
-                                <img src="${url}" class="chord-diagram" alt="${chord.symbol} ${getInversionName(chord.inversion)}" style="width: 140px; height: auto;">
-                            `;
-                            
+                        positionedChords.forEach(({ chord, beat, span, lane }) => {
+                            const chordElement = createOptimizedChordElement(chord);
+                            chordElement.style.gridColumn = `${beat} / span ${span}`;
+                            chordElement.style.gridRow = String(lane);
                             barElement.appendChild(chordElement);
                         });
                     }
@@ -3302,13 +4378,22 @@
                 display.appendChild(rowElement);
             });
             
-            // Display movement analysis
-            analysisDisplay.innerHTML = `
-                <strong>Total Voice Movement:</strong> ${totalMovement}<br>
-                <strong>Transitions:</strong> ${movements.join(', ')}<br>
-                <strong>Average Movement:</strong> ${(totalMovement / Math.max(1, movements.length)).toFixed(1)}
-                ${createGuideLineAnalysis(optimizedSequence)}
-            `;
+            if (optimizedSequence.length === 1) {
+                const chord = optimizedSequence[0];
+                const topVoice = getTopVoiceInfo(chord);
+                analysisDisplay.innerHTML = `
+                    <strong>Single chord voicing:</strong> ${chord.symbol} ${getInversionName(chord.inversion)}
+                    ${topVoice ? `<br><strong>Top voice:</strong> ${topVoice.note} on ${topVoice.stringLabel}` : ''}
+                    ${chord.targetTopNote ? `<br><strong>Lead target:</strong> ${chord.targetTopNote}` : ''}
+                `;
+            } else {
+                analysisDisplay.innerHTML = `
+                    <strong>Total Voice Movement:</strong> ${totalMovement}<br>
+                    <strong>Transitions:</strong> ${movements.join(', ')}<br>
+                    <strong>Average Movement:</strong> ${(totalMovement / Math.max(1, movements.length)).toFixed(1)}
+                    ${createGuideLineAnalysis(optimizedSequence)}
+                `;
+            }
             
             document.getElementById('optimizationDisplay').style.display = 'block';
         }
@@ -3346,7 +4431,7 @@
             }
         };
         
-        window.loadSelectedPreset = function() {
+        window.loadSelectedPreset = async function() {
             const presetSelect = document.getElementById('presetSelect');
             if (!presetSelect || !presetSelect.value) {
                 alert('Choose a preset to load');
@@ -3363,11 +4448,12 @@
                 return;
             }
 
+            await loadChordGenerator();
             loadSong(preset);
         };
 
         window.loadPreset = function() {
-            window.loadSelectedPreset();
+            return window.loadSelectedPreset();
         };
         
         // Helper functions
@@ -3635,7 +4721,9 @@
                 // Update option text to show preferred spelling first
                 Array.from(select.options).forEach(option => {
                     const chromaticNote = option.value;
-                    const spellings = option.getAttribute('data-spellings').split(',');
+                    const spellingsAttribute = option.getAttribute('data-spellings');
+                    if (!spellingsAttribute) return;
+                    const spellings = spellingsAttribute.split(',');
                     
                     if (spellings.length > 1) {
                         const preferredSpelling = getPreferredSpelling(chromaticNote, keyContext);
@@ -3666,24 +4754,33 @@
                 'maj6': 'Major 6', 
                 'maj7s5': 'Major 7♯5',
                 'maj7b5': 'Major 7♭5',
+                'maj9': 'Major 9',
+                'maj69': 'Major 6/9',
                 'dom7': 'Dominant 7',
                 'dom7sus4': 'Dominant 7sus4',
                 'dom7s5': 'Dominant 7♯5',
                 'dom7b5': 'Dominant 7♭5',
+                'dom9': 'Dominant 9',
+                'dom7b9': 'Dominant 7♭9',
+                'dom7s9': 'Dominant 7♯9',
                 'min6': 'Minor 6',
                 'min7': 'Minor 7',
                 'min7b5': 'Minor 7♭5',
                 'min7s5': 'Minor 7♯5',
                 'minmaj7': 'Minor Major 7',
+                'min9': 'Minor 9',
+                'min7b5b9': 'Minor 7♭5(♭9)',
+                'min7b59': 'Minor 7♭5(9)',
+                'min69': 'Minor 6/9',
                 'dim7': 'Diminished 7',
                 'dimmaj7': 'Diminished Major 7'
             };
             
             // Group chord types by category
             const chordCategories = [
-                { name: 'Major Chords', chords: ['maj7', 'maj6', 'maj7s5', 'maj7b5'] },
-                { name: 'Dominant Chords', chords: ['dom7', 'dom7sus4', 'dom7s5', 'dom7b5'] },
-                { name: 'Minor Chords', chords: ['min6', 'min7', 'min7b5', 'min7s5', 'minmaj7'] },
+                { name: 'Major Chords', chords: ['maj7', 'maj6', 'maj7s5', 'maj7b5', 'maj9', 'maj69'] },
+                { name: 'Dominant Chords', chords: ['dom7', 'dom7sus4', 'dom7s5', 'dom7b5', 'dom9', 'dom7b9', 'dom7s9'] },
+                { name: 'Minor Chords', chords: ['min6', 'min7', 'min7b5', 'min7s5', 'minmaj7', 'min9', 'min7b5b9', 'min7b59', 'min69'] },
                 { name: 'Diminished Chords', chords: ['dim7', 'dimmaj7'] }
             ];
             
@@ -3710,9 +4807,9 @@
         
         // Define chord families for substitutions
         const CHORD_FAMILIES = {
-            major: ['maj7', 'maj6', 'maj7s5', 'maj7b5'],
-            minor: ['min6', 'min7', 'min7b5', 'min7s5', 'minmaj7'],
-            dominant: ['dom7', 'dom7sus4', 'dom7s5', 'dom7b5'],
+            major: ['maj7', 'maj6', 'maj7s5', 'maj7b5', 'maj9', 'maj69'],
+            minor: ['min6', 'min7', 'min7b5', 'min7s5', 'minmaj7', 'min9', 'min7b5b9', 'min7b59', 'min69'],
+            dominant: ['dom7', 'dom7sus4', 'dom7s5', 'dom7b5', 'dom9', 'dom7b9', 'dom7s9'],
             diminished: ['dim7', 'dimmaj7']
         };
         
@@ -3802,7 +4899,7 @@
                 const voicing = chordGenerator.createDrop2Voicing(chordNotes, inversion);
                 const fingering = chordGenerator.findDrop2Fingering(voicing, chordRoot, 3, 4, 'middle');
                 
-                if (fingering && shouldUseVoicing(fingering, 'middle')) {
+                        if (fingering && shouldUseVoicing(fingering, 'middle', chordType)) {
                     // Check if the note on B string (index 4) matches our melody note
                     const bStringFret = fingering.frets[4]; // B string
                     if (bStringFret !== null) {
@@ -3836,7 +4933,7 @@
                 const voicing = chordGenerator.createDrop2Voicing(chordNotes, inversion);
                 const fingering = chordGenerator.findDrop2Fingering(voicing, chordRoot, 3, 4, 'middle');
                 
-                if (fingering && shouldUseVoicing(fingering, 'middle')) {
+                        if (fingering && shouldUseVoicing(fingering, 'middle', chordType)) {
                     // Get the note that's actually on the B string (index 4)
                     const bStringFret = fingering.frets[4]; // B string
                     if (bStringFret !== null) {
@@ -4031,7 +5128,7 @@
                 const voicing = chordGenerator.createDrop2Voicing(chordNotes, chord.inversion);
                 const fingering = chordGenerator.findDrop2Fingering(voicing, chord.root, 3, 4, 'middle');
                 
-                if (fingering && shouldUseVoicing(fingering, 'middle')) {
+                    if (fingering && shouldUseVoicing(fingering, 'middle', chord.chordType)) {
                     const svg = chordGenerator.create6StringChordSVG(
                         fingering, 
                         chord.symbol, 
@@ -4155,6 +5252,7 @@
         window.addEventListener('DOMContentLoaded', function() {
             loadChordGenerator().then(() => {
                 populateNoteSelectors();
+                populateTargetTopNoteSelect();
                 populateChordTypeDropdown();
                 populateMelodyChordTypeDropdown();
             });

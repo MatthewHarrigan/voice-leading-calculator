@@ -8,12 +8,17 @@ const CHORD_INTERVALS = {
     'maj6': [0, 4, 7, 9],      // C6: 1 3 5 6 - Major 6
     'maj7s5': [0, 4, 8, 11],   // Cmaj7♯5: 1 3 ♯5 7 - Major 7 with augmented 5th
     'maj7b5': [0, 4, 6, 11],   // Cmaj7♭5: 1 3 ♭5 7 - Major 7 with diminished 5th
+    'maj9': [4, 7, 11, 14],    // Cmaj9: 3 5 7 9 - 9 substitutes the root
+    'maj69': [4, 7, 9, 14],    // C6/9: 3 5 6 9
     
     // Dominant chords
     'dom7': [0, 4, 7, 10],     // C7: 1 3 5 ♭7 - Dominant 7
     'dom7sus4': [0, 5, 7, 10], // C7sus4: 1 4 5 ♭7 - Dominant 7 with suspended 4th
     'dom7s5': [0, 4, 8, 10],   // C7♯5: 1 3 ♯5 ♭7 - Dominant 7 with augmented 5th
     'dom7b5': [0, 4, 6, 10],   // C7♭5: 1 3 ♭5 ♭7 - Dominant 7 with diminished 5th
+    'dom9': [4, 7, 10, 14],    // C9: 3 5 ♭7 9 - 9 substitutes the root
+    'dom7b9': [4, 7, 10, 13],  // C7♭9: 3 5 ♭7 ♭9 - dominant b9 exception
+    'dom7s9': [4, 7, 10, 15],  // C7♯9: 3 5 ♭7 ♯9
     
     // Minor chords
     'min6': [0, 3, 7, 9],      // Cm6: 1 ♭3 5 6 - Minor 6
@@ -21,6 +26,10 @@ const CHORD_INTERVALS = {
     'min7b5': [0, 3, 6, 10],   // Cm7♭5: 1 ♭3 ♭5 ♭7 - Half-diminished 7
     'min7s5': [0, 3, 8, 10],   // Cm7♯5: 1 ♭3 ♯5 ♭7 - Minor 7 with augmented 5th
     'minmaj7': [0, 3, 7, 11],  // Cm(maj7): 1 ♭3 5 7 - Minor major 7
+    'min9': [3, 7, 10, 14],    // Cm9: ♭3 5 ♭7 9 - 9 substitutes the root
+    'min7b5b9': [3, 6, 10, 13], // Cm7♭5(♭9): ♭3 ♭5 ♭7 ♭9
+    'min7b59': [3, 6, 10, 14], // Cm7♭5(9): ♭3 ♭5 ♭7 9
+    'min69': [3, 7, 9, 14],    // Cm6/9: ♭3 5 6 9
     
     // Diminished chords
     'dim7': [0, 3, 6, 9],      // C°7: 1 ♭3 ♭5 ♭♭7 - Fully diminished 7
@@ -100,17 +109,26 @@ function getChordDisplaySymbol(root, chordType) {
         'maj6': '6',
         'maj7s5': 'maj7♯5',
         'maj7b5': 'maj7♭5',
+        'maj9': 'maj9',
+        'maj69': '6/9',
         // Dominant chords  
         'dom7': '7',
         'dom7sus4': '7sus4',
         'dom7s5': '7♯5',
         'dom7b5': '7♭5',
+        'dom9': '9',
+        'dom7b9': '7♭9',
+        'dom7s9': '7♯9',
         // Minor chords
         'min6': 'm6',
         'min7': 'm7',
         'min7b5': 'm7♭5',
         'min7s5': 'm7♯5',
         'minmaj7': 'm(maj7)',
+        'min9': 'm9',
+        'min7b5b9': 'm7♭5(♭9)',
+        'min7b59': 'm7♭5(9)',
+        'min69': 'm6/9',
         // Diminished chords
         'dim7': '°7',
         'dimmaj7': '°maj7'
