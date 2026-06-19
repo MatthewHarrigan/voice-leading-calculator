@@ -103,15 +103,16 @@ Theory & Voicing* (Mel Bay 95112); the per-chapter drills are an engine-buildabl
 
 ## Deployment
 
-Pushing to `main` triggers `.github/workflows/deploy.yml`, which builds the app with the
-`/voice-leading-calculator/` base path and publishes `dist/` to GitHub Pages (with a `404.html`
-fallback for client-side routing). `.github/workflows/ci.yml` runs type-check, lint, unit, and e2e
-tests on every push and pull request.
+`.github/workflows/ci.yml` runs type-check, lint, unit, and e2e tests on every push and pull
+request. `.github/workflows/deploy.yml` builds the app with the `/voice-leading-calculator/` base
+path and publishes `dist/` to GitHub Pages (with a `404.html` fallback for client-side routing).
 
-To enable Pages: repository **Settings → Pages → Source: GitHub Actions**. GitHub Pages requires
-either a **public** repository or a paid plan (Pro/Team/Enterprise) for private repos — until then
-the deploy job fails at `configure-pages` while CI (tests) still passes. The workflow uses
-`enablement: true`, so it will auto-create the Pages site as soon as the repo qualifies.
+The deploy workflow is **manual** (`workflow_dispatch`) for now: GitHub Pages isn't available on
+this repo's current plan/visibility, and auto-running it on every push only produced failed runs
+and notification emails. To deploy: make the repo **public** (or use a plan that allows Pages on
+private repos), set **Settings → Pages → Source: GitHub Actions**, then run the deploy from the
+**Actions** tab (or re-add the `push` trigger). It uses `enablement: true`, so it will create the
+Pages site automatically once the repo qualifies.
 
 ## License
 
