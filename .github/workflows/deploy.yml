@@ -29,7 +29,11 @@ jobs:
         run: npm run build
       - name: SPA fallback for client-side routing
         run: cp dist/index.html dist/404.html
+      # enablement: true auto-creates the Pages site once the repo supports
+      # Pages (public repo, or a plan that allows Pages on private repos).
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

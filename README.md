@@ -108,7 +108,10 @@ Pushing to `main` triggers `.github/workflows/deploy.yml`, which builds the app 
 fallback for client-side routing). `.github/workflows/ci.yml` runs type-check, lint, unit, and e2e
 tests on every push and pull request.
 
-To enable Pages: repository **Settings → Pages → Source: GitHub Actions**.
+To enable Pages: repository **Settings → Pages → Source: GitHub Actions**. GitHub Pages requires
+either a **public** repository or a paid plan (Pro/Team/Enterprise) for private repos — until then
+the deploy job fails at `configure-pages` while CI (tests) still passes. The workflow uses
+`enablement: true`, so it will auto-create the Pages site as soon as the repo qualifies.
 
 ## License
 
