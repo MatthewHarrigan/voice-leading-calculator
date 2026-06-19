@@ -22,6 +22,7 @@ import {
 } from '@/music/voiceLeading';
 
 type OptimizedSeqChord = OptimizedChord<SequenceChord>;
+import { pitchClassOf } from '@/music/notes';
 import { SONG_PRESETS } from '@/data/presets';
 import { useStore } from '@/state/store';
 import { ChordTypeSelect, NoteSelect } from '@/components/pickers';
@@ -40,6 +41,12 @@ export function SequenceBuilderPage() {
   const sequencePlaying = useSequencePlaying();
   const startingInversion = useStore((s) => s.startingInversion);
   const setStartingInversion = useStore((s) => s.setStartingInversion);
+  const tempo = useStore((s) => s.tempo);
+  const setTempo = useStore((s) => s.setTempo);
+  const metronome = useStore((s) => s.metronome);
+  const setMetronome = useStore((s) => s.setMetronome);
+  const bassline = useStore((s) => s.bassline);
+  const setBassline = useStore((s) => s.setBassline);
   const insertion = useStore((s) => s.insertion);
   const setInsertion = useStore((s) => s.setInsertion);
   const selectedChordId = useStore((s) => s.selectedChordId);
@@ -123,10 +130,16 @@ export function SequenceBuilderPage() {
 
   const playAll = () => {
     if (!optimized || !audioEnabled) return;
-    getChordPlayer().playSequence(
-      optimized.map((chord) => ({ fingering: chord.fingering, stringSet: chord.stringSet })),
-      0.7,
-    );
+    const beatsPerBar = 4;
+    const events = optimized.map((chord) => ({
+      fingering: chord.fingering,
+      stringSet: chord.stringSet,
+      startBeat: chord.barIndex * beatsPerBar + (chord.beat - 1),
+      durationBeats: chord.durationBeats,
+      // Root, dropped into a low bass register (E2 = 40 is the lowest).
+      bassMidi: 40 + ((pitchClassOf(chord.displayRoot) - 4 + 12) % 12),
+    }));
+    getChordPlayer().playArrangement(events, { bpm: tempo, beatsPerBar, metronome, bassline });
   };
 
   return (
@@ -284,7 +297,7 @@ export function SequenceBuilderPage() {
       {/* Optimized output */}
       {optimized && (
         <section className="analysis-panel">
-          <div className="row" style={{ justifyContent: 'space-between' }}>
+          <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
             <h2 style={{ margin: 0 }}>Optimized Voicings</h2>
             <div className="row">
               <FormField label="Start inv.">
@@ -303,14 +316,52 @@ export function SequenceBuilderPage() {
               {audioEnabled && (
                 <button
                   type="button"
-                  className={`btn btn-sm${sequencePlaying ? ' btn-danger' : ''}`}
+                  className={`btn btn-sm${sequencePlaying ? ' btn-stop' : ' btn-primary'}`}
                   onClick={() => (sequencePlaying ? getChordPlayer().stop() : playAll())}
-                  style={{ alignSelf: 'flex-end' }}
+                  style={{ alignSelf: 'flex-end', minWidth: 120 }}
                 >
                   {sequencePlaying ? '■ Stop' : '♪ Play sequence'}
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Tempo & playback */}
+          <div className="control-bar" style={{ marginTop: 14, marginBottom: 0 }}>
+            <div className="control-group">
+              <span className="label">Tempo</span>
+              <div className="row" style={{ gap: 10 }}>
+                <input
+                  type="range"
+                  min={40}
+                  max={240}
+                  step={1}
+                  value={tempo}
+                  onChange={(e) => setTempo(Number(e.target.value))}
+                  aria-label="Tempo (BPM)"
+                  style={{ width: 140 }}
+                />
+                <span style={{ fontVariantNumeric: 'tabular-nums', minWidth: 58 }}>♩ = {tempo}</span>
+              </div>
+            </div>
+            <label className="switch" title="Click track on every beat during playback">
+              <input
+                type="checkbox"
+                checked={metronome}
+                onChange={(e) => setMetronome(e.target.checked)}
+                data-testid="metronome"
+              />
+              Metronome
+            </label>
+            <label className="switch" title="Play each chord's root as a bass note">
+              <input
+                type="checkbox"
+                checked={bassline}
+                onChange={(e) => setBassline(e.target.checked)}
+                data-testid="bassline"
+              />
+              Bass line
+            </label>
           </div>
 
           <div className="optimized-grid" style={{ marginTop: 14 }}>

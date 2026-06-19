@@ -255,18 +255,26 @@ test('play button fills while held and strums once on release', async ({ page })
   expect(errors).toEqual([]);
 });
 
-test('play sequence can be stopped', async ({ page }) => {
+test('play sequence with tempo/metronome/bass can be stopped', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+
   await gotoClean(page);
   await page.getByRole('link', { name: 'Sequence Builder' }).click();
   await addChord(page, 'D', 'min7');
   await addChord(page, 'G', 'dom7');
   await addChord(page, 'C', 'maj7');
 
+  await page.getByTestId('metronome').check();
+  await page.getByTestId('bassline').check();
+
   await page.getByRole('button', { name: 'Play sequence' }).click();
   const stop = page.getByRole('button', { name: 'Stop' });
   await expect(stop).toBeVisible();
   await stop.click();
   await expect(page.getByRole('button', { name: 'Play sequence' })).toBeVisible();
+
+  expect(errors).toEqual([]);
 });
 
 test('theme toggle switches to dark mode', async ({ page }) => {

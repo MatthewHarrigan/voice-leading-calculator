@@ -273,6 +273,16 @@ input[type='text'] {
   color: var(--danger);
   border-color: transparent;
 }
+/* Stop button: subtle, not alarming. */
+.btn-stop {
+  background: var(--surface-2);
+  border-color: var(--hairline);
+  color: var(--ink);
+}
+.btn-stop:hover {
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--hairline));
+}
 
 /* Hold-to-strum button: a fill bar sweeps left→right while held. */
 .strum-btn {

@@ -32,6 +32,9 @@ interface AppState {
   theme: Theme;
   audioEnabled: boolean;
   startingInversion: number;
+  tempo: number; // BPM
+  metronome: boolean;
+  bassline: boolean;
 
   // --- editable chart (flat runtime model) ---
   chartTitle: string;
@@ -50,6 +53,9 @@ interface AppState {
   toggleTheme: () => void;
   setAudioEnabled: (v: boolean) => void;
   setStartingInversion: (n: number) => void;
+  setTempo: (n: number) => void;
+  setMetronome: (v: boolean) => void;
+  setBassline: (v: boolean) => void;
 
   addChord: (input: AddChordInput) => void;
   updateChord: (id: string, patch: Partial<SequenceChord>) => void;
@@ -174,6 +180,9 @@ export const useStore = create<AppState>()(
       theme: 'light',
       audioEnabled: true,
       startingInversion: 0,
+      tempo: 100,
+      metronome: false,
+      bassline: false,
 
       chartTitle: 'Untitled Chart',
       chartKey: 'C',
@@ -193,6 +202,9 @@ export const useStore = create<AppState>()(
       toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
       setAudioEnabled: (audioEnabled) => set({ audioEnabled }),
       setStartingInversion: (startingInversion) => set({ startingInversion }),
+      setTempo: (tempo) => set({ tempo: Math.max(40, Math.min(240, Math.round(tempo))) }),
+      setMetronome: (metronome) => set({ metronome }),
+      setBassline: (bassline) => set({ bassline }),
 
       addChord: (input) =>
         set((state) => {
@@ -333,6 +345,9 @@ export const useStore = create<AppState>()(
         theme: state.theme,
         audioEnabled: state.audioEnabled,
         startingInversion: state.startingInversion,
+        tempo: state.tempo,
+        metronome: state.metronome,
+        bassline: state.bassline,
         chartTitle: state.chartTitle,
         chartKey: state.chartKey,
         chart: state.chart,

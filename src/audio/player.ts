@@ -38,12 +38,31 @@ export interface SequenceChordInput {
   stringSet: StringSet;
 }
 
+export interface ArrangementEvent {
+  fingering: Fingering;
+  stringSet: StringSet;
+  /** Absolute beat onset from the start of the chart (0-based). */
+  startBeat: number;
+  /** Length in beats (controls bass note length). */
+  durationBeats: number;
+  /** Low MIDI pitch of the chord root, for the optional bass line. */
+  bassMidi: number;
+}
+
+export interface ArrangementOptions {
+  bpm: number;
+  beatsPerBar?: number;
+  metronome?: boolean;
+  bassline?: boolean;
+}
+
 export class ChordPlayer {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private voices = new Set<Voice>();
   // Currently-ringing voice per guitar string (index 0-5), like a real fretboard.
-  private stringVoices: (Voice | null)[] = [null, null, null, null, null, null];
+  // Index 6 is a virtual monophonic bass "string" used by the bass line.
+  private stringVoices: (Voice | null)[] = [null, null, null, null, null, null, null];
   private seqToken = 0;
   private seqTimer: ReturnType<typeof setTimeout> | null = null;
   private seqPlaying = false;
@@ -338,6 +357,80 @@ export class ChordPlayer {
     }
   }
 
+  /** A short metronome click; accented (louder/higher) on the downbeat. */
+  private metronomeClick(when: number, accent: boolean): void {
+    const ctx = this.ensureContext();
+    const osc = ctx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.value = accent ? 2000 : 1300;
+    const amp = ctx.createGain();
+    amp.gain.setValueAtTime(0.0001, when);
+    amp.gain.exponentialRampToValueAtTime(accent ? 0.4 : 0.22, when + 0.001);
+    amp.gain.exponentialRampToValueAtTime(0.0001, when + 0.05);
+    osc.connect(amp);
+    amp.connect(this.master!);
+    osc.start(when);
+    osc.stop(when + 0.06);
+    const voice: Voice = {
+      amp,
+      oscillators: [osc],
+      nodes: [],
+      stringIndex: -1,
+      teardown: setTimeout(() => this.disposeVoice(voice), 300),
+    };
+    this.voices.add(voice);
+  }
+
+  /**
+   * Play a chart respecting bar/beat placement at a given tempo. Chords strum on
+   * their beat; an optional metronome clicks every beat and an optional bass
+   * line plucks the root (monophonic) under each chord. A drift-corrected
+   * per-beat scheduler drives it; cancellable like any sequence.
+   */
+  async playArrangement(events: ArrangementEvent[], options: ArrangementOptions): Promise<void> {
+    try {
+      await this.resume();
+      this.cancelSequence();
+      if (events.length === 0) return;
+      const ctx = this.ensureContext();
+      const bpm = Math.max(20, options.bpm);
+      const beatsPerBar = options.beatsPerBar ?? 4;
+      const spb = 60 / bpm; // seconds per beat
+      const totalBeats = events.reduce(
+        (max, e) => Math.max(max, e.startBeat + Math.max(1, e.durationBeats)),
+        0,
+      );
+      const token = ++this.seqToken;
+      this.setSeqPlaying(true);
+      const t0 = performance.now();
+
+      const scheduleBeat = (beat: number) => {
+        if (token !== this.seqToken) return;
+        const at = ctx.currentTime + 0.06;
+        if (options.metronome) this.metronomeClick(at, beat % beatsPerBar === 0);
+        for (const e of events) {
+          if (e.startBeat !== beat) continue;
+          this.strumAt(e.fingering, e.stringSet, at, 0.02);
+          if (options.bassline) {
+            const dur = Math.min(4, Math.max(0.8, e.durationBeats * spb + 0.3));
+            this.pluckString(6, e.bassMidi, at, dur);
+          }
+        }
+        const next = beat + 1;
+        if (next < totalBeats) {
+          const targetMs = t0 + next * spb * 1000;
+          this.seqTimer = setTimeout(() => scheduleBeat(next), Math.max(0, targetMs - performance.now()));
+        } else {
+          this.seqTimer = null;
+          this.setSeqPlaying(false);
+        }
+      };
+      scheduleBeat(0);
+    } catch {
+      /* no audio available */
+    }
+  }
+
   /** Play a bare list of MIDI notes (stringless). */
   async playMidi(notes: number[], strum = 0.0): Promise<void> {
     try {
@@ -355,7 +448,7 @@ export class ChordPlayer {
     this.cancelSequence();
     this.voices.forEach((v) => clearTimeout(v.teardown));
     this.voices.clear();
-    this.stringVoices = [null, null, null, null, null, null];
+    this.stringVoices = [null, null, null, null, null, null, null];
     try {
       void this.ctx?.close();
     } catch {

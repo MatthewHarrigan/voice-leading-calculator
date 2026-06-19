@@ -67,7 +67,7 @@ export function ProgressionsPage() {
             </h3>
             {audioEnabled &&
               (sequencePlaying && playingIndex === index ? (
-                <button type="button" className="btn btn-sm btn-danger" onClick={() => getChordPlayer().stop()}>
+                <button type="button" className="btn btn-sm btn-stop" onClick={() => getChordPlayer().stop()}>
                   ■ Stop
                 </button>
               ) : (
