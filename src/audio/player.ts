@@ -46,6 +46,24 @@ export class ChordPlayer {
   private stringVoices: (Voice | null)[] = [null, null, null, null, null, null];
   private seqToken = 0;
   private seqTimer: ReturnType<typeof setTimeout> | null = null;
+  private seqPlaying = false;
+  private seqListeners = new Set<(playing: boolean) => void>();
+
+  /** Subscribe to sequence play/stop changes; returns an unsubscribe fn. */
+  onSequenceChange(listener: (playing: boolean) => void): () => void {
+    this.seqListeners.add(listener);
+    return () => this.seqListeners.delete(listener);
+  }
+
+  isSequencePlaying(): boolean {
+    return this.seqPlaying;
+  }
+
+  private setSeqPlaying(playing: boolean): void {
+    if (this.seqPlaying === playing) return;
+    this.seqPlaying = playing;
+    this.seqListeners.forEach((l) => l(playing));
+  }
 
   private ensureContext(): AudioContext {
     if (!this.ctx) {
@@ -203,9 +221,10 @@ export class ChordPlayer {
       clearTimeout(this.seqTimer);
       this.seqTimer = null;
     }
+    this.setSeqPlaying(false);
   }
 
-  /** Hard stop: damp every string and cancel any sequence (used on dispose). */
+  /** Hard stop: damp every string and cancel any sequence. */
   stopAll(): void {
     this.cancelSequence();
     if (!this.ctx) return;
@@ -213,12 +232,20 @@ export class ChordPlayer {
     for (const voice of [...this.voices]) this.dampVoice(voice, now);
   }
 
-  /** Strum a single chord. Each string interrupts only its own previous note. */
-  async playFingering(fingering: Fingering, stringSet: StringSet): Promise<void> {
+  /** Public alias for stopping playback (e.g. a Stop button). */
+  stop(): void {
+    this.stopAll();
+  }
+
+  /**
+   * Strum a single chord. `spread` is the seconds between strings (0 = all
+   * notes together / block chord). Each string interrupts only its own note.
+   */
+  async playFingering(fingering: Fingering, stringSet: StringSet, spread = 0.045): Promise<void> {
     try {
       await this.resume();
       this.cancelSequence();
-      this.strumAt(fingering, stringSet, this.ensureContext().currentTime + 0.02);
+      this.strumAt(fingering, stringSet, this.ensureContext().currentTime + 0.02, spread);
     } catch {
       /* no audio available */
     }
@@ -291,6 +318,7 @@ export class ChordPlayer {
       if (chords.length === 0) return;
       const ctx = this.ensureContext();
       const token = ++this.seqToken;
+      this.setSeqPlaying(true);
       let i = 0;
       const tick = () => {
         if (token !== this.seqToken) return; // superseded / stopped
@@ -301,6 +329,7 @@ export class ChordPlayer {
           this.seqTimer = setTimeout(tick, gapSeconds * 1000);
         } else {
           this.seqTimer = null;
+          this.setSeqPlaying(false);
         }
       };
       tick();

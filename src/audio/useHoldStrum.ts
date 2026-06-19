@@ -5,6 +5,9 @@ import { useStore } from '@/state/store';
 import { getChordPlayer } from './player';
 
 const DEFAULT_MAX_MS = 1000;
+// A press shorter than this is a "click" (block chord); longer plants the bass
+// note then rolls the rest on release.
+const LEAD_DELAY_MS = 110;
 
 interface HoldStrumOptions {
   /** Max hold (ms). The resulting strum spans at most this long. */
@@ -33,6 +36,10 @@ export function useHoldStrum(
   const pressingRef = useRef(false);
   const startRef = useRef(0);
   const rafRef = useRef<number | null>(null);
+  const leadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Time the lead (bass) note was sounded, or 0 if the press was still too
+  // short to count as a hold (in which case a release plays a block chord).
+  const leadAtRef = useRef(0);
 
   const stopRaf = useCallback(() => {
     if (rafRef.current !== null) {
@@ -41,16 +48,42 @@ export function useHoldStrum(
     }
   }, []);
 
-  useEffect(() => () => stopRaf(), [stopRaf]);
+  const clearLeadTimer = useCallback(() => {
+    if (leadTimerRef.current !== null) {
+      clearTimeout(leadTimerRef.current);
+      leadTimerRef.current = null;
+    }
+  }, []);
+
+  const reset = useCallback(() => {
+    stopRaf();
+    clearLeadTimer();
+    pressingRef.current = false;
+    setPressing(false);
+    onProgress?.(0);
+  }, [clearLeadTimer, onProgress, stopRaf]);
+
+  useEffect(
+    () => () => {
+      stopRaf();
+      clearLeadTimer();
+    },
+    [clearLeadTimer, stopRaf],
+  );
 
   const begin = useCallback(() => {
     if (!audioEnabled || pressingRef.current) return;
     startRef.current = performance.now();
+    leadAtRef.current = 0;
     pressingRef.current = true;
     setPressing(true);
     onProgress?.(0);
-    // Phase 1: sound the bass string right away while we wait for release.
-    void getChordPlayer().strumLead(fingering, stringSet);
+    // Wait a beat: a very short click should play all strings together (handled
+    // in end()). Only once the press passes the threshold do we plant the bass.
+    leadTimerRef.current = setTimeout(() => {
+      leadAtRef.current = performance.now();
+      void getChordPlayer().strumLead(fingering, stringSet);
+    }, LEAD_DELAY_MS);
     if (onProgress) {
       const tick = () => {
         onProgress(Math.min(1, (performance.now() - startRef.current) / maxMs));
@@ -62,23 +95,25 @@ export function useHoldStrum(
 
   const cancel = useCallback(() => {
     if (!pressingRef.current) return;
-    stopRaf();
-    pressingRef.current = false;
-    setPressing(false);
-    onProgress?.(0);
-  }, [onProgress, stopRaf]);
+    reset();
+  }, [reset]);
 
   const end = useCallback(() => {
     if (!pressingRef.current) return;
-    stopRaf();
-    pressingRef.current = false;
-    setPressing(false);
-    onProgress?.(0);
+    const leadAt = leadAtRef.current;
+    reset();
     if (!audioEnabled) return;
-    // Phase 2: roll the rest of the strings out over how long the lead was held.
-    const held = Math.min(maxMs, performance.now() - startRef.current);
-    void getChordPlayer().strumRest(fingering, stringSet, held / 1000);
-  }, [audioEnabled, fingering, maxMs, onProgress, stopRaf, stringSet]);
+    const player = getChordPlayer();
+    if (leadAt) {
+      // Held long enough to plant the bass: roll the rest out over how long the
+      // lead note had been ringing before release.
+      const held = Math.min(maxMs, performance.now() - leadAt);
+      void player.strumRest(fingering, stringSet, held / 1000);
+    } else {
+      // Very short click: all strings together (block chord).
+      void player.playFingering(fingering, stringSet, 0);
+    }
+  }, [audioEnabled, fingering, maxMs, reset, stringSet]);
 
   return { pressing, begin, end, cancel };
 }

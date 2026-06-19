@@ -28,6 +28,7 @@ import { ChordTypeSelect, NoteSelect } from '@/components/pickers';
 import { PlayableDiagram } from '@/components/PlayableDiagram';
 import { useInspector } from '@/components/inspectorContext';
 import { getChordPlayer } from '@/audio/player';
+import { useSequencePlaying } from '@/audio/useSequencePlaying';
 
 export function SequenceBuilderPage() {
   const chart = useStore((s) => s.chart);
@@ -36,6 +37,7 @@ export function SequenceBuilderPage() {
   const stringSet = useStore((s) => s.stringSet);
   const avoidB9 = useStore((s) => s.avoidB9);
   const audioEnabled = useStore((s) => s.audioEnabled);
+  const sequencePlaying = useSequencePlaying();
   const startingInversion = useStore((s) => s.startingInversion);
   const setStartingInversion = useStore((s) => s.setStartingInversion);
   const insertion = useStore((s) => s.insertion);
@@ -301,11 +303,11 @@ export function SequenceBuilderPage() {
               {audioEnabled && (
                 <button
                   type="button"
-                  className="btn btn-sm"
-                  onClick={playAll}
+                  className={`btn btn-sm${sequencePlaying ? ' btn-danger' : ''}`}
+                  onClick={() => (sequencePlaying ? getChordPlayer().stop() : playAll())}
                   style={{ alignSelf: 'flex-end' }}
                 >
-                  ♪ Play sequence
+                  {sequencePlaying ? '■ Stop' : '♪ Play sequence'}
                 </button>
               )}
             </div>

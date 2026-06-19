@@ -1,26 +1,34 @@
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { generateProgressions, type ProgressionType } from '@/music/progressions';
 import { useStore } from '@/state/store';
 import { PlayableDiagram } from '@/components/PlayableDiagram';
 import { getChordPlayer } from '@/audio/player';
+import { useSequencePlaying } from '@/audio/useSequencePlaying';
 
 export function ProgressionsPage() {
   const stringSet = useStore((s) => s.stringSet);
   const avoidB9 = useStore((s) => s.avoidB9);
   const audioEnabled = useStore((s) => s.audioEnabled);
   const [type, setType] = useState<ProgressionType>('major');
+  const sequencePlaying = useSequencePlaying();
+  const [playingIndex, setPlayingIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!sequencePlaying) setPlayingIndex(null);
+  }, [sequencePlaying]);
 
   const patterns = useMemo(
     () => generateProgressions(type, stringSet, { avoidB9 }),
     [type, stringSet, avoidB9],
   );
 
-  const playProgression = (chords: typeof patterns[number]['chords']) => {
+  const playProgression = (chords: typeof patterns[number]['chords'], index: number) => {
     if (!audioEnabled) return;
     getChordPlayer().playSequence(
       chords.map((c) => ({ fingering: c.voicing, stringSet: c.stringSet })),
       0.85,
     );
+    setPlayingIndex(index);
   };
 
   return (
@@ -57,11 +65,20 @@ export function ProgressionsPage() {
             <h3>
               {type === 'major' ? 'Major ii-V-I' : 'Minor ii-V-i'} — Pattern {index + 1}
             </h3>
-            {audioEnabled && (
-              <button className="btn btn-sm" onClick={() => playProgression(pattern.chords)}>
-                ♪ Play
-              </button>
-            )}
+            {audioEnabled &&
+              (sequencePlaying && playingIndex === index ? (
+                <button type="button" className="btn btn-sm btn-danger" onClick={() => getChordPlayer().stop()}>
+                  ■ Stop
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => playProgression(pattern.chords, index)}
+                >
+                  ♪ Play
+                </button>
+              ))}
           </div>
           <div className="progression-chords">
             {pattern.chords.map((chord, chordIndex) => (

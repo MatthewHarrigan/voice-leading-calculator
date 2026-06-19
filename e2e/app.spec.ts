@@ -255,6 +255,20 @@ test('play button fills while held and strums once on release', async ({ page })
   expect(errors).toEqual([]);
 });
 
+test('play sequence can be stopped', async ({ page }) => {
+  await gotoClean(page);
+  await page.getByRole('link', { name: 'Sequence Builder' }).click();
+  await addChord(page, 'D', 'min7');
+  await addChord(page, 'G', 'dom7');
+  await addChord(page, 'C', 'maj7');
+
+  await page.getByRole('button', { name: 'Play sequence' }).click();
+  const stop = page.getByRole('button', { name: 'Stop' });
+  await expect(stop).toBeVisible();
+  await stop.click();
+  await expect(page.getByRole('button', { name: 'Play sequence' })).toBeVisible();
+});
+
 test('theme toggle switches to dark mode', async ({ page }) => {
   await gotoFresh(page);
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
