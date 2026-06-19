@@ -61,6 +61,9 @@ export function PlayableDiagram({
       } catch {
         /* ignore */
       }
+      // Don't arm playback for the second press of a double-click — that gesture
+      // opens the inspector, and arming would plant a stray bass note.
+      if (performance.now() - lastUpRef.current < DOUBLE_MS) return;
       begin();
     },
     onPointerUp: handleUp,

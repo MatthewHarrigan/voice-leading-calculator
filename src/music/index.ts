@@ -6,4 +6,5 @@ export * from './voicing';
 export * from './voiceLeading';
 export * from './progressions';
 export * from './melody';
+export * from './timing';
 export * from './song';

@@ -40,6 +40,9 @@ export function useHoldStrum(
   // Time the lead (bass) note was sounded, or 0 if the press was still too
   // short to count as a hold (in which case a release plays a block chord).
   const leadAtRef = useRef(0);
+  // Snapshot the chord at press time so both phases of the strum (lead + rest)
+  // play the *same* chord even if the props change mid-hold (e.g. a re-optimise).
+  const chordRef = useRef({ fingering, stringSet });
 
   const stopRaf = useCallback(() => {
     if (rafRef.current !== null) {
@@ -75,6 +78,7 @@ export function useHoldStrum(
     if (!audioEnabled || pressingRef.current) return;
     startRef.current = performance.now();
     leadAtRef.current = 0;
+    chordRef.current = { fingering, stringSet };
     pressingRef.current = true;
     setPressing(true);
     onProgress?.(0);
@@ -82,7 +86,8 @@ export function useHoldStrum(
     // in end()). Only once the press passes the threshold do we plant the bass.
     leadTimerRef.current = setTimeout(() => {
       leadAtRef.current = performance.now();
-      void getChordPlayer().strumLead(fingering, stringSet);
+      const c = chordRef.current;
+      void getChordPlayer().strumLead(c.fingering, c.stringSet);
     }, LEAD_DELAY_MS);
     if (onProgress) {
       const tick = () => {
@@ -101,6 +106,7 @@ export function useHoldStrum(
   const end = useCallback(() => {
     if (!pressingRef.current) return;
     const leadAt = leadAtRef.current;
+    const c = chordRef.current;
     reset();
     if (!audioEnabled) return;
     const player = getChordPlayer();
@@ -108,12 +114,12 @@ export function useHoldStrum(
       // Held long enough to plant the bass: roll the rest out over how long the
       // lead note had been ringing before release.
       const held = Math.min(maxMs, performance.now() - leadAt);
-      void player.strumRest(fingering, stringSet, held / 1000);
+      void player.strumRest(c.fingering, c.stringSet, held / 1000);
     } else {
       // Very short click: all strings together (block chord).
-      void player.playFingering(fingering, stringSet, 0);
+      void player.playFingering(c.fingering, c.stringSet, 0);
     }
-  }, [audioEnabled, fingering, maxMs, reset, stringSet]);
+  }, [audioEnabled, maxMs, reset]);
 
   return { pressing, begin, end, cancel };
 }

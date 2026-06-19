@@ -23,6 +23,7 @@ import {
 
 type OptimizedSeqChord = OptimizedChord<SequenceChord>;
 import { pitchClassOf } from '@/music/notes';
+import { beatPosition } from '@/music/timing';
 import { SONG_PRESETS } from '@/data/presets';
 import { useStore } from '@/state/store';
 import { ChordTypeSelect, NoteSelect } from '@/components/pickers';
@@ -134,7 +135,7 @@ export function SequenceBuilderPage() {
     const events = optimized.map((chord) => ({
       fingering: chord.fingering,
       stringSet: chord.stringSet,
-      startBeat: chord.barIndex * beatsPerBar + (chord.beat - 1),
+      startBeat: beatPosition(chord.barIndex, chord.beat, beatsPerBar),
       durationBeats: chord.durationBeats,
       // Root, dropped into a low bass register (E2 = 40 is the lowest).
       bassMidi: 40 + ((pitchClassOf(chord.displayRoot) - 4 + 12) % 12),

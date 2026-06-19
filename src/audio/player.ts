@@ -12,6 +12,7 @@
 // cancellable scheduler, so pressing it again restarts rather than layering.
 
 import { frettedMidi, type StringSet, activeStrings } from '@/music/tuning';
+import { arrangementSpanBeats } from '@/music/timing';
 import type { Fingering } from '@/music/voicing';
 
 function midiToFreq(midi: number): number {
@@ -63,6 +64,9 @@ export class ChordPlayer {
   // Currently-ringing voice per guitar string (index 0-5), like a real fretboard.
   // Index 6 is a virtual monophonic bass "string" used by the bass line.
   private stringVoices: (Voice | null)[] = [null, null, null, null, null, null, null];
+  // Signature of the chord currently ringing, so a chord *change* can mute all
+  // strings while a same-chord re-trigger keeps the per-string ring-out.
+  private lastChordSig: string | null = null;
   private seqToken = 0;
   private seqTimer: ReturnType<typeof setTimeout> | null = null;
   private seqPlaying = false;
@@ -138,8 +142,12 @@ export class ChordPlayer {
     const ctx = this.ctx;
     if (!ctx) return;
     try {
-      voice.amp.gain.cancelScheduledValues(at);
-      voice.amp.gain.setTargetAtTime(0.0001, at, release / 3);
+      const gain = voice.amp.gain;
+      // cancelAndHoldAtTime anchors the param at its in-progress value so a damp
+      // landing mid-attack fades from the audible level rather than popping.
+      if (typeof gain.cancelAndHoldAtTime === 'function') gain.cancelAndHoldAtTime(at);
+      else gain.cancelScheduledValues(at);
+      gain.setTargetAtTime(0.0001, at, release / 3);
       voice.oscillators.forEach((o) => {
         try {
           o.stop(at + release + 0.04);
@@ -222,8 +230,38 @@ export class ChordPlayer {
     this.stringVoices[stringIndex] = this.buildVoice(midi, when, duration, stringIndex);
   }
 
+  /** A stable key identifying a chord voicing (string set + active frets). */
+  private chordSignature(fingering: Fingering, stringSet: StringSet): string {
+    return `${stringSet}:${activeStrings(stringSet)
+      .map((s) => fingering.frets[s] ?? 'x')
+      .join(',')}`;
+  }
+
+  /** Damp every ringing guitar string (0-5); the bass slot (6) is left alone. */
+  private muteStrings(at: number): void {
+    for (let s = 0; s < 6; s++) {
+      const voice = this.stringVoices[s];
+      if (voice) {
+        this.dampVoice(voice, at);
+        this.stringVoices[s] = null;
+      }
+    }
+  }
+
+  /**
+   * Called as a chord is about to sound: if it differs from the chord currently
+   * ringing, mute all the previous chord's strings (a clean chord change). The
+   * same chord re-triggered keeps the per-string ring-out behaviour.
+   */
+  private beforeChord(fingering: Fingering, stringSet: StringSet, at: number): void {
+    const sig = this.chordSignature(fingering, stringSet);
+    if (this.lastChordSig !== null && this.lastChordSig !== sig) this.muteStrings(at);
+    this.lastChordSig = sig;
+  }
+
   /** Strum the played notes of a fingering starting at `when` (internal). */
   private strumAt(fingering: Fingering, stringSet: StringSet, when: number, strum = 0.045): void {
+    this.beforeChord(fingering, stringSet, when);
     let voice = 0;
     for (const stringIndex of activeStrings(stringSet)) {
       const fret = fingering.frets[stringIndex];
@@ -246,6 +284,7 @@ export class ChordPlayer {
   /** Hard stop: damp every string and cancel any sequence. */
   stopAll(): void {
     this.cancelSequence();
+    this.lastChordSig = null;
     if (!this.ctx) return;
     const now = this.ctx.currentTime;
     for (const voice of [...this.voices]) this.dampVoice(voice, now);
@@ -299,7 +338,9 @@ export class ChordPlayer {
       this.cancelSequence();
       const strings = this.orderedStrings(fingering, stringSet);
       if (strings.length === 0) return;
-      this.pluckString(strings[0].stringIndex, strings[0].midi, this.ensureContext().currentTime + 0.02, 3.0);
+      const at = this.ensureContext().currentTime + 0.02;
+      this.beforeChord(fingering, stringSet, at);
+      this.pluckString(strings[0].stringIndex, strings[0].midi, at, 3.0);
     } catch {
       /* no audio available */
     }
@@ -376,7 +417,10 @@ export class ChordPlayer {
       oscillators: [osc],
       nodes: [],
       stringIndex: -1,
-      teardown: setTimeout(() => this.disposeVoice(voice), 300),
+      teardown: setTimeout(
+        () => this.disposeVoice(voice),
+        Math.max(0, (when - ctx.currentTime + 0.06 + 0.15) * 1000),
+      ),
     };
     this.voices.add(voice);
   }
@@ -396,10 +440,7 @@ export class ChordPlayer {
       const bpm = Math.max(20, options.bpm);
       const beatsPerBar = options.beatsPerBar ?? 4;
       const spb = 60 / bpm; // seconds per beat
-      const totalBeats = events.reduce(
-        (max, e) => Math.max(max, e.startBeat + Math.max(1, e.durationBeats)),
-        0,
-      );
+      const totalBeats = arrangementSpanBeats(events);
       const token = ++this.seqToken;
       this.setSeqPlaying(true);
       const t0 = performance.now();
@@ -449,6 +490,7 @@ export class ChordPlayer {
     this.voices.forEach((v) => clearTimeout(v.teardown));
     this.voices.clear();
     this.stringVoices = [null, null, null, null, null, null, null];
+    this.lastChordSig = null;
     try {
       void this.ctx?.close();
     } catch {
