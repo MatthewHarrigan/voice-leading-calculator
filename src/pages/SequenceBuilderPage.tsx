@@ -35,6 +35,7 @@ export function SequenceBuilderPage() {
   const chartKey = useStore((s) => s.chartKey);
   const stringSet = useStore((s) => s.stringSet);
   const avoidB9 = useStore((s) => s.avoidB9);
+  const audioEnabled = useStore((s) => s.audioEnabled);
   const startingInversion = useStore((s) => s.startingInversion);
   const setStartingInversion = useStore((s) => s.setStartingInversion);
   const insertion = useStore((s) => s.insertion);
@@ -118,13 +119,12 @@ export function SequenceBuilderPage() {
     setInsertion({ barIndex: chord.barIndex, beat: chord.beat });
   };
 
-  const playAll = async () => {
-    if (!optimized) return;
-    const player = getChordPlayer();
-    for (const chord of optimized) {
-      await player.playFingering(chord.fingering, chord.stringSet);
-      await new Promise((r) => setTimeout(r, 700));
-    }
+  const playAll = () => {
+    if (!optimized || !audioEnabled) return;
+    getChordPlayer().playSequence(
+      optimized.map((chord) => ({ fingering: chord.fingering, stringSet: chord.stringSet })),
+      0.7,
+    );
   };
 
   return (
@@ -298,9 +298,16 @@ export function SequenceBuilderPage() {
                   ))}
                 </select>
               </FormField>
-              <button className="btn btn-sm" onClick={playAll} style={{ alignSelf: 'flex-end' }}>
-                ♪ Play sequence
-              </button>
+              {audioEnabled && (
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={playAll}
+                  style={{ alignSelf: 'flex-end' }}
+                >
+                  ♪ Play sequence
+                </button>
+              )}
             </div>
           </div>
 

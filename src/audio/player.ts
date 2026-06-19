@@ -4,7 +4,11 @@
 // faster-decaying partials, shaped by a low-pass filter that closes over the
 // note (the classic "pluck" brightness decay) and a fast-attack / exponential
 // release amplitude envelope. A gentle limiter on the master bus keeps strummed
-// chords from clipping or sounding harsh. No samples, no network, always in tune.
+// chords from clipping. No samples, no network, always in tune.
+//
+// Only ONE thing plays at a time: every public play method first calls
+// stopAll(), which fades out any sounding/scheduled voices and cancels any
+// running sequence, so repeated presses never stack into overlapping audio.
 
 import { frettedMidi, type StringSet, activeStrings } from '@/music/tuning';
 import type { Fingering } from '@/music/voicing';
@@ -20,10 +24,24 @@ const PARTIALS: { ratio: number; gain: number; type: OscillatorType }[] = [
   { ratio: 3, gain: 0.12, type: 'sine' },
 ];
 
+interface Voice {
+  amp: GainNode;
+  oscillators: OscillatorNode[];
+  nodes: AudioNode[];
+  teardown: ReturnType<typeof setTimeout>;
+}
+
+export interface SequenceChordInput {
+  fingering: Fingering;
+  stringSet: StringSet;
+}
+
 export class ChordPlayer {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
-  private timers = new Set<ReturnType<typeof setTimeout>>();
+  private voices = new Set<Voice>();
+  private seqToken = 0;
+  private seqTimer: ReturnType<typeof setTimeout> | null = null;
 
   private ensureContext(): AudioContext {
     if (!this.ctx) {
@@ -35,7 +53,6 @@ export class ChordPlayer {
       const master = this.ctx.createGain();
       master.gain.value = 0.5;
 
-      // Soft limiter so a full 4-note strum stays clean.
       const limiter = this.ctx.createDynamicsCompressor();
       limiter.threshold.value = -10;
       limiter.knee.value = 24;
@@ -60,13 +77,53 @@ export class ChordPlayer {
     }
   }
 
-  /** Pluck a single MIDI note with an additive, decaying tone. */
-  private pluck(midi: number, when: number, duration = 1.7): void {
+  private disposeVoice(voice: Voice): void {
+    clearTimeout(voice.teardown);
+    try {
+      voice.oscillators.forEach((o) => o.disconnect());
+      voice.nodes.forEach((n) => n.disconnect());
+      voice.amp.disconnect();
+    } catch {
+      /* already torn down */
+    }
+    this.voices.delete(voice);
+  }
+
+  /** Stop everything currently sounding or scheduled, and cancel any sequence. */
+  stopAll(fade = 0.04): void {
+    // Invalidate any running sequence loop and pending tick.
+    this.seqToken += 1;
+    if (this.seqTimer !== null) {
+      clearTimeout(this.seqTimer);
+      this.seqTimer = null;
+    }
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    for (const voice of [...this.voices]) {
+      try {
+        voice.amp.gain.cancelScheduledValues(now);
+        voice.amp.gain.setTargetAtTime(0.0001, now, 0.012);
+        voice.oscillators.forEach((o) => {
+          try {
+            o.stop(now + fade + 0.03);
+          } catch {
+            /* not started / already stopped */
+          }
+        });
+      } catch {
+        /* ignore */
+      }
+      clearTimeout(voice.teardown);
+      voice.teardown = setTimeout(() => this.disposeVoice(voice), (fade + 0.2) * 1000);
+    }
+  }
+
+  /** Schedule a single pluck at absolute time `when`. Does not stop other voices. */
+  private pluck(midi: number, when: number, duration = 1.4): void {
     const ctx = this.ensureContext();
     const freq = midiToFreq(midi);
     const nyquist = ctx.sampleRate / 2;
 
-    // Low-pass that opens on attack then closes — gives the plucked brightness sweep.
     const filter = ctx.createBiquadFilter();
     filter.type = 'lowpass';
     filter.Q.value = 0.9;
@@ -75,7 +132,6 @@ export class ChordPlayer {
     filter.frequency.setValueAtTime(openFreq, when);
     filter.frequency.exponentialRampToValueAtTime(closeFreq, when + duration * 0.9);
 
-    // Amplitude envelope: quick attack, exponential release.
     const amp = ctx.createGain();
     amp.gain.setValueAtTime(0.0001, when);
     amp.gain.exponentialRampToValueAtTime(0.28, when + 0.006);
@@ -85,6 +141,7 @@ export class ChordPlayer {
     amp.connect(this.master!);
 
     const oscillators: OscillatorNode[] = [];
+    const partialGains: AudioNode[] = [];
     for (const partial of PARTIALS) {
       const partialFreq = freq * partial.ratio;
       if (partialFreq >= nyquist) continue;
@@ -92,7 +149,6 @@ export class ChordPlayer {
       osc.type = partial.type;
       osc.frequency.value = partialFreq;
       const pg = ctx.createGain();
-      // Higher partials fade faster, like a real string.
       pg.gain.setValueAtTime(partial.gain, when);
       pg.gain.exponentialRampToValueAtTime(
         Math.max(0.0001, partial.gain * 0.04),
@@ -103,48 +159,29 @@ export class ChordPlayer {
       osc.start(when);
       osc.stop(when + duration + 0.05);
       oscillators.push(osc);
+      partialGains.push(pg);
     }
 
-    const cleanupAt = (when - ctx.currentTime + duration + 0.2) * 1000;
-    const timer = setTimeout(() => {
-      this.timers.delete(timer);
-      try {
-        oscillators.forEach((o) => o.disconnect());
-        filter.disconnect();
-        amp.disconnect();
-      } catch {
-        /* already torn down */
-      }
-    }, Math.max(0, cleanupAt));
-    this.timers.add(timer);
+    const voice: Voice = {
+      amp,
+      oscillators,
+      nodes: [filter, ...partialGains],
+      teardown: setTimeout(
+        () => this.disposeVoice(voice),
+        Math.max(0, (when - ctx.currentTime + duration + 0.2) * 1000),
+      ),
+    };
+    this.voices.add(voice);
   }
 
-  /** Strum the played notes of a fingering, low to high. */
-  async playFingering(fingering: Fingering, stringSet: StringSet, strum = 0.045): Promise<void> {
-    try {
-      await this.resume();
-      const ctx = this.ensureContext();
-      const start = ctx.currentTime + 0.03;
-      let voice = 0;
-      for (const stringIndex of activeStrings(stringSet)) {
-        const fret = fingering.frets[stringIndex];
-        if (fret === null || fret === undefined) continue;
-        this.pluck(frettedMidi(stringIndex, fret), start + voice * strum);
-        voice += 1;
-      }
-    } catch {
-      /* no audio available */
-    }
-  }
-
-  /** Play a single MIDI note immediately. */
-  async playNote(midi: number, duration = 1.4): Promise<void> {
-    try {
-      await this.resume();
-      const ctx = this.ensureContext();
-      this.pluck(midi, ctx.currentTime + 0.01, duration);
-    } catch {
-      /* no audio available */
+  /** Strum the played notes of a fingering starting at `when` (internal). */
+  private strumAt(fingering: Fingering, stringSet: StringSet, when: number, strum = 0.045): void {
+    let voice = 0;
+    for (const stringIndex of activeStrings(stringSet)) {
+      const fret = fingering.frets[stringIndex];
+      if (fret === null || fret === undefined) continue;
+      this.pluck(frettedMidi(stringIndex, fret), when + voice * strum);
+      voice += 1;
     }
   }
 
@@ -159,15 +196,36 @@ export class ChordPlayer {
       .sort((a, b) => a - b);
   }
 
+  /** Strum a single chord (replaces any current playback). */
+  async playFingering(fingering: Fingering, stringSet: StringSet): Promise<void> {
+    try {
+      await this.resume();
+      this.stopAll();
+      this.strumAt(fingering, stringSet, this.ensureContext().currentTime + 0.02);
+    } catch {
+      /* no audio available */
+    }
+  }
+
+  /** Play a single MIDI note (replaces any current playback). */
+  async playNote(midi: number, duration = 1.4): Promise<void> {
+    try {
+      await this.resume();
+      this.stopAll();
+      this.pluck(midi, this.ensureContext().currentTime + 0.02, duration);
+    } catch {
+      /* no audio available */
+    }
+  }
+
   /**
-   * Play a single ascending arpeggio of the chord spread evenly over
-   * `totalSeconds` (the gesture length). Notes do not loop. Quicker = faster
-   * strum; longer = a slow, deliberate roll. Notes sustain a little past their
-   * neighbour so slow rolls still feel connected.
+   * Single ascending arpeggio of the chord spread evenly over `totalSeconds`
+   * (the gesture length). Does not loop. Replaces any current playback.
    */
   async arpeggiate(fingering: Fingering, stringSet: StringSet, totalSeconds: number): Promise<void> {
     try {
       await this.resume();
+      this.stopAll();
       const ctx = this.ensureContext();
       const notes = this.orderedMidi(fingering, stringSet);
       if (notes.length === 0) return;
@@ -181,12 +239,42 @@ export class ChordPlayer {
     }
   }
 
-  /** Play a bare list of MIDI notes (used for melody preview). */
+  /**
+   * Play a list of chords in time, one strum every `gapSeconds`. Replaces any
+   * current playback; pressing again restarts cleanly (no overlap). Chords are
+   * triggered just-in-time so only the current few voices are ever live.
+   */
+  async playSequence(chords: SequenceChordInput[], gapSeconds = 0.7): Promise<void> {
+    try {
+      await this.resume();
+      this.stopAll();
+      if (chords.length === 0) return;
+      const ctx = this.ensureContext();
+      const token = ++this.seqToken;
+      let i = 0;
+      const tick = () => {
+        if (token !== this.seqToken) return; // superseded / stopped
+        const chord = chords[i];
+        i += 1;
+        this.strumAt(chord.fingering, chord.stringSet, ctx.currentTime + 0.02);
+        if (i < chords.length) {
+          this.seqTimer = setTimeout(tick, gapSeconds * 1000);
+        } else {
+          this.seqTimer = null;
+        }
+      };
+      tick();
+    } catch {
+      /* no audio available */
+    }
+  }
+
+  /** Play a bare list of MIDI notes (replaces any current playback). */
   async playMidi(notes: number[], strum = 0.0): Promise<void> {
     try {
       await this.resume();
-      const ctx = this.ensureContext();
-      const start = ctx.currentTime + 0.03;
+      this.stopAll();
+      const start = this.ensureContext().currentTime + 0.02;
       notes.forEach((midi, i) => this.pluck(midi, start + i * strum));
     } catch {
       /* no audio available */
@@ -195,8 +283,9 @@ export class ChordPlayer {
 
   /** Release the audio context and any pending teardown timers. */
   dispose(): void {
-    this.timers.forEach((t) => clearTimeout(t));
-    this.timers.clear();
+    this.stopAll();
+    this.voices.forEach((v) => clearTimeout(v.teardown));
+    this.voices.clear();
     try {
       void this.ctx?.close();
     } catch {

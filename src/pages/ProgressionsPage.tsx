@@ -15,13 +15,12 @@ export function ProgressionsPage() {
     [type, stringSet, avoidB9],
   );
 
-  const playProgression = async (chords: typeof patterns[number]['chords']) => {
+  const playProgression = (chords: typeof patterns[number]['chords']) => {
     if (!audioEnabled) return;
-    const player = getChordPlayer();
-    for (let i = 0; i < chords.length; i++) {
-      await player.playFingering(chords[i].voicing, chords[i].stringSet);
-      await new Promise((r) => setTimeout(r, 850));
-    }
+    getChordPlayer().playSequence(
+      chords.map((c) => ({ fingering: c.voicing, stringSet: c.stringSet })),
+      0.85,
+    );
   };
 
   return (
