@@ -14,11 +14,12 @@ interface HoldStrumOptions {
 }
 
 /**
- * Shared press-and-hold-to-strum gesture. A very short press plays the chord as
- * a block (all strings together, handled by ChordPlayer.arpeggiate); a longer
- * hold spreads the ascending roll across the held time. Returns the press state
- * and begin/end/cancel handlers so callers can wire pointer + keyboard events
- * (and, optionally, drive a fill bar via onProgress).
+ * Shared press-and-hold-to-strum gesture, modelled on plucking a guitar:
+ *  - press plants the lowest (bass) string immediately and lets it ring;
+ *  - release rolls the remaining strings out over a span equal to how long the
+ *    lead note was held (a quick tap plays them together → a block chord).
+ * Returns the press state and begin/end/cancel handlers so callers can wire
+ * pointer + keyboard events (and, optionally, drive a fill bar via onProgress).
  */
 export function useHoldStrum(
   fingering: Fingering,
@@ -44,11 +45,12 @@ export function useHoldStrum(
 
   const begin = useCallback(() => {
     if (!audioEnabled || pressingRef.current) return;
-    void getChordPlayer().resume();
     startRef.current = performance.now();
     pressingRef.current = true;
     setPressing(true);
     onProgress?.(0);
+    // Phase 1: sound the bass string right away while we wait for release.
+    void getChordPlayer().strumLead(fingering, stringSet);
     if (onProgress) {
       const tick = () => {
         onProgress(Math.min(1, (performance.now() - startRef.current) / maxMs));
@@ -56,7 +58,7 @@ export function useHoldStrum(
       };
       rafRef.current = requestAnimationFrame(tick);
     }
-  }, [audioEnabled, maxMs, onProgress]);
+  }, [audioEnabled, fingering, maxMs, onProgress, stringSet]);
 
   const cancel = useCallback(() => {
     if (!pressingRef.current) return;
@@ -73,8 +75,9 @@ export function useHoldStrum(
     setPressing(false);
     onProgress?.(0);
     if (!audioEnabled) return;
+    // Phase 2: roll the rest of the strings out over how long the lead was held.
     const held = Math.min(maxMs, performance.now() - startRef.current);
-    void getChordPlayer().arpeggiate(fingering, stringSet, held / 1000);
+    void getChordPlayer().strumRest(fingering, stringSet, held / 1000);
   }, [audioEnabled, fingering, maxMs, onProgress, stopRaf, stringSet]);
 
   return { pressing, begin, end, cancel };

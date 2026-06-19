@@ -235,31 +235,45 @@ export class ChordPlayer {
     }
   }
 
+  /** Active strings of a fingering, low→high, with their MIDI pitch. */
+  private orderedStrings(fingering: Fingering, stringSet: StringSet): { stringIndex: number; midi: number }[] {
+    return activeStrings(stringSet)
+      .filter((s) => fingering.frets[s] !== null && fingering.frets[s] !== undefined)
+      .map((s) => ({ stringIndex: s, midi: frettedMidi(s, fingering.frets[s]!) }))
+      .sort((a, b) => a.midi - b.midi);
+  }
+
   /**
-   * Single ascending arpeggio rolled low→high across the strings over
-   * `totalSeconds`. Re-triggering interrupts each string as the roll reaches it,
-   * so strings not yet re-plucked keep ringing from the previous pass.
+   * Phase 1 of a press-and-hold strum: pluck the lowest string immediately and
+   * let it ring (a long sustain) while the player decides how long to hold.
    */
-  async arpeggiate(fingering: Fingering, stringSet: StringSet, totalSeconds: number): Promise<void> {
+  async strumLead(fingering: Fingering, stringSet: StringSet): Promise<void> {
     try {
       await this.resume();
       this.cancelSequence();
-      const ctx = this.ensureContext();
-      const strings = activeStrings(stringSet).filter((s) => {
-        const fret = fingering.frets[s];
-        return fret !== null && fret !== undefined;
-      });
+      const strings = this.orderedStrings(fingering, stringSet);
       if (strings.length === 0) return;
-      const start = ctx.currentTime + 0.02;
+      this.pluckString(strings[0].stringIndex, strings[0].midi, this.ensureContext().currentTime + 0.02, 3.0);
+    } catch {
+      /* no audio available */
+    }
+  }
+
+  /**
+   * Phase 2: on release, roll the remaining strings out over `totalSeconds`
+   * (the time the lead note was held). A very short hold plays them together.
+   */
+  async strumRest(fingering: Fingering, stringSet: StringSet, totalSeconds: number): Promise<void> {
+    try {
+      await this.resume();
+      const rest = this.orderedStrings(fingering, stringSet).slice(1);
+      if (rest.length === 0) return;
+      const start = this.ensureContext().currentTime + 0.02;
       const span = Math.max(0, totalSeconds);
-      // A very short press plays all strings together (a block chord); longer
-      // presses spread the roll across the held duration.
       const BLOCK_MAX = 0.12;
-      const spacing = span <= BLOCK_MAX || strings.length < 2 ? 0 : span / (strings.length - 1);
+      const spacing = span <= BLOCK_MAX || rest.length < 2 ? 0 : span / (rest.length - 1);
       const dur = Math.min(3.5, Math.max(1.2, spacing * 1.5 + 0.9));
-      strings.forEach((stringIndex, i) => {
-        this.pluckString(stringIndex, frettedMidi(stringIndex, fingering.frets[stringIndex]!), start + i * spacing, dur);
-      });
+      rest.forEach(({ stringIndex, midi }, i) => this.pluckString(stringIndex, midi, start + i * spacing, dur));
     } catch {
       /* no audio available */
     }
