@@ -25,6 +25,10 @@ const PARTIALS: { ratio: number; gain: number; type: OscillatorType }[] = [
   { ratio: 3, gain: 0.12, type: 'sine' },
 ];
 
+// Default note ring-out (seconds). Real guitar strings sustain for several
+// seconds; this is the decay length of a plucked string.
+const DEFAULT_SUSTAIN = 3.0;
+
 interface Voice {
   amp: GainNode;
   oscillators: OscillatorNode[];
@@ -224,7 +228,7 @@ export class ChordPlayer {
   }
 
   /** Pluck a specific string: damps that string's previous note, lets others ring. */
-  private pluckString(stringIndex: number, midi: number, when: number, duration = 1.4): void {
+  private pluckString(stringIndex: number, midi: number, when: number, duration = DEFAULT_SUSTAIN): void {
     const prev = this.stringVoices[stringIndex];
     if (prev) this.dampVoice(prev, when);
     this.stringVoices[stringIndex] = this.buildVoice(midi, when, duration, stringIndex);
@@ -310,7 +314,7 @@ export class ChordPlayer {
   }
 
   /** Play a single MIDI note (stringless, used for melody preview). */
-  async playNote(midi: number, duration = 1.4): Promise<void> {
+  async playNote(midi: number, duration = DEFAULT_SUSTAIN): Promise<void> {
     try {
       await this.resume();
       this.cancelSequence();
@@ -340,7 +344,7 @@ export class ChordPlayer {
       if (strings.length === 0) return;
       const at = this.ensureContext().currentTime + 0.02;
       this.beforeChord(fingering, stringSet, at);
-      this.pluckString(strings[0].stringIndex, strings[0].midi, at, 3.0);
+      this.pluckString(strings[0].stringIndex, strings[0].midi, at, DEFAULT_SUSTAIN + 1);
     } catch {
       /* no audio available */
     }
@@ -359,7 +363,7 @@ export class ChordPlayer {
       const span = Math.max(0, totalSeconds);
       const BLOCK_MAX = 0.12;
       const spacing = span <= BLOCK_MAX || rest.length < 2 ? 0 : span / (rest.length - 1);
-      const dur = Math.min(3.5, Math.max(1.2, spacing * 1.5 + 0.9));
+      const dur = Math.min(5, Math.max(2, spacing * 1.5 + 1.6));
       rest.forEach(({ stringIndex, midi }, i) => this.pluckString(stringIndex, midi, start + i * spacing, dur));
     } catch {
       /* no audio available */
@@ -453,7 +457,7 @@ export class ChordPlayer {
           if (e.startBeat !== beat) continue;
           this.strumAt(e.fingering, e.stringSet, at, 0.02);
           if (options.bassline) {
-            const dur = Math.min(4, Math.max(0.8, e.durationBeats * spb + 0.3));
+            const dur = Math.min(5, Math.max(1.4, e.durationBeats * spb + 0.6));
             this.pluckString(6, e.bassMidi, at, dur);
           }
         }
@@ -478,7 +482,7 @@ export class ChordPlayer {
       await this.resume();
       this.cancelSequence();
       const start = this.ensureContext().currentTime + 0.02;
-      notes.forEach((midi, i) => this.buildVoice(midi, start + i * strum, 1.4, -1));
+      notes.forEach((midi, i) => this.buildVoice(midi, start + i * strum, DEFAULT_SUSTAIN, -1));
     } catch {
       /* no audio available */
     }
