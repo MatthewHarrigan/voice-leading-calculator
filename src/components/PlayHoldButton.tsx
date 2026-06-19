@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { activeStrings, frettedMidi, type StringSet } from '@/music/tuning';
+import { useEffect, useRef, useState } from 'react';
+import type { StringSet } from '@/music/tuning';
 import type { Fingering } from '@/music/voicing';
 import { useStore } from '@/state/store';
 import { getChordPlayer } from '@/audio/player';
@@ -9,89 +9,76 @@ interface PlayHoldButtonProps {
   stringSet: StringSet;
   className?: string;
   style?: React.CSSProperties;
-  /** Render-prop children receive the current holding state for custom labels. */
-  children?: (holding: boolean) => ReactNode;
 }
 
-// A quick tap (released before this) strums the whole chord; a longer press
-// rolls an ascending arpeggio for as long as the button is held.
-const HOLD_THRESHOLD_MS = 140;
-const ARP_INTERVAL_MS = 150;
+// Hold up to this long; the fill bar reaches 100% here and the resulting
+// arpeggio spans at most this many seconds.
+const MAX_MS = 5000;
+// Floor so a quick click still rolls as a fast strum rather than a block chord.
+const MIN_MS = 60;
 
 /**
- * Hold-to-arpeggiate play control. Hold for 2 s → the chord arpeggiates over 2 s
- * (an ascending roll that repeats for the length of the press). A tap strums the
- * chord. Works with mouse, touch, and keyboard (Enter/Space).
+ * Press-and-hold play control. The button fills left→right over up to 5 s while
+ * held; on release the chord plays as a single ascending strum whose length
+ * equals how long you held (a quick tap = a fast strum, a long hold = a slow
+ * arpeggio). Does not loop. Works with mouse, touch, and keyboard.
  */
-export function PlayHoldButton({ fingering, stringSet, className, style, children }: PlayHoldButtonProps) {
+export function PlayHoldButton({ fingering, stringSet, className, style }: PlayHoldButtonProps) {
   const audioEnabled = useStore((s) => s.audioEnabled);
-  const holdTimer = useRef<number | null>(null);
-  const arpTimer = useRef<number | null>(null);
-  const arpActive = useRef(false);
-  const noteIndex = useRef(0);
-  const [holding, setHolding] = useState(false);
+  const [pressing, setPressing] = useState(false);
+  const startRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
+  const fillRef = useRef<HTMLSpanElement | null>(null);
+  const secsRef = useRef<HTMLSpanElement | null>(null);
 
-  const ascendingMidi = () =>
-    activeStrings(stringSet)
-      .map((s) => {
-        const fret = fingering.frets[s];
-        return fret === null || fret === undefined ? null : frettedMidi(s, fret);
-      })
-      .filter((m): m is number => m !== null)
-      .sort((a, b) => a - b);
-
-  const stopAll = () => {
-    if (holdTimer.current !== null) {
-      clearTimeout(holdTimer.current);
-      holdTimer.current = null;
-    }
-    if (arpTimer.current !== null) {
-      clearInterval(arpTimer.current);
-      arpTimer.current = null;
-    }
-    arpActive.current = false;
-    setHolding(false);
+  const setFill = (fraction: number) => {
+    if (fillRef.current) fillRef.current.style.width = `${Math.min(1, fraction) * 100}%`;
+    if (secsRef.current) secsRef.current.textContent = (Math.min(MAX_MS, fraction * MAX_MS) / 1000).toFixed(1);
   };
 
-  useEffect(() => () => stopAll(), []);
-
-  const startArpeggio = () => {
-    const notes = ascendingMidi();
-    if (notes.length === 0) return;
-    arpActive.current = true;
-    setHolding(true);
-    noteIndex.current = 0;
-    const player = getChordPlayer();
-    const step = () => {
-      player.playNote(notes[noteIndex.current % notes.length]);
-      noteIndex.current += 1;
-    };
-    step(); // first note immediately
-    arpTimer.current = window.setInterval(step, ARP_INTERVAL_MS);
+  const stopRaf = () => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
   };
+
+  useEffect(
+    () => () => {
+      stopRaf();
+    },
+    [],
+  );
 
   const begin = () => {
     if (!audioEnabled) return;
     void getChordPlayer().resume();
-    stopAll();
-    holdTimer.current = window.setTimeout(startArpeggio, HOLD_THRESHOLD_MS);
+    startRef.current = performance.now();
+    setPressing(true);
+    const tick = () => {
+      const elapsed = performance.now() - startRef.current;
+      setFill(elapsed / MAX_MS);
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    setFill(0);
+    rafRef.current = requestAnimationFrame(tick);
   };
 
   const end = () => {
-    const wasArpeggiating = arpActive.current;
-    const wasPressed = holdTimer.current !== null || wasArpeggiating;
-    stopAll();
-    // A quick tap (released before the arpeggio kicked in) strums the chord.
-    if (audioEnabled && wasPressed && !wasArpeggiating) {
-      void getChordPlayer().playFingering(fingering, stringSet);
-    }
+    if (!pressing) return;
+    stopRaf();
+    setPressing(false);
+    setFill(0);
+    const held = Math.min(MAX_MS, Math.max(MIN_MS, performance.now() - startRef.current));
+    if (audioEnabled) void getChordPlayer().arpeggiate(fingering, stringSet, held / 1000);
   };
 
   return (
     <button
       type="button"
-      className={className}
+      className={`strum-btn ${className ?? ''}`}
       style={style}
+      data-pressing={pressing}
       onPointerDown={(e) => {
         e.preventDefault();
         e.currentTarget.setPointerCapture(e.pointerId);
@@ -111,9 +98,18 @@ export function PlayHoldButton({ fingering, stringSet, className, style, childre
           end();
         }
       }}
-      aria-label="Play voicing — tap to strum, hold to arpeggiate"
+      aria-label="Play voicing — hold to set the strum length, release to play"
     >
-      {children ? children(holding) : holding ? '♪ arpeggiating…' : '♪ Play · hold to arpeggiate'}
+      <span ref={fillRef} className="strum-fill" aria-hidden="true" />
+      <span className="strum-label">
+        {pressing ? (
+          <>
+            ◉ <span ref={secsRef}>0.0</span>s — release to strum
+          </>
+        ) : (
+          '▸ Strum · hold to lengthen (max 5s)'
+        )}
+      </span>
     </button>
   );
 }

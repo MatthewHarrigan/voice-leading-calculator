@@ -137,12 +137,45 @@ export class ChordPlayer {
     }
   }
 
-  /** Play a single MIDI note immediately (used by the live arpeggiator). */
+  /** Play a single MIDI note immediately. */
   async playNote(midi: number, duration = 1.4): Promise<void> {
     try {
       await this.resume();
       const ctx = this.ensureContext();
       this.pluck(midi, ctx.currentTime + 0.01, duration);
+    } catch {
+      /* no audio available */
+    }
+  }
+
+  /** Ascending MIDI pitches of a fingering, low to high. */
+  private orderedMidi(fingering: Fingering, stringSet: StringSet): number[] {
+    return activeStrings(stringSet)
+      .map((s) => {
+        const fret = fingering.frets[s];
+        return fret === null || fret === undefined ? null : frettedMidi(s, fret);
+      })
+      .filter((m): m is number => m !== null)
+      .sort((a, b) => a - b);
+  }
+
+  /**
+   * Play a single ascending arpeggio of the chord spread evenly over
+   * `totalSeconds` (the gesture length). Notes do not loop. Quicker = faster
+   * strum; longer = a slow, deliberate roll. Notes sustain a little past their
+   * neighbour so slow rolls still feel connected.
+   */
+  async arpeggiate(fingering: Fingering, stringSet: StringSet, totalSeconds: number): Promise<void> {
+    try {
+      await this.resume();
+      const ctx = this.ensureContext();
+      const notes = this.orderedMidi(fingering, stringSet);
+      if (notes.length === 0) return;
+      const start = ctx.currentTime + 0.02;
+      const span = Math.max(0, totalSeconds);
+      const spacing = notes.length > 1 ? span / (notes.length - 1) : 0;
+      const dur = Math.min(3.5, Math.max(1.2, spacing * 1.5 + 0.9));
+      notes.forEach((midi, i) => this.pluck(midi, start + i * spacing, dur));
     } catch {
       /* no audio available */
     }

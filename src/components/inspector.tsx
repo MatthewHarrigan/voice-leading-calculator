@@ -26,11 +26,9 @@ function VoicingInspector({ chord }: { chord: InspectChord }) {
           stringSet={chord.stringSet}
           className="btn btn-primary btn-sm"
           style={{ width: '100%', marginTop: 10 }}
-        >
-          {(holding) => (holding ? '♪ arpeggiating…' : '♪ Play · hold to arpeggiate')}
-        </PlayHoldButton>
+        />
         <p className="muted" style={{ fontSize: 11, textAlign: 'center', marginTop: 6 }}>
-          Tap to strum · hold to arpeggiate over the hold
+          Hold longer for a slower strum — the roll spans how long you hold
         </p>
       </div>
 

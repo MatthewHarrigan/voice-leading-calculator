@@ -220,7 +220,7 @@ test('melody finder analyses a built line', async ({ page }) => {
   await expect(page.locator('.analysis-panel')).toContainText('steps or common tones');
 });
 
-test('play button arpeggiates while held and strums on tap', async ({ page }) => {
+test('play button fills while held and strums once on release', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
 
@@ -232,17 +232,23 @@ test('play button arpeggiates while held and strums on tap', async ({ page }) =>
   const box = await play.boundingBox();
   if (!box) throw new Error('play button not found');
 
-  // Hold: the label switches to the arpeggiating state, then reverts on release.
+  // Hold: enters the pressing state and shows the release prompt + fill.
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
-  await expect(play).toContainText('arpeggiating');
-  await page.waitForTimeout(450);
-  await page.mouse.up();
-  await expect(play).not.toContainText('arpeggiating');
+  await expect(play).toHaveAttribute('data-pressing', 'true');
+  await expect(play).toContainText('release to strum');
+  await page.waitForTimeout(500);
+  // Fill bar has advanced.
+  const fillWidth = await play.locator('.strum-fill').evaluate((el) => el.getBoundingClientRect().width);
+  expect(fillWidth).toBeGreaterThan(0);
 
-  // Tap: quick click does not get stuck in the arpeggiating state.
+  await page.mouse.up();
+  await expect(play).toHaveAttribute('data-pressing', 'false');
+  await expect(play).toContainText('hold to lengthen');
+
+  // A quick tap also resolves cleanly (no stuck pressing state).
   await play.click();
-  await expect(play).not.toContainText('arpeggiating');
+  await expect(play).toHaveAttribute('data-pressing', 'false');
 
   expect(errors).toEqual([]);
 });
