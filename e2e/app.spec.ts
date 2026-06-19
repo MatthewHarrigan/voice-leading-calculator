@@ -220,6 +220,33 @@ test('melody finder analyses a built line', async ({ page }) => {
   await expect(page.locator('.analysis-panel')).toContainText('steps or common tones');
 });
 
+test('play button arpeggiates while held and strums on tap', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+
+  await gotoFresh(page);
+  await page.locator('.content .chord-card').first().click();
+  await expect(page.locator('.modal')).toBeVisible();
+
+  const play = page.getByRole('button', { name: /Play voicing/i });
+  const box = await play.boundingBox();
+  if (!box) throw new Error('play button not found');
+
+  // Hold: the label switches to the arpeggiating state, then reverts on release.
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await expect(play).toContainText('arpeggiating');
+  await page.waitForTimeout(450);
+  await page.mouse.up();
+  await expect(play).not.toContainText('arpeggiating');
+
+  // Tap: quick click does not get stuck in the arpeggiating state.
+  await play.click();
+  await expect(play).not.toContainText('arpeggiating');
+
+  expect(errors).toEqual([]);
+});
+
 test('theme toggle switches to dark mode', async ({ page }) => {
   await gotoFresh(page);
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');

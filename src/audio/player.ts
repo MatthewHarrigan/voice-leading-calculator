@@ -137,6 +137,17 @@ export class ChordPlayer {
     }
   }
 
+  /** Play a single MIDI note immediately (used by the live arpeggiator). */
+  async playNote(midi: number, duration = 1.4): Promise<void> {
+    try {
+      await this.resume();
+      const ctx = this.ensureContext();
+      this.pluck(midi, ctx.currentTime + 0.01, duration);
+    } catch {
+      /* no audio available */
+    }
+  }
+
   /** Play a bare list of MIDI notes (used for melody preview). */
   async playMidi(notes: number[], strum = 0.0): Promise<void> {
     try {

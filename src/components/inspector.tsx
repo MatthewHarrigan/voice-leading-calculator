@@ -1,13 +1,12 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { stringSetLabel } from '@/music/tuning';
 import { fretSpan, inversionName, topNoteOf, voiceRows } from '@/music/voicing';
-import { usePlayChord } from '@/audio/useAudio';
 import { ChordDiagram } from './ChordDiagram';
 import { Modal } from './Modal';
+import { PlayHoldButton } from './PlayHoldButton';
 import { InspectorContext, type InspectChord } from './inspectorContext';
 
 function VoicingInspector({ chord }: { chord: InspectChord }) {
-  const play = usePlayChord();
   const rows = voiceRows(chord.fingering, chord.rootDisplay, chord.stringSet);
   const top = topNoteOf(chord.fingering, chord.stringSet);
   const span = fretSpan(chord.fingering, chord.stringSet);
@@ -22,13 +21,17 @@ function VoicingInspector({ chord }: { chord: InspectChord }) {
           title={`${chord.symbol} ${inversionName(chord.inversion)}`}
           leadNote={chord.leadNote ?? null}
         />
-        <button
+        <PlayHoldButton
+          fingering={chord.fingering}
+          stringSet={chord.stringSet}
           className="btn btn-primary btn-sm"
           style={{ width: '100%', marginTop: 10 }}
-          onClick={() => play(chord.fingering, chord.stringSet)}
         >
-          ♪ Play voicing
-        </button>
+          {(holding) => (holding ? '♪ arpeggiating…' : '♪ Play · hold to arpeggiate')}
+        </PlayHoldButton>
+        <p className="muted" style={{ fontSize: 11, textAlign: 'center', marginTop: 6 }}>
+          Tap to strum · hold to arpeggiate over the hold
+        </p>
       </div>
 
       <div className="inspector">
