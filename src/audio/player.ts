@@ -1,14 +1,15 @@
-// A small, dependency-free plucked-string synth on the Web Audio API.
+// A small, dependency-free plucked-string synth on the Web Audio API that
+// behaves like a real guitar: SIX independent monophonic strings.
 //
-// Each note is a short additive pluck: a fundamental plus a couple of quieter,
-// faster-decaying partials, shaped by a low-pass filter that closes over the
-// note (the classic "pluck" brightness decay) and a fast-attack / exponential
-// release amplitude envelope. A gentle limiter on the master bus keeps strummed
-// chords from clipping. No samples, no network, always in tune.
+// Each note is a short additive pluck (fundamental + two quieter, faster-
+// decaying partials) shaped by a low-pass filter that closes over the note and
+// a fast-attack / exponential-release envelope, summed through a master limiter.
 //
-// Only ONE thing plays at a time: every public play method first calls
-// stopAll(), which fades out any sounding/scheduled voices and cancels any
-// running sequence, so repeated presses never stack into overlapping audio.
+// Per-string monophony: each string holds at most one ringing voice. Plucking a
+// string damps whatever that same string was playing (a fast release) but leaves
+// the other strings ringing — so a new strum/arpeggio interrupts each string only
+// as it reaches it. A "sequence" (Play / Play progression) is a single
+// cancellable scheduler, so pressing it again restarts rather than layering.
 
 import { frettedMidi, type StringSet, activeStrings } from '@/music/tuning';
 import type { Fingering } from '@/music/voicing';
@@ -17,7 +18,6 @@ function midiToFreq(midi: number): number {
   return 440 * Math.pow(2, (midi - 69) / 12);
 }
 
-// Relative amplitude of each partial (fundamental, 2nd, 3rd harmonic).
 const PARTIALS: { ratio: number; gain: number; type: OscillatorType }[] = [
   { ratio: 1, gain: 1.0, type: 'triangle' },
   { ratio: 2, gain: 0.32, type: 'sine' },
@@ -29,6 +29,8 @@ interface Voice {
   oscillators: OscillatorNode[];
   nodes: AudioNode[];
   teardown: ReturnType<typeof setTimeout>;
+  /** String 0-5 this voice belongs to, or -1 for an untracked (stringless) note. */
+  stringIndex: number;
 }
 
 export interface SequenceChordInput {
@@ -40,6 +42,8 @@ export class ChordPlayer {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
   private voices = new Set<Voice>();
+  // Currently-ringing voice per guitar string (index 0-5), like a real fretboard.
+  private stringVoices: (Voice | null)[] = [null, null, null, null, null, null];
   private seqToken = 0;
   private seqTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -87,39 +91,37 @@ export class ChordPlayer {
       /* already torn down */
     }
     this.voices.delete(voice);
-  }
-
-  /** Stop everything currently sounding or scheduled, and cancel any sequence. */
-  stopAll(fade = 0.04): void {
-    // Invalidate any running sequence loop and pending tick.
-    this.seqToken += 1;
-    if (this.seqTimer !== null) {
-      clearTimeout(this.seqTimer);
-      this.seqTimer = null;
-    }
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    for (const voice of [...this.voices]) {
-      try {
-        voice.amp.gain.cancelScheduledValues(now);
-        voice.amp.gain.setTargetAtTime(0.0001, now, 0.012);
-        voice.oscillators.forEach((o) => {
-          try {
-            o.stop(now + fade + 0.03);
-          } catch {
-            /* not started / already stopped */
-          }
-        });
-      } catch {
-        /* ignore */
-      }
-      clearTimeout(voice.teardown);
-      voice.teardown = setTimeout(() => this.disposeVoice(voice), (fade + 0.2) * 1000);
+    if (voice.stringIndex >= 0 && this.stringVoices[voice.stringIndex] === voice) {
+      this.stringVoices[voice.stringIndex] = null;
     }
   }
 
-  /** Schedule a single pluck at absolute time `when`. Does not stop other voices. */
-  private pluck(midi: number, when: number, duration = 1.4): void {
+  /** Quickly damp a ringing voice starting at time `at` (a string being re-plucked). */
+  private dampVoice(voice: Voice, at: number, release = 0.025): void {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    try {
+      voice.amp.gain.cancelScheduledValues(at);
+      voice.amp.gain.setTargetAtTime(0.0001, at, release / 3);
+      voice.oscillators.forEach((o) => {
+        try {
+          o.stop(at + release + 0.04);
+        } catch {
+          /* not started / already stopped */
+        }
+      });
+    } catch {
+      /* ignore */
+    }
+    clearTimeout(voice.teardown);
+    voice.teardown = setTimeout(
+      () => this.disposeVoice(voice),
+      Math.max(0, (at - ctx.currentTime + release + 0.15) * 1000),
+    );
+  }
+
+  /** Build and schedule a pluck voice; returns it so the caller can track it. */
+  private buildVoice(midi: number, when: number, duration: number, stringIndex: number): Voice {
     const ctx = this.ensureContext();
     const freq = midiToFreq(midi);
     const nyquist = ctx.sampleRate / 2;
@@ -166,12 +168,21 @@ export class ChordPlayer {
       amp,
       oscillators,
       nodes: [filter, ...partialGains],
+      stringIndex,
       teardown: setTimeout(
         () => this.disposeVoice(voice),
         Math.max(0, (when - ctx.currentTime + duration + 0.2) * 1000),
       ),
     };
     this.voices.add(voice);
+    return voice;
+  }
+
+  /** Pluck a specific string: damps that string's previous note, lets others ring. */
+  private pluckString(stringIndex: number, midi: number, when: number, duration = 1.4): void {
+    const prev = this.stringVoices[stringIndex];
+    if (prev) this.dampVoice(prev, when);
+    this.stringVoices[stringIndex] = this.buildVoice(midi, when, duration, stringIndex);
   }
 
   /** Strum the played notes of a fingering starting at `when` (internal). */
@@ -180,74 +191,86 @@ export class ChordPlayer {
     for (const stringIndex of activeStrings(stringSet)) {
       const fret = fingering.frets[stringIndex];
       if (fret === null || fret === undefined) continue;
-      this.pluck(frettedMidi(stringIndex, fret), when + voice * strum);
+      this.pluckString(stringIndex, frettedMidi(stringIndex, fret), when + voice * strum);
       voice += 1;
     }
   }
 
-  /** Ascending MIDI pitches of a fingering, low to high. */
-  private orderedMidi(fingering: Fingering, stringSet: StringSet): number[] {
-    return activeStrings(stringSet)
-      .map((s) => {
-        const fret = fingering.frets[s];
-        return fret === null || fret === undefined ? null : frettedMidi(s, fret);
-      })
-      .filter((m): m is number => m !== null)
-      .sort((a, b) => a - b);
+  /** Cancel any running sequence loop (but let ringing strings decay naturally). */
+  private cancelSequence(): void {
+    this.seqToken += 1;
+    if (this.seqTimer !== null) {
+      clearTimeout(this.seqTimer);
+      this.seqTimer = null;
+    }
   }
 
-  /** Strum a single chord (replaces any current playback). */
+  /** Hard stop: damp every string and cancel any sequence (used on dispose). */
+  stopAll(): void {
+    this.cancelSequence();
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
+    for (const voice of [...this.voices]) this.dampVoice(voice, now);
+  }
+
+  /** Strum a single chord. Each string interrupts only its own previous note. */
   async playFingering(fingering: Fingering, stringSet: StringSet): Promise<void> {
     try {
       await this.resume();
-      this.stopAll();
+      this.cancelSequence();
       this.strumAt(fingering, stringSet, this.ensureContext().currentTime + 0.02);
     } catch {
       /* no audio available */
     }
   }
 
-  /** Play a single MIDI note (replaces any current playback). */
+  /** Play a single MIDI note (stringless, used for melody preview). */
   async playNote(midi: number, duration = 1.4): Promise<void> {
     try {
       await this.resume();
-      this.stopAll();
-      this.pluck(midi, this.ensureContext().currentTime + 0.02, duration);
+      this.cancelSequence();
+      this.buildVoice(midi, this.ensureContext().currentTime + 0.02, duration, -1);
     } catch {
       /* no audio available */
     }
   }
 
   /**
-   * Single ascending arpeggio of the chord spread evenly over `totalSeconds`
-   * (the gesture length). Does not loop. Replaces any current playback.
+   * Single ascending arpeggio rolled low→high across the strings over
+   * `totalSeconds`. Re-triggering interrupts each string as the roll reaches it,
+   * so strings not yet re-plucked keep ringing from the previous pass.
    */
   async arpeggiate(fingering: Fingering, stringSet: StringSet, totalSeconds: number): Promise<void> {
     try {
       await this.resume();
-      this.stopAll();
+      this.cancelSequence();
       const ctx = this.ensureContext();
-      const notes = this.orderedMidi(fingering, stringSet);
-      if (notes.length === 0) return;
+      const strings = activeStrings(stringSet).filter((s) => {
+        const fret = fingering.frets[s];
+        return fret !== null && fret !== undefined;
+      });
+      if (strings.length === 0) return;
       const start = ctx.currentTime + 0.02;
       const span = Math.max(0, totalSeconds);
-      const spacing = notes.length > 1 ? span / (notes.length - 1) : 0;
+      const spacing = strings.length > 1 ? span / (strings.length - 1) : 0;
       const dur = Math.min(3.5, Math.max(1.2, spacing * 1.5 + 0.9));
-      notes.forEach((midi, i) => this.pluck(midi, start + i * spacing, dur));
+      strings.forEach((stringIndex, i) => {
+        this.pluckString(stringIndex, frettedMidi(stringIndex, fingering.frets[stringIndex]!), start + i * spacing, dur);
+      });
     } catch {
       /* no audio available */
     }
   }
 
   /**
-   * Play a list of chords in time, one strum every `gapSeconds`. Replaces any
-   * current playback; pressing again restarts cleanly (no overlap). Chords are
-   * triggered just-in-time so only the current few voices are ever live.
+   * Play a list of chords in time, one strum every `gapSeconds`. A single
+   * cancellable scheduler: pressing again restarts cleanly. Each chord change
+   * interrupts the strings it re-plucks (per-string monophony).
    */
   async playSequence(chords: SequenceChordInput[], gapSeconds = 0.7): Promise<void> {
     try {
       await this.resume();
-      this.stopAll();
+      this.cancelSequence();
       if (chords.length === 0) return;
       const ctx = this.ensureContext();
       const token = ++this.seqToken;
@@ -269,13 +292,13 @@ export class ChordPlayer {
     }
   }
 
-  /** Play a bare list of MIDI notes (replaces any current playback). */
+  /** Play a bare list of MIDI notes (stringless). */
   async playMidi(notes: number[], strum = 0.0): Promise<void> {
     try {
       await this.resume();
-      this.stopAll();
+      this.cancelSequence();
       const start = this.ensureContext().currentTime + 0.02;
-      notes.forEach((midi, i) => this.pluck(midi, start + i * strum));
+      notes.forEach((midi, i) => this.buildVoice(midi, start + i * strum, 1.4, -1));
     } catch {
       /* no audio available */
     }
@@ -283,9 +306,10 @@ export class ChordPlayer {
 
   /** Release the audio context and any pending teardown timers. */
   dispose(): void {
-    this.stopAll();
+    this.cancelSequence();
     this.voices.forEach((v) => clearTimeout(v.teardown));
     this.voices.clear();
+    this.stringVoices = [null, null, null, null, null, null];
     try {
       void this.ctx?.close();
     } catch {
