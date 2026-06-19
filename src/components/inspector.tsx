@@ -27,9 +27,6 @@ function VoicingInspector({ chord }: { chord: InspectChord }) {
           className="btn btn-primary btn-sm"
           style={{ width: '100%', marginTop: 10 }}
         />
-        <p className="muted" style={{ fontSize: 11, textAlign: 'center', marginTop: 6 }}>
-          Hold longer for a slower strum — the roll spans how long you hold
-        </p>
       </div>
 
       <div className="inspector">

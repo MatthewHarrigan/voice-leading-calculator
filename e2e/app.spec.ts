@@ -232,19 +232,17 @@ test('play button fills while held and strums once on release', async ({ page })
   const box = await play.boundingBox();
   if (!box) throw new Error('play button not found');
 
-  // Hold: enters the pressing state and shows the release prompt + fill.
+  // Hold: enters the pressing state and the fill bar advances.
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
   await expect(play).toHaveAttribute('data-pressing', 'true');
-  await expect(play).toContainText('release to strum');
-  await page.waitForTimeout(500);
-  // Fill bar has advanced.
+  await page.waitForTimeout(350);
   const fillWidth = await play.locator('.strum-fill').evaluate((el) => el.getBoundingClientRect().width);
   expect(fillWidth).toBeGreaterThan(0);
 
   await page.mouse.up();
   await expect(play).toHaveAttribute('data-pressing', 'false');
-  await expect(play).toContainText('hold to lengthen');
+  await expect(play).toContainText('Play');
 
   // A quick tap also resolves cleanly (no stuck pressing state).
   await play.click();

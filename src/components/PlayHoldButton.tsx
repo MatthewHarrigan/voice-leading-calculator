@@ -13,15 +13,15 @@ interface PlayHoldButtonProps {
 
 // Hold up to this long; the fill bar reaches 100% here and the resulting
 // arpeggio spans at most this many seconds.
-const MAX_MS = 5000;
+const MAX_MS = 1000;
 // Floor so a quick click still rolls as a fast strum rather than a block chord.
 const MIN_MS = 60;
 
 /**
- * Press-and-hold play control. The button fills left→right over up to 5 s while
+ * Press-and-hold play control. The button fills left→right over up to 1 s while
  * held; on release the chord plays as a single ascending strum whose length
- * equals how long you held (a quick tap = a fast strum, a long hold = a slow
- * arpeggio). Does not loop. Works with mouse, touch, and keyboard.
+ * equals how long you held (a quick tap = a fast strum, a longer hold = a
+ * slower roll). Does not loop. Works with mouse, touch, and keyboard.
  */
 export function PlayHoldButton({ fingering, stringSet, className, style }: PlayHoldButtonProps) {
   const audioEnabled = useStore((s) => s.audioEnabled);
@@ -29,11 +29,9 @@ export function PlayHoldButton({ fingering, stringSet, className, style }: PlayH
   const startRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const fillRef = useRef<HTMLSpanElement | null>(null);
-  const secsRef = useRef<HTMLSpanElement | null>(null);
 
   const setFill = (fraction: number) => {
     if (fillRef.current) fillRef.current.style.width = `${Math.min(1, fraction) * 100}%`;
-    if (secsRef.current) secsRef.current.textContent = (Math.min(MAX_MS, fraction * MAX_MS) / 1000).toFixed(1);
   };
 
   const stopRaf = () => {
@@ -98,18 +96,10 @@ export function PlayHoldButton({ fingering, stringSet, className, style }: PlayH
           end();
         }
       }}
-      aria-label="Play voicing — hold to set the strum length, release to play"
+      aria-label="Play voicing — hold to set the strum length"
     >
       <span ref={fillRef} className="strum-fill" aria-hidden="true" />
-      <span className="strum-label">
-        {pressing ? (
-          <>
-            ◉ <span ref={secsRef}>0.0</span>s — release to strum
-          </>
-        ) : (
-          '▸ Strum · hold to lengthen (max 5s)'
-        )}
-      </span>
+      <span className="strum-label">▶ Play</span>
     </button>
   );
 }
