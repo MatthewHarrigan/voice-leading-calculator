@@ -252,7 +252,10 @@ export class ChordPlayer {
       if (strings.length === 0) return;
       const start = ctx.currentTime + 0.02;
       const span = Math.max(0, totalSeconds);
-      const spacing = strings.length > 1 ? span / (strings.length - 1) : 0;
+      // A very short press plays all strings together (a block chord); longer
+      // presses spread the roll across the held duration.
+      const BLOCK_MAX = 0.12;
+      const spacing = span <= BLOCK_MAX || strings.length < 2 ? 0 : span / (strings.length - 1);
       const dur = Math.min(3.5, Math.max(1.2, spacing * 1.5 + 0.9));
       strings.forEach((stringIndex, i) => {
         this.pluckString(stringIndex, frettedMidi(stringIndex, fingering.frets[stringIndex]!), start + i * spacing, dur);

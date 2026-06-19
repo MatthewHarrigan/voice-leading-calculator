@@ -416,6 +416,9 @@ input[type='text'] {
   border-radius: var(--radius);
   padding: 10px 10px 6px;
   cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
   transition: box-shadow 0.15s, border-color 0.15s, transform 0.08s;
 }
 .chord-card:hover {
@@ -479,6 +482,9 @@ input[type='text'] {
 .progression-chord {
   width: 150px;
   cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
   border-radius: var(--radius-sm);
   transition: transform 0.08s;
 }

@@ -29,13 +29,17 @@ test('library renders diagrams and opens the voicing inspector', async ({ page }
 
   const firstCard = page.locator('.content .chord-card').first();
   await expect(firstCard.locator('svg.chord-diagram')).toBeVisible();
-  await firstCard.click();
+  await firstCard.dblclick();
 
   await expect(page.locator('.modal')).toBeVisible();
   await expect(page.locator('.inspector')).toContainText('Voicing Inspector');
   await expect(page.locator('.inspector')).toContainText('Cmaj7');
   await expect(page.locator('.voice-row')).toHaveCount(4);
   await page.locator('.close-x').click();
+  await expect(page.locator('.modal')).toHaveCount(0);
+
+  // A single click plays the chord and must NOT open the inspector.
+  await firstCard.click();
   await expect(page.locator('.modal')).toHaveCount(0);
 
   expect(errors).toEqual([]);
@@ -74,7 +78,7 @@ test('progressions show four ranked ii-V-I patterns', async ({ page }) => {
   await page.getByRole('button', { name: 'Minor ii-V-i' }).click();
   await expect(page.locator('.progression')).toHaveCount(4);
 
-  await firstChords.first().click();
+  await firstChords.first().dblclick();
   await expect(page.locator('.modal')).toBeVisible();
   await page.locator('.close-x').click();
 });
@@ -129,7 +133,7 @@ test('sequence builder adds chords and optimises voice leading', async ({ page }
   await expect(page.locator('.analysis-panel')).toContainText('Dm7 → G7');
   await expect(page.locator('.analysis-panel')).toContainText('Guide line');
 
-  await page.locator('.optimized-grid .optimized-chord').first().click();
+  await page.locator('.optimized-grid .optimized-chord').first().dblclick();
   await expect(page.locator('.modal')).toBeVisible();
   await expect(page.locator('.inspector')).toContainText('Dm7');
   await page.locator('.close-x').click();
@@ -225,7 +229,7 @@ test('play button fills while held and strums once on release', async ({ page })
   page.on('pageerror', (e) => errors.push(e.message));
 
   await gotoFresh(page);
-  await page.locator('.content .chord-card').first().click();
+  await page.locator('.content .chord-card').first().dblclick();
   await expect(page.locator('.modal')).toBeVisible();
 
   const play = page.getByRole('button', { name: /Play voicing/i });

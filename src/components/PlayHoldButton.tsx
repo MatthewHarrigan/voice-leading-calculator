@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useRef } from 'react';
 import type { StringSet } from '@/music/tuning';
 import type { Fingering } from '@/music/voicing';
-import { useStore } from '@/state/store';
-import { getChordPlayer } from '@/audio/player';
+import { useHoldStrum } from '@/audio/useHoldStrum';
 
 interface PlayHoldButtonProps {
   fingering: Fingering;
@@ -11,65 +10,17 @@ interface PlayHoldButtonProps {
   style?: React.CSSProperties;
 }
 
-// Hold up to this long; the fill bar reaches 100% here and the resulting
-// arpeggio spans at most this many seconds.
-const MAX_MS = 1000;
-// Floor so a quick click still rolls as a fast strum rather than a block chord.
-const MIN_MS = 60;
-
 /**
- * Press-and-hold play control. The button fills left→right over up to 1 s while
- * held; on release the chord plays as a single ascending strum whose length
- * equals how long you held (a quick tap = a fast strum, a longer hold = a
- * slower roll). Does not loop. Works with mouse, touch, and keyboard.
+ * Press-and-hold play control with a fill bar. A quick tap plays a block chord;
+ * holding fills the button left→right (up to 1 s) and, on release, strums the
+ * chord as a single ascending roll spanning the held time. Mouse/touch/keyboard.
  */
 export function PlayHoldButton({ fingering, stringSet, className, style }: PlayHoldButtonProps) {
-  const audioEnabled = useStore((s) => s.audioEnabled);
-  const [pressing, setPressing] = useState(false);
-  const startRef = useRef(0);
-  const rafRef = useRef<number | null>(null);
   const fillRef = useRef<HTMLSpanElement | null>(null);
-
-  const setFill = (fraction: number) => {
+  const setFill = useCallback((fraction: number) => {
     if (fillRef.current) fillRef.current.style.width = `${Math.min(1, fraction) * 100}%`;
-  };
-
-  const stopRaf = () => {
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
-  };
-
-  useEffect(
-    () => () => {
-      stopRaf();
-    },
-    [],
-  );
-
-  const begin = () => {
-    if (!audioEnabled) return;
-    void getChordPlayer().resume();
-    startRef.current = performance.now();
-    setPressing(true);
-    const tick = () => {
-      const elapsed = performance.now() - startRef.current;
-      setFill(elapsed / MAX_MS);
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    setFill(0);
-    rafRef.current = requestAnimationFrame(tick);
-  };
-
-  const end = () => {
-    if (!pressing) return;
-    stopRaf();
-    setPressing(false);
-    setFill(0);
-    const held = Math.min(MAX_MS, Math.max(MIN_MS, performance.now() - startRef.current));
-    if (audioEnabled) void getChordPlayer().arpeggiate(fingering, stringSet, held / 1000);
-  };
+  }, []);
+  const { pressing, begin, end, cancel } = useHoldStrum(fingering, stringSet, { onProgress: setFill });
 
   return (
     <button
@@ -79,11 +30,15 @@ export function PlayHoldButton({ fingering, stringSet, className, style }: PlayH
       data-pressing={pressing}
       onPointerDown={(e) => {
         e.preventDefault();
-        e.currentTarget.setPointerCapture(e.pointerId);
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId);
+        } catch {
+          /* ignore */
+        }
         begin();
       }}
       onPointerUp={end}
-      onPointerCancel={end}
+      onPointerCancel={cancel}
       onKeyDown={(e) => {
         if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) {
           e.preventDefault();
