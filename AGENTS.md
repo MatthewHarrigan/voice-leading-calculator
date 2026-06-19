@@ -1,4 +1,4 @@
-# Claude Context File — Drop 2 Voicing Workbench
+# Codex Context File — Drop 2 Voicing Workbench
 
 ## Project Overview
 A modern React + TypeScript single-page app for studying drop 2 guitar voicings and voice
@@ -51,8 +51,8 @@ GitHub Actions builds and deploys to GitHub Pages on push to `main`
 (`.github/workflows/deploy.yml`); CI runs on every push/PR (`.github/workflows/ci.yml`).
 The production base path is `/voice-leading-calculator/`; e2e/CI build with `VITE_BASE=/`.
 
-## Notes for Claude
-- **Commit messages must NOT include Claude credit or co-author lines.**
+## Notes for Codex
+- **Commit messages must NOT include Codex credit or co-author lines.**
 - Keep music logic in `src/music/` pure and tested; do not pull React into it.
 - Only commit/push to the user's GitHub remote (`origin`,
   github.com/MatthewHarrigan/voice-leading-calculator).
