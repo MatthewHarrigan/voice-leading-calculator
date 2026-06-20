@@ -74,6 +74,34 @@ describe('cell-grid edge tokens', () => {
     expect(m[1].chords[0].bass).toBe('G');
     expect(m[1].chords[0].symbol).toContain('/G');
   });
+
+  test('W does not corrupt the cell positions of later bars', () => {
+    const m = tokenizeMeasures('C7,   |W/G,   |D7,   |', [4, 4]);
+    expect(m.map((x) => x.cell)).toEqual([0, 4, 8]);
+    expect(m[1].chords[0].symbol).toContain('/G');
+  });
+
+  test('an orphaned W (no prior chord) is skipped without corrupting the grid', () => {
+    expect(tokenizeMeasures('W/G|', [4, 4])).toHaveLength(0);
+    const m = tokenizeMeasures('W/GC7,   |D7,   |', [4, 4]);
+    // The orphaned W consumes nothing; C7 still starts the first bar at cell 0.
+    expect(m[0].cell).toBe(0);
+    expect(m[0].chords[0].symbol).toBe('C7');
+    expect(m[1].cell).toBe(4);
+  });
+
+  test('chord beats reconcile to the bar meter (3 even chords in 4/4 → sum 4)', () => {
+    const m = tokenizeMeasures('C7,W,W|', [4, 4]);
+    const beats = m[0].chords.map((c) => c.beats);
+    expect(beats.reduce((a, b) => a + b, 0)).toBe(4);
+    expect(beats[beats.length - 1]).toBe(2);
+  });
+
+  test('small (s/l) chord size is parsed per chord', () => {
+    const m = tokenizeMeasures('sC7,B7|lD7|', [4, 4]);
+    expect(m[0].chords.map((c) => !!c.small)).toEqual([true, true]);
+    expect(m[1].chords.map((c) => !!c.small)).toEqual([false]);
+  });
 });
 
 describe('parse 9.20 Special', () => {
@@ -185,7 +213,14 @@ describe('round-trip serialize → parse', () => {
       section: m.section,
       ending: m.ending,
       barRepeat: m.barRepeat,
-      chords: m.chords.map((c) => ({ root: c.root, quality: c.quality, bass: c.bass, chordType: c.chordType, noChord: c.noChord })),
+      chords: m.chords.map((c) => ({
+        root: c.root,
+        quality: c.quality,
+        bass: c.bass,
+        chordType: c.chordType,
+        noChord: c.noChord,
+        small: !!c.small,
+      })),
     }));
 
   test('9.20 Special survives a round-trip (chords + structure)', () => {

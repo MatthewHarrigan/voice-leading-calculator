@@ -6,6 +6,7 @@ import {
   chartToSequence,
   chordFromType,
   createEmptyChart,
+  measureStartBeats,
   sequenceToChart,
   songToChart,
 } from './chart';
@@ -78,6 +79,17 @@ describe('chartToSequence', () => {
     ];
     const seq = chartToSequence(chart, { stringSet: 'middle' });
     expect(seq.map((c) => c.symbol)).toEqual(['Cmaj7', 'G7', 'Cmaj7', 'G7']);
+  });
+});
+
+describe('measureStartBeats', () => {
+  test('accumulates by the default meter', () => {
+    expect(measureStartBeats([{}, {}, {}, {}], [4, 4])).toEqual([0, 4, 8, 12]);
+  });
+
+  test('honours per-measure time-signature changes (mixed meter)', () => {
+    const measures = [{ timeSig: [3, 4] as [number, number] }, {}, { timeSig: [3, 4] as [number, number] }];
+    expect(measureStartBeats(measures, [4, 4])).toEqual([0, 3, 7]);
   });
 });
 

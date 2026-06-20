@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { type ChordTypeId } from '@/music/chords';
 import { type SequenceChord } from '@/music/song';
-import { chartToSequence } from '@/music/chart';
+import { chartToSequence, measureStartBeats } from '@/music/chart';
 import { flattenChart, toIRealHTML, toIRealURL } from '@/music/ireal';
 import type { IRealChart, IRealChord, IRealMeasure } from '@/music/ireal/types';
 import {
@@ -111,15 +111,7 @@ export function SequenceBuilderPage() {
 
   // Performance order (repeats/endings expanded) → optimiser + diagrams.
   const flat = useMemo(() => flattenChart(chart), [chart]);
-  const barStartBeats = useMemo(() => {
-    const arr: number[] = [];
-    let acc = 0;
-    flat.forEach((m) => {
-      arr.push(acc);
-      acc += (m.timeSig ?? chart.timeSignature)[0];
-    });
-    return arr;
-  }, [flat, chart.timeSignature]);
+  const barStartBeats = useMemo(() => measureStartBeats(flat, chart.timeSignature), [flat, chart.timeSignature]);
 
   const sequence = useMemo(() => chartToSequence(chart, { stringSet }), [chart, stringSet]);
 
@@ -592,6 +584,10 @@ function OptimizedDiagramGrid({
   const groups = useMemo(() => {
     const layout = computeLayout(chart);
     const authoredIndexById = new Map(chart.measures.map((m, i) => [m.id, i]));
+    // `optimized` carries barIndex = position in the flattened performance order;
+    // `flat` is the same flattenChart(chart) order, so flat[barIndex] is that
+    // chord's measure and flat[i].id is its authored id. This holds only at
+    // wholeRepeats=1 (the page's default) — cloned passes would get fresh ids.
     const byBar = new Map<number, OptimizedSeqChord[]>();
     for (const c of optimized) {
       const list = byBar.get(c.barIndex);
@@ -603,7 +599,9 @@ function OptimizedDiagramGrid({
     const out: { id: string; row: number; col: number; span: number; chords: OptimizedSeqChord[] }[] = [];
     const seen = new Set<string>();
     flat.forEach((m, barIndex) => {
-      if (seen.has(m.id)) return; // first pass per authored bar
+      // Repeated bars share an authored id; show only the first pass's voicing so
+      // the diagrams mirror the authored chart (one per bar), not the expansion.
+      if (seen.has(m.id)) return;
       const chords = byBar.get(barIndex);
       if (!chords || chords.length === 0) return;
       const authoredIdx = authoredIndexById.get(m.id);

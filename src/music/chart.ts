@@ -223,3 +223,21 @@ export function chartToSequence(chart: IRealChart, options: ChartToSequenceOptio
 export function refSymbol(ref: IRealChordRef): string {
   return prettyChordSymbol(ref);
 }
+
+/**
+ * Absolute beat at which each measure begins, honouring per-measure time
+ * signatures (a measure's beat count is its numerator). Drives the playhead and
+ * the playback timeline so mixed-meter charts stay in time.
+ */
+export function measureStartBeats(
+  measures: Pick<IRealMeasure, 'timeSig'>[],
+  defaultTimeSig: [number, number],
+): number[] {
+  const out: number[] = [];
+  let acc = 0;
+  for (const m of measures) {
+    out.push(acc);
+    acc += (m.timeSig ?? defaultTimeSig)[0];
+  }
+  return out;
+}

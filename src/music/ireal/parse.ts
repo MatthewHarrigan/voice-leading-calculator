@@ -117,6 +117,13 @@ export function tokenizeMeasures(music: string, initialTimeSig: [number, number]
             const span = Math.max(1, nextOffset - offset);
             ch.beats = Math.max(1, Math.round((span * barBeats) / width));
           });
+          // Reconcile rounding so a bar's chord beats sum to its meter (the last
+          // chord absorbs the drift, e.g. 3 evenly-spaced chords in 4/4 → 1,1,2).
+          const sum = measure.chords.reduce((s, c) => s + c.beats, 0);
+          if (sum !== barBeats) {
+            const last = measure.chords[measure.chords.length - 1];
+            last.beats = Math.max(1, last.beats + (barBeats - sum));
+          }
         } else {
           const splits = distributeBeats(measure.chords.length, barBeats);
           measure.chords.forEach((ch, k) => (ch.beats = splits[k] ?? 1));
@@ -200,9 +207,12 @@ export function tokenizeMeasures(music: string, initialTimeSig: [number, number]
     // to place a bass note, i.e. a slash chord, without reprinting the root).
     const inv = /^W(\/[A-G][#b]?)?/.exec(rest);
     if (inv) {
-      (cur._cells ??= []).push(cellCursor);
-      cellCursor += 1;
+      // Only consume a cell / emit a chord when there's a root to inherit; an
+      // orphaned W (no prior chord) is malformed — skip it without disturbing
+      // the cell grid so later measures keep their positions.
       if (lastRef) {
+        (cur._cells ??= []).push(cellCursor);
+        cellCursor += 1;
         const bass = inv[1] ? inv[1].slice(1) : lastRef.bass;
         const ref: IRealChordRef = { ...lastRef, ...(bass ? { bass } : {}) };
         cur.chords.push({
