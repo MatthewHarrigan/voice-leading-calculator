@@ -9,7 +9,7 @@
   --surface-2: #f1efea;
   --ink: #1a1a1a;
   --muted: #6b6b6b;
-  --faint: #9a9a9a;
+  --faint: #767676;
   --hairline: #e3e0d9;
   --accent: #2f6f6a;
   --accent-ink: #ffffff;
@@ -25,6 +25,8 @@
 
   --radius: 10px;
   --radius-sm: 6px;
+  /* Lead-sheet chord-symbol size, shared by the score and the guitar sheet. */
+  --chart-symbol-size: 20px;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.22);
   --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
@@ -37,7 +39,7 @@
   --surface-2: #23272b;
   --ink: #ecebe8;
   --muted: #a3a8ad;
-  --faint: #6c7177;
+  --faint: #8b9197;
   --hairline: #2c3034;
   --accent: #5fb3ab;
   --accent-ink: #08201e;
@@ -229,6 +231,15 @@ input[type='text'] {
   font: inherit;
 }
 
+/* Keyboard focus ring (was missing entirely). :focus-visible keeps mouse clicks
+   clean while giving keyboard users a clear indicator on every control. */
+:where(a, button, .btn, .view-toggle-btn, .segmented button, .sequence-chord, .progression-chord,
+  .chord-card, .optimized-chord, .voicing-option, select, input, .close-x, [role='button'], [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
 .btn {
   appearance: none;
   border: 1px solid var(--hairline);
@@ -403,7 +414,10 @@ input[type='text'] {
 .chord-diagram .cd-lead {
   fill: var(--cd-ink);
   font-family: var(--serif);
-  font-size: 11px;
+  /* A pure ratio inside the 200-unit viewBox; bumped so labels survive the
+     downscale to ~80-96px diagrams on the lead sheet. */
+  font-size: 15px;
+  font-weight: 600;
   text-anchor: middle;
 }
 .chord-diagram .cd-lead {
@@ -651,7 +665,8 @@ input[type='text'] {
   border: 0;
   background: transparent;
   color: var(--muted);
-  padding: 5px 12px;
+  padding: 6px 14px;
+  min-height: 32px;
   font-size: 13px;
   cursor: pointer;
   border-left: 1px solid var(--hairline);
@@ -694,7 +709,8 @@ input[type='text'] {
 .sequence-chord {
   align-self: center;
   margin: 0 2px;
-  padding: 3px 4px;
+  padding: 5px 8px;
+  min-height: 30px;
   border-radius: var(--radius-sm);
   background: transparent;
   border: 0;
@@ -937,12 +953,16 @@ input[type='text'] {
   cursor: default;
   min-height: 0;
 }
-/* Barlines (shared by the score and the diagram sheet via `.barred`) */
+/* Barlines (shared by the score and the diagram sheet via `.barred`).
+   Final and repeat bars get a composite thin+thick edge (real lead-sheet look),
+   so a tune's end is clearly distinct from a plain or repeat barline. */
 .barred.open-double { border-left: 3px double var(--ink); }
-.barred.open-repeat { border-left: 4px solid var(--ink); }
+.barred.open-repeat { border-left: 4px solid var(--ink); box-shadow: inset 6px 0 0 -5px var(--ink); }
 .barred.close-double { border-right: 3px double var(--ink); }
-.barred.close-repeat { border-right: 4px solid var(--ink); }
-.barred.close-final { border-right: 4px solid var(--ink); }
+.barred.close-repeat { border-right: 4px solid var(--ink); box-shadow: inset -6px 0 0 -5px var(--ink); }
+.barred.close-final { border-right: 4px solid var(--ink); box-shadow: inset -6px 0 0 -5px var(--ink); }
+/* A heavy open-repeat at a row start must win over the thin staff barline. */
+.barred.row-start.open-repeat { border-left: 4px solid var(--ink); }
 
 .measure-marks {
   position: absolute;
@@ -968,8 +988,12 @@ input[type='text'] {
   border: 1.5px solid var(--ink);
   border-radius: 2px;
   padding: 0 5px;
-  font-size: 11px;
-  line-height: 1.4;
+  font-size: 14px;
+  line-height: 1.35;
+}
+/* When a bar carries an ending bracket, drop the marks below it so they don't collide. */
+.has-ending .measure-marks {
+  top: 15px;
 }
 /* Tall stacked time-signature fraction leading the bar, at staff height. */
 .time-sig {
@@ -981,7 +1005,8 @@ input[type='text'] {
   font-weight: 700;
   color: var(--ink);
   line-height: 0.84;
-  font-size: 18px;
+  font-size: 22px;
+  font-variant-numeric: lining-nums;
   margin-right: 8px;
   align-self: center;
 }
@@ -994,7 +1019,7 @@ input[type='text'] {
   border-top: 1.5px solid var(--ink);
   border-left: 1.5px solid var(--ink);
   padding: 1px 0 0 4px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--ink);
   pointer-events: none;
@@ -1073,7 +1098,7 @@ input[type='text'] {
   text-align: left;
 }
 .sequence-chord.small .sc-symbol {
-  font-size: 12px;
+  font-size: calc(var(--chart-symbol-size) * 0.72);
 }
 .bar-repeat {
   display: inline-flex;
@@ -1082,7 +1107,14 @@ input[type='text'] {
   color: var(--ink);
 }
 .bar-repeat svg {
-  opacity: 0.7;
+  opacity: 0.9;
+}
+/* Non-colour cue for the playhead (colour alone fails WCAG 1.4.1). */
+.measure-playing .sc-symbol,
+.measure-playing .diagram-symbol {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
 }
 .measure-empty {
   color: var(--faint);
@@ -1111,26 +1143,28 @@ input[type='text'] {
   line-height: 1;
 }
 .chord-symbol .cs-root {
-  font-weight: 600;
+  font-weight: 700;
 }
+/* Accidental and quality share one raised baseline so they line up at any size. */
 .chord-symbol .cs-acc {
-  font-size: 0.7em;
-  vertical-align: 0.32em;
+  font-size: 0.62em;
+  vertical-align: 0.42em;
   margin-left: 0.02em;
 }
 .chord-symbol .cs-qual {
-  font-size: 0.66em;
-  vertical-align: 0.34em;
-  font-weight: 600;
+  font-size: 0.6em;
+  vertical-align: 0.42em;
+  font-weight: 700;
   margin-left: 0.04em;
 }
 .chord-symbol .cs-bass {
   font-size: 0.74em;
   color: var(--muted);
+  font-weight: 600;
 }
 .sc-symbol {
   display: block;
-  font-size: 16px;
+  font-size: var(--chart-symbol-size);
 }
 
 /* ---------- Guitar-diagram sheet (mirrors the chord score) ---------- */
@@ -1139,19 +1173,39 @@ input[type='text'] {
   margin-top: 14px;
 }
 .diagram-sheet .measure-cells {
-  gap: 4px 6px;
+  gap: 6px 8px;
   align-items: flex-start;
+  justify-content: center;
 }
 .diagram-cell {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
-  flex: 1 1 0;
+  flex: 1 1 76px;
 }
 .diagram-symbol {
-  font-size: 13px;
+  font-size: var(--chart-symbol-size);
+}
+/* The diagram wrapper inherits a fixed 150px width from .progression-chord; on
+   the lead-sheet it must instead share the bar so multi-chord bars never overlap.
+   Cap to an iReal-compact size, centre a lone diagram, and wrap dense bars. */
+.diagram-sheet .progression-chord.optimized-chord {
+  width: 100%;
+  max-width: 96px;
+  min-width: 0;
+  margin: 0 auto;
+}
+.diagram-sheet .chord-diagram {
+  width: 100%;
+  height: auto;
+  max-height: 124px;
+}
+@media (max-width: 820px) {
+  .diagram-sheet .progression-chord.optimized-chord {
+    max-width: 76px;
+  }
 }
 
 /* Import panel */
@@ -1179,4 +1233,23 @@ input[type='text'] {
   color: #c0392b;
   font-size: 13px;
   margin: 4px 0;
+}
+
+/* Respect a user's reduced-motion preference: kill the hover lifts, the modal
+   fade and any transitions, but keep selected/playing end-states. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .chord-card:hover,
+  .progression-chord:hover,
+  .optimized-chord:hover,
+  .chart-measure:hover {
+    transform: none;
+  }
 }

@@ -321,7 +321,12 @@ export function SequenceBuilderPage() {
         >
           Save as…
         </button>
-        <button className="btn btn-sm btn-danger" onClick={clearChart}>
+        <button
+          className="btn btn-sm btn-danger"
+          onClick={() => {
+            if (window.confirm('Clear the entire chart? This cannot be undone.')) clearChart();
+          }}
+        >
           Clear All
         </button>
       </div>

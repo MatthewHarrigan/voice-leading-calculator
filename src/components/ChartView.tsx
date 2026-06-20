@@ -1,4 +1,4 @@
-import { Fragment, type CSSProperties, type ReactNode } from 'react';
+import { Fragment, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { inversionName } from '@/music/voicing';
 import { prettyChordSymbol } from '@/music/ireal/chordParser';
 import type { IRealChart, IRealMeasure } from '@/music/ireal/types';
@@ -53,23 +53,43 @@ export function ChartGrid({
           gridColumn: `${place.col + 1} / span ${place.span}`,
           gridRow: place.row + 1,
         };
+        const playing = !!playingMeasureId && m.id === playingMeasureId;
         const cls = [
           measureBaseClassName,
           'barred',
           structuralClasses(m, place),
+          m.ending != null ? 'has-ending' : '',
           m.id === selectedMeasureId ? 'measure-selected' : '',
           m.id === insertionMeasureId ? 'measure-insertion' : '',
-          playingMeasureId && m.id === playingMeasureId ? 'measure-playing' : '',
+          playing ? 'measure-playing' : '',
         ]
           .filter(Boolean)
           .join(' ');
+        // When the bar is selectable, make it keyboard-operable like a button.
+        const interactive = onSelectMeasure
+          ? {
+              role: 'button' as const,
+              tabIndex: 0,
+              'aria-label': `Bar ${i + 1}${
+                m.chords.length ? `: ${m.chords.map((c) => c.symbol).join(', ')}` : ' (empty)'
+              }`,
+              onKeyDown: (e: KeyboardEvent) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSelectMeasure(m.id);
+                }
+              },
+            }
+          : {};
         return (
           <div
             key={m.id}
             className={cls}
             data-measure-id={m.id}
             style={style}
+            aria-current={playing ? 'location' : undefined}
             onClick={onSelectMeasure ? () => onSelectMeasure(m.id) : undefined}
+            {...interactive}
           >
             {m.ending != null && <EndingBracket ending={m.ending} />}
             {m.open === 'repeat' && <RepeatDots side="open" />}
