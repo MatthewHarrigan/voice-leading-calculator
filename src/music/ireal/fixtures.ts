@@ -1,0 +1,38 @@
+// Real iReal Pro URLs used as parser test fixtures and demo imports.
+//
+// These are chord charts of copyrighted compositions, sourced from the public
+// iReal Pro user forum. They are included only to exercise and demonstrate the
+// format decoder, not as a redistributable song catalogue.
+
+/** The verified spec vector — "9.20 Special" (Earl Warren), 24 bars → 32 expanded. */
+export const VECTOR_920_SPECIAL =
+  'irealb://9%2E20%20Special=Warren%20Earl==Medium%20Swing=C==1r34LbKcu7bB%2C7B4D9%2CXQyX%2CC%7CQyX6%2DF%7CQXy%2C9D%7CQyX%2C6%2DF%7CQy%7CsC7%2C4TA%2A%7B%20%2C7G%7CN1lD9Dl2NZL%20QyXQyX%7DG7%2C7bAs%20%2C7G%7CQyX%2C9%2CXyQ%7C7A%2C7KQyX%2C%2ABC7%2ClcKQyX%2C7DZL%20lcQKyX%2C6FZL%20lcKQyX%20LZG7%5B%5D%206C7B%2C7C%5B%2AAD9%2CC%7CQyX%2C6%2DF%7CQyX9%2CD%7CQyX%2C6%2DF%7CQyX%2CXyQ%7Cs%5D%20%20lc%2CBb7%2CA7%7ClD9%2CXyQ%7CG7%2C%20C6%20Z%20==0=0===';
+
+export interface IRealFixture {
+  name: string;
+  url: string;
+}
+
+/** A handful of well-known standards (modern obfuscated form). */
+export const STANDARD_FIXTURES: IRealFixture[] = [
+  {
+    name: 'Autumn Leaves',
+    url: 'irealb://Autumn%20Leaves%3DKosma%20Joseph%3D%3DMedium%20Swing%3DG-%3D%3D1r34LbKcu7%239b7D4C-9Xb7-A%7CQyX9%5EbE%7CQXy9%5EbB%7CQyX31F%7CQy5XyQ%7C4TA*%7B9b7D%7CG-9XyAB*%5B%5DQyX%2C9-G2N%7D%7C%20%2C5%237G%209-G1N%7CQh7XyQ%7CQyX5bE%7CQy%7CG-9XB%7CQyX9b31F%7CQyX-9CZL5%237G%209-G%7CQyb%5E13XQyX5%23-AZL9%5D%5B*CA%209-FZL31bG%209-GQ%7CyX5%239%237D%7CQyX7hE7b9%23QyX9%5E7b5XyQ%7CD7b9%235XyQ%7CG-11XyQKcl%20%20Z%20%3DJazz-Even%208ths%3D138%3D10',
+  },
+  {
+    name: 'Blue Bossa',
+    url: 'irealb://Blue%20Bossa%201%3DDorham%20Kenny%3D%3DBossa%20Nova%3DC-%3D%3D1r34LbKcu7%20lcKQ4C-7X44TA*%5B%7CQyX7-F%7CyQX7-C%7CQyX7-F%7CQyC-7Xy4Ti*%7CA%7CQyXXyQKcL%20lcKQyX7-C%7CQy9Xb7G%7CQyX7hDZL%20lZEb-77-FZL%2C9b7G%7CDb%5E7QyX7-C%7CQyX9b7GQ%7CyX7hDZL%20lcKQyX%7CDh7%20QyX7bQ%20Z%7B%2CQ%2CC-7XyQKcl%20%3C4x%3E%20%7D%20%3DLatin-Brazil:%20Bossa%20Electric%3D120%3D5',
+  },
+  {
+    name: 'All The Things You Are',
+    url: 'irealb://All%20The%20Things%20You%20Are%20JPM%3DKern%20Jerome%3D%3DMedium%20Swing%3DC%3D%3D1r34LbKcu77bE%7CQ4Db-7%7CQyX-FA*%7CQyXx%7CyQX9%237C%7CQyXx%7CQyXBb-Xy4Ti*%5B%7CQyX-b%5EXyQ-C%7CQyXx%7CQyX%5ECZ9L%237G%20-D%7CQyX%5EbD%7CXyQ%7CFA%7CQyXQyX-AQ%7CEb%5EE%20%5EG%7CQyX%5EGZL9%23D7%20-A%7CQyX%5EbA%7CQyX7LZ*ByX7bB%7CQyX9XyQ%7CGyX%5EE%7CQyX9%237B%7CQXy-%23F%7CQyX%5EG%7CQyX%5EQ%7CC7%239%237D%7CB%7CQyXyQ%7CBbX-bD%7CQyX%5EbD%7CQy%5EXbA%7CQyX7bE%7CQyX-yQ%7CC-X-FC*%3EADOCBb-XyCQZL9%237C%20hG%7CQy%5EXbAQ%7CQyX9%237bE%7CQ-%3C*69%7CQyX-XyQ%7CF7XyQ%7CBb-XyQ%7CEb7XyQ%7CfAb%5EXyQ%7CXyQLZXyQLZXyQ%20Z%20%3DJazz-Medium%20Swing%3D100%3D3',
+  },
+  {
+    name: 'Take The A Train',
+    url: 'irealb://Take%20The%20A%20Train%20%28C%29%3DEllington%20-%20Strayhorn%3D%3DMedium%20Swing%3DC%3D%3D1r34LbKcu71NZL%204C%5EXy7GZL%207-D%7CQyXx%7CyQX11%237%5ED%7CQyXx%7CQ%20LZC%5E4TA*%5B%7CQyXx%5BN2x%201%237%5ED%7CQyXx%7CQyX%7CxQyXx%7CQyX%5EFB*ZL1XyQ%7C%7DQyXx%207GZLQ%7CG7XQyXx%7CQyX11%237%5EDQ%7CyXx%7CQyX%5ECA*%7CQy%7CD-7%20yX7-D%2CQ%2CLZC%5EXyQ%7CxXyQZ%20%20%5BQC%5E%20LZx%20%20Z%20%3DJazz-Medium%20Swing%3D100%3D3',
+  },
+  {
+    name: 'All Of Me',
+    url: 'irealb://All%20Of%20Me%20%28sad%29%3DMarks%20Gerald%3D%3DMedium%20Swing%3DF%3D%3D1r34LbKcu7QyX%2C94F%2C%20F7-AZL%2BA%20%2C9-E%7CQXy7AZL7bB%20%2CFZL7%5EXyQ%7CD4TA*%5B7A%20%2C7D7b9%2C%5B%5D%2C7bB%2Csus31bB%3Essus90*%3C%20%2C7-GZL*BlE-%207-G%7C%2C7-bEEh7%2C%20%2031GZL31bA%20%2C9-ZDL%2BA%207-DlZL9%237AsE-7%2ClZL9%23%2C7-Gs%2C%20Ab9%5B%5D%2C%2BC%2C7-G%2C7D%2C7G-sZL7D%209-GZL11%23*AlF%207-Dl%7Cl%7C%2C9%23%2C%7CF%5E7E%2C-bB%2C9b7As%7CQy7XhElZL5b9bB%2C6F%2C%2B%2CEb79b31C9%237%23FyQ%7CA7Cl%7C%2C7-bD%2Co%23F%2C-%2CA7-GsZL9%237D%20%2C9b-7%2C%20sX9%237D9-AZL%2C%5D%5B*CG/7%5EC%289-AZL%2BE%207%29o%23F%287hB%7CQyXbBl%29%20Eb99%237B%2C%20D9LZG-9%20Ab7LZsA%2B%2CBb%5E7%2CBoLZlF%2CU%2C%20D7%239LZG9b5%20C7b5%20Z%20%3DJazz-Ballad%20Swing%3D80%3D3',
+  },
+];
