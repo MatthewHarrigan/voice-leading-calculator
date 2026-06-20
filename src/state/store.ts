@@ -5,6 +5,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { type ChordTypeId } from '@/music/chords';
+import { parseKey, pitchClassOf } from '@/music/notes';
 import type { StringSet } from '@/music/tuning';
 import {
   chartToSequence,
@@ -65,6 +66,7 @@ interface AppState {
   setChartRepeats: (n: number) => void;
   setTimeSignature: (sig: [number, number]) => void;
   transpose: (semitones: number) => void;
+  transposeToKey: (tonic: string) => void;
 
   // --- chords ---
   addChord: (input: AddChordInput) => void;
@@ -116,6 +118,7 @@ export interface MeasurePatch {
   segno?: boolean;
   fermata?: boolean;
   staffText?: string | undefined;
+  directive?: string | undefined;
 }
 
 const DEFAULT_TEMPO = 100;
@@ -229,6 +232,20 @@ export const useStore = create<AppState>()(
         }),
 
       transpose: (semitones) => set((s) => ({ chart: normalize(transposeChart(s.chart, semitones)) })),
+
+      transposeToKey: (tonic) =>
+        set((s) => {
+          const prev = parseKey(s.chart.key);
+          const curTonic = prev?.tonic ?? 'C';
+          let delta = 0;
+          try {
+            delta = ((pitchClassOf(tonic) - pitchClassOf(curTonic)) % 12 + 12) % 12;
+          } catch {
+            delta = 0;
+          }
+          const newKey = prev?.mode === 'minor' ? `${tonic} minor` : tonic;
+          return { chart: normalize(transposeChart(s.chart, delta, newKey)) };
+        }),
 
       addChord: (input) =>
         set((s) => {

@@ -64,6 +64,10 @@ export interface IRealMeasure {
   fermata?: boolean;
   /** Free staff text annotation. */
   staffText?: string;
+  /** Render staff text above (rather than below) the bar, per its <*nn> offset. */
+  staffTextAbove?: boolean;
+  /** Vertical spacer count (iReal `Y`), preserved for round-tripping. */
+  spacer?: number;
   /** Recognised navigation directive (D.C. al Coda, D.S. al Fine, Fine, …). */
   directive?: string;
 }

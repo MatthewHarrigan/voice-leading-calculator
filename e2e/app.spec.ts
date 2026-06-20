@@ -446,3 +446,22 @@ test('renders stacked time signature, repeat dots, and alternate chords', async 
   await page.getByTestId('import-panel').getByRole('button', { name: 'All Of Me' }).click();
   await expect(page.locator('.sc-alt')).not.toHaveCount(0);
 });
+
+test('changing the key transposes all chords in both views', async ({ page }) => {
+  await gotoFresh(page);
+  await page.getByRole('link', { name: 'Sequence Builder' }).click();
+  await addChord(page, 'D', 'min7');
+  await addChord(page, 'G', 'dom7');
+  await addChord(page, 'C', 'maj7');
+
+  await expect(page.locator('.chart-view')).toContainText('Dm7');
+  await expect(page.locator('.optimized-grid')).toContainText('Dm7');
+
+  // Move the key up to D (a whole step): Dm7 G7 Cmaj7 -> Em7 A7 Dmaj7.
+  await page.getByLabel('Chart key').selectOption('D');
+
+  await expect(page.locator('.chart-meta')).toContainText('Key D');
+  await expect(page.locator('.chart-view')).toContainText('Em7');
+  await expect(page.locator('.chart-view')).not.toContainText('Dm7');
+  await expect(page.locator('.optimized-grid')).toContainText('Em7');
+});

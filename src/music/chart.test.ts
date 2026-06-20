@@ -9,6 +9,7 @@ import {
   measureStartBeats,
   sequenceToChart,
   songToChart,
+  transposeChart,
 } from './chart';
 import { SONG_PRESETS } from '../data/presets';
 
@@ -79,6 +80,25 @@ describe('chartToSequence', () => {
     ];
     const seq = chartToSequence(chart, { stringSet: 'middle' });
     expect(seq.map((c) => c.symbol)).toEqual(['Cmaj7', 'G7', 'Cmaj7', 'G7']);
+  });
+});
+
+describe('transposeChart', () => {
+  test('transposes to a flat target key and respells chords with flats', () => {
+    const c = createEmptyChart('t', 'C');
+    c.measures = [
+      { id: 'm1', chords: [chordFromType('D', 'min7', 2), chordFromType('G', 'dom7', 2)], timeSig: [4, 4] },
+      { id: 'm2', chords: [chordFromType('C', 'maj7', 4)], close: 'final' },
+    ];
+    const t = transposeChart(c, 3, 'Eb');
+    expect(t.key).toBe('Eb');
+    expect(t.measures.flatMap((m) => m.chords.map((ch) => ch.symbol))).toEqual(['Fm7', 'Bb7', 'Ebmaj7']);
+  });
+
+  test('derives the new key from the shift when no target key is given', () => {
+    const c = createEmptyChart('t', 'C');
+    c.measures = [{ id: 'm1', chords: [chordFromType('C', 'maj7', 4)], timeSig: [4, 4], close: 'final' }];
+    expect(transposeChart(c, 2).key).toBe('D');
   });
 });
 

@@ -57,6 +57,11 @@ function parseTimeSig(a: string, b: string): [number, number] {
 
 const DIRECTIVE_RE = /\b(D\.C\.|D\.S\.)( al (Coda|Fine|1st End\.|2nd End\.|3rd End\.))?|Fine|To Coda/i;
 
+/** Is this text a navigation directive the flattener acts on (D.C./D.S./Fine/To Coda)? */
+export function isNavigationDirective(text: string): boolean {
+  return DIRECTIVE_RE.test(text);
+}
+
 /** Even-as-possible integer beat split that sums to `total` (each ≥ 1). */
 function distributeBeats(n: number, total: number): number[] {
   if (n <= 0) return [];
@@ -175,12 +180,17 @@ export function tokenizeMeasures(music: string, initialTimeSig: [number, number]
       continue;
     }
 
-    // Staff text / directive.
+    // Staff text / directive. A leading *nn is a vertical offset (00 below …
+    // 74 above the staff); keep it to place the text above vs below the bar.
     const text = /^<(.*?)>/.exec(rest);
     if (text) {
-      const body = text[1].replace(/^\*\d\d/, '').trim(); // strip vertical-offset prefix
+      const offset = /^\*(\d\d)/.exec(text[1]);
+      const body = text[1].replace(/^\*\d\d/, '').trim();
       if (DIRECTIVE_RE.test(body)) cur.directive = body;
-      else if (body) cur.staffText = body;
+      else if (body) {
+        cur.staffText = body;
+        if (offset && parseInt(offset[1], 10) >= 50) cur.staffTextAbove = true;
+      }
       i += text[0].length;
       continue;
     }
@@ -292,8 +302,13 @@ export function tokenizeMeasures(music: string, initialTimeSig: [number, number]
         // beat — both occupy one layout cell; `p` extends the prior chord's span.
         cellCursor += 1;
         break;
+      case 'Y':
+        // Vertical spacer (extra space above the staff). Preserved for a lossless
+        // round-trip; it does not consume a horizontal layout cell.
+        cur.spacer = (cur.spacer ?? 0) + 1;
+        break;
       default:
-        // comma (separator), U (end marker), Y (vertical spacer), unknown.
+        // comma (separator), U (end marker), unknown.
         break;
     }
     i += 1;

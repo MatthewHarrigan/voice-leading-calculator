@@ -1,4 +1,5 @@
 import { useStore } from '@/state/store';
+import { isNavigationDirective } from '@/music/ireal/parse';
 import type { BarlineClose, BarlineOpen } from '@/music/ireal/types';
 
 interface MeasureEditorProps {
@@ -146,10 +147,16 @@ export function MeasureEditor({ measureId }: MeasureEditorProps) {
         <Field label="Text / directive">
           <input
             className="text-input"
-            value={measure.staffText ?? ''}
+            value={measure.directive ?? measure.staffText ?? ''}
             placeholder="e.g. D.C. al Coda"
             aria-label="Staff text"
-            onChange={(e) => patchMeasure(measureId, { staffText: e.target.value || undefined })}
+            onChange={(e) => {
+              const v = e.target.value || undefined;
+              // Route recognised navigation phrases to `directive` so playback
+              // (flatten) honours them; everything else is plain staff text.
+              if (v && isNavigationDirective(v)) patchMeasure(measureId, { directive: v, staffText: undefined });
+              else patchMeasure(measureId, { staffText: v, directive: undefined });
+            }}
           />
         </Field>
       </div>

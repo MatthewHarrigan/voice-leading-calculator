@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { unscramble, scramble } from './unscramble';
 import { mapQuality } from './chordParser';
-import { parseIRealSong, parseIRealURL, tokenizeMeasures } from './parse';
+import { isNavigationDirective, parseIRealSong, parseIRealURL, tokenizeMeasures } from './parse';
 import { toIRealURL, buildMusicTokens } from './serialize';
 import { flattenChart } from './flatten';
 import { VECTOR_920_SPECIAL, STANDARD_FIXTURES } from './fixtures';
@@ -109,6 +109,29 @@ describe('cell-grid edge tokens', () => {
     expect(m[0].chords[0].alternate).not.toBeNull();
     expect(m[0].chords[0].alternate?.root).toBe('F#');
     expect(m[0].chords[0].alternate?.chordType).toBe('dim7');
+  });
+});
+
+describe('staff text, spacers, directives', () => {
+  test('captures Y vertical spacers without consuming horizontal cells', () => {
+    const m = tokenizeMeasures('YYC7,   |', [4, 4]);
+    expect(m[0].spacer).toBe(2);
+    expect(m[0].cell).toBe(0);
+    expect(buildMusicTokens({ title: 't', timeSignature: [4, 4], measures: m })).toContain('YY');
+  });
+
+  test('captures the staff-text vertical offset (above vs below)', () => {
+    expect(tokenizeMeasures('<*72Solo>C7,   |', [4, 4])[0].staffTextAbove).toBe(true);
+    expect(tokenizeMeasures('<*00Solo>C7,   |', [4, 4])[0].staffTextAbove).toBeUndefined();
+    expect(tokenizeMeasures('<*72Solo>C7,   |', [4, 4])[0].staffText).toBe('Solo');
+  });
+
+  test('recognises navigation directives', () => {
+    expect(isNavigationDirective('D.C. al Coda')).toBe(true);
+    expect(isNavigationDirective('D.S. al Fine')).toBe(true);
+    expect(isNavigationDirective('Fine')).toBe(true);
+    expect(isNavigationDirective('To Coda')).toBe(true);
+    expect(isNavigationDirective('Play softly')).toBe(false);
   });
 });
 

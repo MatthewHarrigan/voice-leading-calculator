@@ -938,8 +938,12 @@ input[type='text'] {
   color: var(--ink);
 }
 .nav-mark {
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
   color: var(--ink);
+}
+.nav-svg {
+  display: block;
 }
 .measure-cells {
   display: flex;
@@ -1025,10 +1029,15 @@ input[type='text'] {
   position: absolute;
   bottom: 2px;
   left: 6px;
+  right: 6px;
   font-size: 10px;
   font-style: italic;
   color: var(--muted);
   pointer-events: none;
+}
+.measure-text.above {
+  bottom: auto;
+  top: 16px;
 }
 
 /* Import panel */

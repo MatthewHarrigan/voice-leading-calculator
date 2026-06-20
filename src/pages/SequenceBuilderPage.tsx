@@ -81,10 +81,10 @@ export function SequenceBuilderPage() {
   const removeChord = useStore((s) => s.removeChord);
 
   const setChartTitle = useStore((s) => s.setChartTitle);
-  const setChartKey = useStore((s) => s.setChartKey);
   const setChartStyle = useStore((s) => s.setChartStyle);
   const setTimeSignature = useStore((s) => s.setTimeSignature);
   const transpose = useStore((s) => s.transpose);
+  const transposeToKey = useStore((s) => s.transposeToKey);
 
   const clearChart = useStore((s) => s.clearChart);
   const loadSong = useStore((s) => s.loadSong);
@@ -320,7 +320,8 @@ export function SequenceBuilderPage() {
           />
         </FormField>
         <FormField label="Key">
-          <NoteSelect value={keyTonic(chart.key)} onChange={(t) => setChartKey(applyKeyMode(t, chart.key))} aria-label="Chart key" />
+          <NoteSelect value={keyTonic(chart.key)} onChange={(t) => transposeToKey(t)} aria-label="Chart key" />
+          {/^.*(minor|min|m)$/i.test(chart.key ?? '') ? <span className="muted" style={{ fontSize: 12 }}>minor</span> : null}
         </FormField>
         <FormField label="Style">
           <input
@@ -531,9 +532,6 @@ function keyTonic(key: string | undefined): string {
   if (!key) return 'C';
   const m = /^([A-G][#b]?)/.exec(key.trim());
   return m ? m[1] : 'C';
-}
-function applyKeyMode(tonic: string, prevKey: string | undefined): string {
-  return prevKey && /minor|min|m$/i.test(prevKey) ? `${tonic} minor` : tonic;
 }
 
 function FormField({ label, children }: { label: string; children: React.ReactNode }) {

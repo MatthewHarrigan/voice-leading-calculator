@@ -16,6 +16,42 @@ interface ChartViewProps {
 
 const ROMAN = ['', '1', '2', '3', '4'];
 
+// Crisp inline glyphs — the Unicode musical symbols (𝄋/𝄌/𝄐) lack font support
+// in most browsers and render as broken/stacked tofu.
+function CodaGlyph() {
+  return (
+    <svg className="nav-svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden focusable="false">
+      <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <line x1="12" y1="3" x2="12" y2="21" stroke="currentColor" strokeWidth="1.6" />
+      <line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="1.6" />
+    </svg>
+  );
+}
+function SegnoGlyph() {
+  return (
+    <svg className="nav-svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden focusable="false">
+      <path
+        d="M16 7c-1-3-6-3-7 0s5 3 4 6-6 3-7 0"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <line x1="6" y1="18" x2="18" y2="6" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="6.5" cy="7" r="1.3" fill="currentColor" />
+      <circle cx="17.5" cy="17" r="1.3" fill="currentColor" />
+    </svg>
+  );
+}
+function FermataGlyph() {
+  return (
+    <svg className="nav-svg" viewBox="0 0 24 24" width="14" height="14" aria-hidden focusable="false">
+      <path d="M4 16a8 8 0 0 1 16 0" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <circle cx="12" cy="15" r="1.6" fill="currentColor" />
+    </svg>
+  );
+}
+
 function measureClasses(m: IRealMeasure, selected: boolean, insertion: boolean, playing: boolean): string {
   return [
     'chart-measure',
@@ -71,9 +107,21 @@ export function ChartView({
                 </span>
               )}
               {m.ending != null && <span className="ending-mark">{ROMAN[m.ending] ?? m.ending}.</span>}
-              {m.segno && <span className="nav-mark" title="Segno">𝄋</span>}
-              {m.coda && <span className="nav-mark" title="Coda">𝄌</span>}
-              {m.fermata && <span className="nav-mark" title="Fermata">𝄐</span>}
+              {m.segno && (
+                <span className="nav-mark" title="Segno">
+                  <SegnoGlyph />
+                </span>
+              )}
+              {m.coda && (
+                <span className="nav-mark" title="Coda">
+                  <CodaGlyph />
+                </span>
+              )}
+              {m.fermata && (
+                <span className="nav-mark" title="Fermata">
+                  <FermataGlyph />
+                </span>
+              )}
             </div>
 
             <div className="measure-cells">
@@ -110,7 +158,11 @@ export function ChartView({
               )}
             </div>
 
-            {(m.staffText || m.directive) && <div className="measure-text">{m.directive ?? m.staffText}</div>}
+            {(m.staffText || m.directive) && (
+              <div className={`measure-text${m.staffTextAbove && !m.directive ? ' above' : ''}`}>
+                {m.directive ?? m.staffText}
+              </div>
+            )}
           </div>
         );
       })}

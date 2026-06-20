@@ -49,6 +49,7 @@ export function buildMusicTokens(chart: IRealChart): string {
   let small = false; // chord-size state, toggled by `s`/`l` across the chart
   chart.measures.forEach((m, idx) => {
     out += openToken(m.open);
+    if (m.spacer) out += 'Y'.repeat(m.spacer);
     if (m.section) out += `*${m.section}`;
     if (m.timeSig) out += `T${m.timeSig[0]}${m.timeSig[1] === 8 && m.timeSig[0] === 12 ? '2' : m.timeSig[1]}`;
     if (m.ending != null) out += `N${m.ending}`;

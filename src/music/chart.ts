@@ -81,16 +81,24 @@ export function chordFromType(
   };
 }
 
-/** Transpose every chord (and the key) by a number of semitones. */
-export function transposeChart(chart: IRealChart, semitones: number): IRealChart {
+/**
+ * Transpose every chord (and the key) by a number of semitones. Pass an explicit
+ * `targetKey` to control the destination key's spelling (so chords follow the
+ * chosen key's accidental); otherwise it's derived from the current key.
+ */
+export function transposeChart(chart: IRealChart, semitones: number, targetKey?: string): IRealChart {
   const shift = ((semitones % 12) + 12) % 12;
-  if (shift === 0) return chart;
   const keyCtx = parseKey(chart.key);
-  const newKeyTonic = keyCtx
-    ? spellNote((pitchClassOf(keyCtx.tonic) + shift) % 12, accidentalForKey(keyCtx))
-    : undefined;
-  const newKey =
-    keyCtx && newKeyTonic ? (keyCtx.mode === 'minor' ? `${newKeyTonic} minor` : newKeyTonic) : chart.key;
+  let newKey: string | undefined;
+  if (targetKey) {
+    newKey = targetKey;
+  } else {
+    const newKeyTonic = keyCtx
+      ? spellNote((pitchClassOf(keyCtx.tonic) + shift) % 12, accidentalForKey(keyCtx))
+      : undefined;
+    newKey = keyCtx && newKeyTonic ? (keyCtx.mode === 'minor' ? `${newKeyTonic} minor` : newKeyTonic) : chart.key;
+  }
+  if (shift === 0 && newKey === chart.key) return chart;
   const acc = accidentalForKey(parseKey(newKey ?? chart.key));
 
   const shiftNote = (note: string) => spellNote((pitchClassOf(note) + shift) % 12, acc);
