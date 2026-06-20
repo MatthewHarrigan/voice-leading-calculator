@@ -451,6 +451,31 @@ test('renders stacked time signature, repeat dots, and alternate chords', async 
   await expect(page.locator('.sc-alt')).not.toHaveCount(0);
 });
 
+test('view toggle switches between chart, guitar and both', async ({ page }) => {
+  await gotoFresh(page);
+  await page.getByRole('link', { name: 'Sequence Builder' }).click();
+  await addChord(page, 'D', 'min7');
+  await addChord(page, 'G', 'dom7');
+
+  // Default is "Both": the chord score and the guitar sheet are both present.
+  await expect(page.locator('.chart-view')).toHaveCount(1);
+  await expect(page.locator('.optimized-chart-grid')).toHaveCount(1);
+
+  // Guitar only hides the chord score.
+  await page.getByTestId('view-guitar').click();
+  await expect(page.locator('.chart-view')).toHaveCount(0);
+  await expect(page.locator('.optimized-chart-grid')).toHaveCount(1);
+
+  // Chart only hides the guitar sheet.
+  await page.getByTestId('view-chart').click();
+  await expect(page.locator('.chart-view')).toHaveCount(1);
+  await expect(page.locator('.optimized-chart-grid')).toHaveCount(0);
+
+  await page.getByTestId('view-both').click();
+  await expect(page.locator('.chart-view')).toHaveCount(1);
+  await expect(page.locator('.optimized-chart-grid')).toHaveCount(1);
+});
+
 test('changing the key transposes all chords in both views', async ({ page }) => {
   await gotoFresh(page);
   await page.getByRole('link', { name: 'Sequence Builder' }).click();

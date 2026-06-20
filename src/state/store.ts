@@ -21,6 +21,8 @@ import { createEmptySong, uid, type SequenceChord, type Song } from '@/music/son
 
 export type Theme = 'light' | 'dark';
 export type SortMode = 'default' | 'string';
+/** Which lead sheet the Sequence Builder shows: chord score, guitar diagrams, or both. */
+export type ChartViewMode = 'chart' | 'guitar' | 'both';
 
 interface AppState {
   // --- global settings ---
@@ -35,6 +37,7 @@ interface AppState {
   bassline: boolean;
   bassSolo: boolean;
   repeatForm: boolean; // loop the whole chart during playback
+  chartViewMode: ChartViewMode;
 
   // --- editable chart ---
   chart: IRealChart;
@@ -58,6 +61,7 @@ interface AppState {
   setBassline: (v: boolean) => void;
   setBassSolo: (v: boolean) => void;
   setRepeatForm: (v: boolean) => void;
+  setChartViewMode: (m: ChartViewMode) => void;
 
   // --- chart meta ---
   setChartTitle: (title: string) => void;
@@ -197,6 +201,7 @@ export const useStore = create<AppState>()(
       bassline: false,
       bassSolo: false,
       repeatForm: false,
+      chartViewMode: 'both',
 
       chart: createEmptyChart(),
       selectedChordId: null,
@@ -216,6 +221,7 @@ export const useStore = create<AppState>()(
       setBassline: (bassline) => set({ bassline }),
       setBassSolo: (bassSolo) => set({ bassSolo }),
       setRepeatForm: (repeatForm) => set({ repeatForm }),
+      setChartViewMode: (chartViewMode) => set({ chartViewMode }),
 
       setChartTitle: (title) => set((s) => ({ chart: { ...s.chart, title } })),
       setChartKey: (key) => set((s) => ({ chart: { ...s.chart, key } })),
@@ -466,6 +472,7 @@ export const useStore = create<AppState>()(
         bassline: state.bassline,
         bassSolo: state.bassSolo,
         repeatForm: state.repeatForm,
+        chartViewMode: state.chartViewMode,
         chart: state.chart,
         savedCharts: state.savedCharts,
       }),

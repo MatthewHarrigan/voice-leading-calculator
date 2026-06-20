@@ -63,6 +63,8 @@ export interface ArrangementOptions {
   soloBass?: boolean;
   /** When true, loop the whole arrangement until stopped. */
   loop?: boolean;
+  /** Play the whole form this many times before stopping (ignored when loop). */
+  loopCount?: number;
 }
 
 export class ChordPlayer {
@@ -492,7 +494,10 @@ export class ChordPlayer {
         if (!opts) return;
         const spb = 60 / Math.max(20, opts.bpm); // seconds per beat
         const beatsPerBar = opts.beatsPerBar ?? 4;
-        const beat = opts.loop ? abs % totalBeats : abs;
+        // Wrap the beat to the form length so every pass (loop or finite repeat)
+        // re-fires the chart's events and re-drives the playhead.
+        const passes = opts.loop ? Infinity : Math.max(1, opts.loopCount ?? 1);
+        const beat = abs % totalBeats;
         this.emitBeat(beat);
         const at = ctx.currentTime + 0.06;
         if (opts.metronome) this.metronomeClick(at, beat % beatsPerBar === 0);
@@ -506,7 +511,7 @@ export class ChordPlayer {
           }
         }
         const next = abs + 1;
-        if (opts.loop || next < totalBeats) {
+        if (next < totalBeats * passes) {
           nextTime += spb * 1000;
           this.seqTimer = setTimeout(() => scheduleBeat(next), Math.max(0, nextTime - performance.now()));
         } else {

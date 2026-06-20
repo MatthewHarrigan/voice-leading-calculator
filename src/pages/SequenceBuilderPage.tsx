@@ -69,6 +69,9 @@ export function SequenceBuilderPage() {
   const setBassSolo = useStore((s) => s.setBassSolo);
   const repeatForm = useStore((s) => s.repeatForm);
   const setRepeatForm = useStore((s) => s.setRepeatForm);
+  const chartViewMode = useStore((s) => s.chartViewMode);
+  const setChartViewMode = useStore((s) => s.setChartViewMode);
+  const setChartRepeats = useStore((s) => s.setChartRepeats);
 
   const selectedChordId = useStore((s) => s.selectedChordId);
   const selectedMeasureId = useStore((s) => s.selectedMeasureId);
@@ -217,8 +220,9 @@ export function SequenceBuilderPage() {
       bassline,
       soloBass: bassSolo,
       loop: repeatForm,
+      loopCount: chart.repeats ?? 1,
     });
-  }, [sequencePlaying, tempo, beatsPerBar, metronome, bassline, bassSolo, repeatForm]);
+  }, [sequencePlaying, tempo, beatsPerBar, metronome, bassline, bassSolo, repeatForm, chart.repeats]);
 
   const playAll = () => {
     if (!optimized || !audioEnabled) return;
@@ -236,6 +240,7 @@ export function SequenceBuilderPage() {
       bassline,
       soloBass: bassSolo,
       loop: repeatForm,
+      loopCount: chart.repeats ?? 1,
     });
   };
 
@@ -370,6 +375,20 @@ export function SequenceBuilderPage() {
             ))}
           </select>
         </FormField>
+        <FormField label="Repeats">
+          <select
+            value={chart.repeats ?? 1}
+            onChange={(e) => setChartRepeats(Number(e.target.value))}
+            aria-label="Repeats"
+            title="How many times the whole form plays"
+          >
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+              <option key={n} value={n}>
+                ×{n}
+              </option>
+            ))}
+          </select>
+        </FormField>
         <FormField label="Transpose">
           <div className="row">
             {TRANSPOSE_STEPS.map((step) => (
@@ -385,6 +404,30 @@ export function SequenceBuilderPage() {
         <strong>{chart.title}</strong> · Key {chart.key ?? 'C'} · {chart.measures.length} bar
         {chart.measures.length === 1 ? '' : 's'} · {chordCount} chord{chordCount === 1 ? '' : 's'}
         {chart.composer ? ` · ${chart.composer}` : ''}
+      </div>
+
+      {/* iReal-style footer strip + view toggle */}
+      <div className="chart-footer">
+        <div className="chart-footer-info">
+          <span>♩ = {tempo}</span>
+          <span>×{chart.repeats ?? 1}</span>
+          <span>{chart.key ?? 'C'}</span>
+          {chart.style ? <span>{chart.style}</span> : null}
+        </div>
+        <div className="view-toggle" role="group" aria-label="Chart view">
+          {(['chart', 'guitar', 'both'] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              className={`view-toggle-btn${chartViewMode === mode ? ' active' : ''}`}
+              aria-pressed={chartViewMode === mode}
+              data-testid={`view-${mode}`}
+              onClick={() => setChartViewMode(mode)}
+            >
+              {mode === 'chart' ? 'Chart' : mode === 'guitar' ? 'Guitar' : 'Both'}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Add / edit chord */}
@@ -441,7 +484,7 @@ export function SequenceBuilderPage() {
         <p className="empty-hint">
           Your chart will appear here. Add a chord, load a preset, or import an iReal Pro link.
         </p>
-      ) : (
+      ) : chartViewMode !== 'guitar' ? (
         <ChartView
           chart={chart}
           selectedChordId={selectedChordId}
@@ -454,7 +497,7 @@ export function SequenceBuilderPage() {
           }}
           onSelectMeasure={selectMeasure}
         />
-      )}
+      ) : null}
 
       {selectedMeasureId && <MeasureEditor measureId={selectedMeasureId} />}
 
@@ -533,10 +576,14 @@ export function SequenceBuilderPage() {
             </label>
           </div>
 
-          <GuitarChartView chart={chart} byMeasure={optimizedByMeasure} playingMeasureId={playingMeasureId} />
-          <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-            Diagrams mirror the chart layout — one voicing per bar (first pass through the form).
-          </p>
+          {chartViewMode !== 'chart' && (
+            <>
+              <GuitarChartView chart={chart} byMeasure={optimizedByMeasure} playingMeasureId={playingMeasureId} />
+              <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+                Diagrams mirror the chart layout — one voicing per bar (first pass through the form).
+              </p>
+            </>
+          )}
 
           <MovementAnalysis optimized={optimized} transitions={transitions} guide={guide} />
         </section>
