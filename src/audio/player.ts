@@ -79,6 +79,9 @@ export class ChordPlayer {
   private seqTimer: ReturnType<typeof setTimeout> | null = null;
   private seqPlaying = false;
   private seqListeners = new Set<(playing: boolean) => void>();
+  // Live playback options for the running arrangement; the scheduler reads these
+  // each beat so tempo / metronome / bass / solo / loop update mid-playback.
+  private liveOptions: ArrangementOptions | null = null;
 
   /** Subscribe to sequence play/stop changes; returns an unsubscribe fn. */
   onSequenceChange(listener: (playing: boolean) => void): () => void {
@@ -286,7 +289,17 @@ export class ChordPlayer {
       clearTimeout(this.seqTimer);
       this.seqTimer = null;
     }
+    this.liveOptions = null;
     this.setSeqPlaying(false);
+  }
+
+  /**
+   * Update the running arrangement's options live (tempo, metronome, bass line,
+   * bass solo, loop). A no-op when nothing is playing — changes then apply on
+   * the next Play.
+   */
+  setArrangementOptions(patch: Partial<ArrangementOptions>): void {
+    if (this.liveOptions) Object.assign(this.liveOptions, patch);
   }
 
   /** Hard stop: damp every string and cancel any sequence. */
@@ -445,35 +458,40 @@ export class ChordPlayer {
       this.cancelSequence();
       if (events.length === 0) return;
       const ctx = this.ensureContext();
-      const bpm = Math.max(20, options.bpm);
-      const beatsPerBar = options.beatsPerBar ?? 4;
-      const spb = 60 / bpm; // seconds per beat
+      this.liveOptions = { ...options, beatsPerBar: options.beatsPerBar ?? 4 };
       const totalBeats = arrangementSpanBeats(events);
       const token = ++this.seqToken;
       this.setSeqPlaying(true);
-      const t0 = performance.now();
+      // Incremental beat grid (target time advances by the *current* seconds-per-
+      // beat) so a live tempo change re-times from the next beat without a jump.
+      let nextTime = performance.now();
 
       // `abs` is an ever-increasing beat counter so looping stays drift-free.
       const scheduleBeat = (abs: number) => {
         if (token !== this.seqToken) return;
-        const beat = options.loop ? abs % totalBeats : abs;
+        const opts = this.liveOptions;
+        if (!opts) return;
+        const spb = 60 / Math.max(20, opts.bpm); // seconds per beat
+        const beatsPerBar = opts.beatsPerBar ?? 4;
+        const beat = opts.loop ? abs % totalBeats : abs;
         const at = ctx.currentTime + 0.06;
-        if (options.metronome) this.metronomeClick(at, beat % beatsPerBar === 0);
-        const soloing = !!(options.bassline && options.soloBass);
+        if (opts.metronome) this.metronomeClick(at, beat % beatsPerBar === 0);
+        const soloing = !!(opts.bassline && opts.soloBass);
         for (const e of events) {
           if (e.startBeat !== beat) continue;
           if (!soloing) this.strumAt(e.fingering, e.stringSet, at, 0.02);
-          if (options.bassline) {
+          if (opts.bassline) {
             const dur = Math.min(5, Math.max(1.4, e.durationBeats * spb + 0.6));
             this.pluckString(6, e.bassMidi, at, dur);
           }
         }
         const next = abs + 1;
-        if (options.loop || next < totalBeats) {
-          const targetMs = t0 + next * spb * 1000;
-          this.seqTimer = setTimeout(() => scheduleBeat(next), Math.max(0, targetMs - performance.now()));
+        if (opts.loop || next < totalBeats) {
+          nextTime += spb * 1000;
+          this.seqTimer = setTimeout(() => scheduleBeat(next), Math.max(0, nextTime - performance.now()));
         } else {
           this.seqTimer = null;
+          this.liveOptions = null;
           this.setSeqPlaying(false);
         }
       };

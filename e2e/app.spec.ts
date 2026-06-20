@@ -349,3 +349,33 @@ test('measure editor sets a barline and inserts/deletes bars', async ({ page }) 
   await page.getByTestId('delete-measure').click();
   await expect(realBars).toHaveCount(2);
 });
+
+test('playback options update live while the sequence is playing', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+
+  await gotoClean(page);
+  await page.getByRole('link', { name: 'Sequence Builder' }).click();
+  await addChord(page, 'D', 'min7');
+  await addChord(page, 'G', 'dom7');
+  await addChord(page, 'C', 'maj7');
+
+  await page.getByRole('button', { name: 'Play sequence' }).click();
+  await expect(page.getByRole('button', { name: 'Stop' })).toBeVisible();
+
+  // Toggle each option WHILE playing — these must not throw or stop playback.
+  await page.getByTestId('metronome').check();
+  await page.getByTestId('bassline').check();
+  await page.getByTestId('bass-solo').check();
+  await page.getByTestId('repeat-form').check();
+  await page.getByLabel('Tempo (BPM)').fill('180');
+  await page.getByTestId('bass-solo').uncheck();
+  await page.getByTestId('metronome').uncheck();
+
+  // Still playing (repeat-form loops it), and Stop returns to idle.
+  await expect(page.getByRole('button', { name: 'Stop' })).toBeVisible();
+  await page.getByRole('button', { name: 'Stop' }).click();
+  await expect(page.getByRole('button', { name: 'Play sequence' })).toBeVisible();
+
+  expect(errors).toEqual([]);
+});

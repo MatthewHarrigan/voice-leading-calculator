@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { type ChordTypeId } from '@/music/chords';
 import { type SequenceChord } from '@/music/song';
 import { chartToSequence } from '@/music/chart';
@@ -175,9 +175,24 @@ export function SequenceBuilderPage() {
     });
   };
 
+  const beatsPerBar = chart.timeSignature[0];
+
+  // Push control changes to the running arrangement so tempo, metronome, bass,
+  // solo and loop all update live mid-playback (not just on the next Play).
+  useEffect(() => {
+    if (!sequencePlaying) return;
+    getChordPlayer().setArrangementOptions({
+      bpm: tempo,
+      beatsPerBar,
+      metronome,
+      bassline,
+      soloBass: bassSolo,
+      loop: repeatForm,
+    });
+  }, [sequencePlaying, tempo, beatsPerBar, metronome, bassline, bassSolo, repeatForm]);
+
   const playAll = () => {
     if (!optimized || !audioEnabled) return;
-    const beatsPerBar = chart.timeSignature[0];
     const events = optimized.map((chord) => ({
       fingering: chord.fingering,
       stringSet: chord.stringSet,
