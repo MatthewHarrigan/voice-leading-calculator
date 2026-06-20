@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { unscramble, scramble } from './unscramble';
 import { mapQuality } from './chordParser';
-import { parseIRealSong, tokenizeMeasures } from './parse';
+import { parseIRealSong, parseIRealURL, tokenizeMeasures } from './parse';
 import { toIRealURL, buildMusicTokens } from './serialize';
 import { flattenChart } from './flatten';
 import { VECTOR_920_SPECIAL, STANDARD_FIXTURES } from './fixtures';
@@ -101,6 +101,25 @@ describe('cell-grid edge tokens', () => {
     const m = tokenizeMeasures('sC7,B7|lD7|', [4, 4]);
     expect(m[0].chords.map((c) => !!c.small)).toEqual([true, true]);
     expect(m[1].chords.map((c) => !!c.small)).toEqual([false]);
+  });
+
+  test('parses an alternate chord in parentheses', () => {
+    const m = tokenizeMeasures('F-6(F#o7)|', [4, 4]);
+    expect(m[0].chords[0].symbol).toBe('Fm6');
+    expect(m[0].chords[0].alternate).not.toBeNull();
+    expect(m[0].chords[0].alternate?.root).toBe('F#');
+    expect(m[0].chords[0].alternate?.chordType).toBe('dim7');
+  });
+});
+
+describe('playlists', () => {
+  test('parses a multi-song playlist with a trailing name', () => {
+    const url =
+      'irealbook://Tune One=Me=Medium Swing=C=n={C^7 |G7 }===Tune Two=You=Bossa Nova=F=n={F^7 |C7 }===My Set';
+    const pl = parseIRealURL(url);
+    expect(pl.name).toBe('My Set');
+    expect(pl.songs.map((s) => s.title)).toEqual(['Tune One', 'Tune Two']);
+    expect(pl.songs[1].key).toBe('F');
   });
 });
 

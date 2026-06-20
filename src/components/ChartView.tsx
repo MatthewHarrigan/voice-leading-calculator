@@ -1,5 +1,6 @@
 import { Fragment, type CSSProperties } from 'react';
 import { inversionName } from '@/music/voicing';
+import { prettyChordSymbol } from '@/music/ireal/chordParser';
 import type { IRealChart, IRealMeasure } from '@/music/ireal/types';
 import { computeLayout } from './chartLayout';
 
@@ -59,11 +60,14 @@ export function ChartView({
             style={style}
             onClick={() => onSelectMeasure(m.id)}
           >
+            {m.open === 'repeat' && <span className="repeat-dots repeat-dots-open" aria-hidden />}
+            {m.close === 'repeat' && <span className="repeat-dots repeat-dots-close" aria-hidden />}
             <div className="measure-marks">
               {m.section && <span className="section-mark">{m.section}</span>}
               {m.timeSig && (
-                <span className="time-sig">
-                  {m.timeSig[0]}/{m.timeSig[1]}
+                <span className="time-sig" title={`${m.timeSig[0]}/${m.timeSig[1]}`}>
+                  <span>{m.timeSig[0]}</span>
+                  <span>{m.timeSig[1]}</span>
                 </span>
               )}
               {m.ending != null && <span className="ending-mark">{ROMAN[m.ending] ?? m.ending}.</span>}
@@ -90,16 +94,11 @@ export function ChartView({
                       onSelectChord(c.id);
                     }}
                   >
+                    {c.alternate && <span className="sc-alt">{prettyChordSymbol(c.alternate)}</span>}
                     <span className="sc-symbol">
                       {c.symbol}
                       {c.bass ? <span className="sc-bass">/{c.bass}</span> : null}
                     </span>
-                    {c.alternate && (
-                      <span className="sc-alt">
-                        ({c.alternate.root}
-                        {c.alternate.quality})
-                      </span>
-                    )}
                     {c.targetTopNote && <span className="sc-lead">lead {c.targetTopNote}</span>}
                     {Number.isInteger(c.preferredInversion) && (
                       <span className="sc-meta">

@@ -412,3 +412,37 @@ test('optimised diagrams mirror the chart bar layout', async ({ page }) => {
   await expect(page.locator('.optimized-measure')).not.toHaveCount(0);
   await expect(page.locator('.optimized-grid .optimized-chord')).not.toHaveCount(0);
 });
+
+const PLAYLIST =
+  'irealbook://Tune One=Me=Medium Swing=C=n={C^7 |G7 |C^7 |G7 }===Tune Two=You=Bossa Nova=F=n={F^7 |C7 |F^7 |C7 }===My Set';
+
+test('imports a multi-song playlist via the picker', async ({ page }) => {
+  await gotoFresh(page);
+  await page.getByRole('link', { name: 'Sequence Builder' }).click();
+  await page.getByTestId('import-toggle').click();
+  await page.getByTestId('import-text').fill(PLAYLIST);
+  await page.getByTestId('import-submit').click();
+
+  const picker = page.getByTestId('playlist-picker');
+  await expect(picker).toBeVisible();
+  await picker.getByRole('button', { name: /Tune Two/ }).click();
+  await expect(page.locator('.chart-meta')).toContainText('Tune Two');
+  await expect(page.locator('.chart-meta')).toContainText('Key F');
+});
+
+test('renders stacked time signature, repeat dots, and alternate chords', async ({ page }) => {
+  await gotoFresh(page);
+  await page.getByRole('link', { name: 'Sequence Builder' }).click();
+
+  // 9.20 Special has a repeat and a time signature.
+  await page.getByTestId('import-toggle').click();
+  await page.getByTestId('import-text').fill(VECTOR_920);
+  await page.getByTestId('import-submit').click();
+  await expect(page.locator('.time-sig')).not.toHaveCount(0);
+  await expect(page.locator('.repeat-dots')).not.toHaveCount(0);
+
+  // All Of Me carries alternate chords in parentheses.
+  await page.getByTestId('import-toggle').click();
+  await page.getByTestId('import-panel').getByRole('button', { name: 'All Of Me' }).click();
+  await expect(page.locator('.sc-alt')).not.toHaveCount(0);
+});

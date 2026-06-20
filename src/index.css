@@ -920,9 +920,14 @@ input[type='text'] {
   line-height: 1.5;
 }
 .time-sig {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
   font-family: var(--serif);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--ink);
+  line-height: 0.82;
+  font-size: 11px;
 }
 .ending-mark {
   margin-left: auto;
@@ -956,6 +961,53 @@ input[type='text'] {
   display: block;
   font-size: 10px;
   color: var(--muted);
+  margin-bottom: 1px;
+  line-height: 1;
+}
+
+/* Repeat-sign dots drawn beside the thick {/} barlines. */
+.repeat-dots {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+}
+.repeat-dots-open {
+  left: 6px;
+}
+.repeat-dots-close {
+  right: 6px;
+}
+.repeat-dots::before,
+.repeat-dots::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+.repeat-dots::before {
+  top: 40%;
+}
+.repeat-dots::after {
+  top: 54%;
+}
+
+/* Multi-song playlist picker */
+.playlist-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+  max-height: 320px;
+  overflow: auto;
+}
+.playlist-song {
+  justify-content: flex-start;
+  text-align: left;
 }
 .sequence-chord.small .sc-symbol {
   font-size: 11px;

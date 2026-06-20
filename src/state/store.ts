@@ -86,6 +86,7 @@ interface AppState {
   loadChart: (chart: IRealChart) => void;
   loadSong: (song: Song) => void;
   importIRealText: (text: string) => { ok: true; title: string } | { ok: false; error: string };
+  addSavedCharts: (charts: IRealChart[]) => void;
   saveCurrentAs: (title: string) => void;
   deleteSavedChart: (id: string) => void;
 }
@@ -350,11 +351,19 @@ export const useStore = create<AppState>()(
         }),
 
       loadChart: (chart) =>
-        set({
+        set((s) => ({
           chart: normalize(cloneChart(chart)),
+          tempo: chart.tempo ?? s.tempo,
           selectedChordId: null,
           selectedMeasureId: null,
           insertionMeasureId: null,
+        })),
+
+      addSavedCharts: (charts) =>
+        set((s) => {
+          const byTitle = new Map(s.savedCharts.map((c) => [c.title, c]));
+          charts.forEach((c) => byTitle.set(c.title, { ...cloneChart(c), id: uid('chart'), title: c.title }));
+          return { savedCharts: Array.from(byTitle.values()) };
         }),
 
       loadSong: (song) =>
