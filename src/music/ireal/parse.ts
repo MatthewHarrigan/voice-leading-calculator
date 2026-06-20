@@ -320,6 +320,30 @@ export function tokenizeMeasures(music: string, initialTimeSig: [number, number]
   return measures;
 }
 
+/** One entry in a playlist index: enough to browse, plus the verbatim chunk. */
+export interface PlaylistEntry {
+  title: string;
+  composer: string;
+  /** The trimmed `=`-delimited song chunk, for on-demand full parsing. */
+  chunk: string;
+}
+
+/** A lightweight playlist index — title/composer per song, no music decoded. */
+export interface IRealIndex {
+  scheme: string;
+  name?: string;
+  songs: PlaylistEntry[];
+}
+
+/** Split a decoded payload into the song chunks + trailing playlist name. */
+function splitSongs(decoded: string): { chunks: string[]; name?: string } {
+  const parts = decoded.split('===');
+  let name: string | undefined;
+  if (parts.length > 1) name = parts.pop();
+  const chunks = parts.map((p) => p.trim()).filter((p) => p.length > 0);
+  return { chunks, name: name?.trim() || undefined };
+}
+
 function parseSongFields(scheme: string, song: string): IRealChart | null {
   const fields = song.split('=');
   if (fields.length < 5) return null;
@@ -367,25 +391,43 @@ function parseSongFields(scheme: string, song: string): IRealChart | null {
   };
 }
 
-/** Parse a full iReal Pro URL into a playlist (one or more charts). */
-export function parseIRealURL(input: string): IRealPlaylist {
-  const trimmed = input.trim();
-  const m = SCHEME_RE.exec(trimmed);
+/**
+ * Build a lightweight index of a playlist: just the title and composer of each
+ * song (cheap — no unscrambling or tokenizing), keeping the verbatim chunk so a
+ * single song can be fully parsed on demand. Fast enough to scan the 1460-song
+ * default jazz playlist. Unlike `parseIRealURL`, an empty list is not an error.
+ */
+export function parseIRealIndex(input: string): IRealIndex {
+  const m = SCHEME_RE.exec(input.trim());
   if (!m) throw new Error('Not an iReal Pro link (expected irealb:// or irealbook://).');
   const scheme = m[1];
-  const decoded = decode(m[2]);
+  const { chunks, name } = splitSongs(decode(m[2]));
+  const songs: PlaylistEntry[] = [];
+  for (const chunk of chunks) {
+    const fields = chunk.split('=');
+    if (fields.length < 5) continue; // same validity gate as parseSongFields
+    songs.push({
+      title: normalizeTitle(fields[0] ?? 'Untitled'),
+      composer: normalizeComposer(fields[1] ?? ''),
+      chunk,
+    });
+  }
+  return { scheme, name, songs };
+}
 
-  const parts = decoded.split('===');
-  let name: string | undefined;
-  if (parts.length > 1) name = parts.pop();
-  const songs = parts
-    .map((p) => p.trim())
-    .filter((p) => p.length > 0)
-    .map((p) => parseSongFields(scheme, p))
+/** Fully parse a single song chunk (a `PlaylistEntry.chunk`) into a chart. */
+export function parseIRealSongChunk(scheme: string, chunk: string): IRealChart | null {
+  return parseSongFields(scheme, chunk);
+}
+
+/** Parse a full iReal Pro URL into a playlist (one or more charts). */
+export function parseIRealURL(input: string): IRealPlaylist {
+  const index = parseIRealIndex(input);
+  const songs = index.songs
+    .map((e) => parseIRealSongChunk(index.scheme, e.chunk))
     .filter((s): s is IRealChart => s !== null);
-
   if (songs.length === 0) throw new Error('No songs found in the iReal Pro link.');
-  return { name: name?.trim() || undefined, songs };
+  return { name: index.name, songs };
 }
 
 /** Parse the first song from an iReal Pro URL, or null on failure. */

@@ -15,7 +15,7 @@ import {
   songToChart,
   transposeChart,
 } from '@/music/chart';
-import { parseIRealURL } from '@/music/ireal/parse';
+import { parseIRealIndex, parseIRealURL, type IRealIndex } from '@/music/ireal/parse';
 import type { BarlineClose, BarlineOpen, IRealChart, IRealChord, IRealMeasure } from '@/music/ireal/types';
 import { createEmptySong, uid, type SequenceChord, type Song } from '@/music/song';
 
@@ -48,6 +48,10 @@ interface AppState {
 
   // --- saved charts ---
   savedCharts: IRealChart[];
+
+  // --- loaded playlist (in-memory only; raw source kept under a dedicated
+  // localStorage key so a large playlist never bloats the persisted state) ---
+  playlist: IRealIndex | null;
 
   // --- setters ---
   setStringSet: (s: StringSet) => void;
@@ -95,7 +99,16 @@ interface AppState {
   addSavedCharts: (charts: IRealChart[]) => void;
   saveCurrentAs: (title: string) => void;
   deleteSavedChart: (id: string) => void;
+
+  // --- playlist (runtime loader) ---
+  setPlaylist: (source: string) => { ok: true; persisted: boolean } | { ok: false; error: string };
+  rehydratePlaylist: () => void;
+  clearPlaylist: () => void;
 }
+
+/** localStorage key for the raw playlist source — kept OUT of the persisted
+ * `vlc:v2` blob so editing chords never re-serialises a ~1MB playlist. */
+const PLAYLIST_KEY = 'vlc:playlist';
 
 export interface AddChordInput {
   root: string;
@@ -209,6 +222,7 @@ export const useStore = create<AppState>()(
       insertionMeasureId: null,
 
       savedCharts: [],
+      playlist: null,
 
       setStringSet: (stringSet) => set({ stringSet }),
       setAvoidB9: (avoidB9) => set({ avoidB9 }),
@@ -430,6 +444,56 @@ export const useStore = create<AppState>()(
         }),
 
       deleteSavedChart: (id) => set((s) => ({ savedCharts: s.savedCharts.filter((c) => c.id !== id) })),
+
+      setPlaylist: (source) => {
+        let index: IRealIndex;
+        try {
+          index = parseIRealIndex(source);
+        } catch (e) {
+          return { ok: false as const, error: e instanceof Error ? e.message : 'Could not read that link.' };
+        }
+        if (index.songs.length === 0) {
+          return { ok: false as const, error: 'No songs found in the iReal Pro link.' };
+        }
+        // Persist the raw source once (not on every edit). A huge playlist may
+        // exceed quota — keep it in memory for this session and report that.
+        let persisted = true;
+        try {
+          localStorage.setItem(PLAYLIST_KEY, source);
+        } catch {
+          persisted = false;
+        }
+        set({ playlist: index });
+        return { ok: true as const, persisted };
+      },
+
+      rehydratePlaylist: () => {
+        let source: string | null = null;
+        try {
+          source = localStorage.getItem(PLAYLIST_KEY);
+        } catch {
+          source = null;
+        }
+        if (!source) return;
+        try {
+          set({ playlist: parseIRealIndex(source) });
+        } catch {
+          try {
+            localStorage.removeItem(PLAYLIST_KEY);
+          } catch {
+            /* ignore */
+          }
+        }
+      },
+
+      clearPlaylist: () => {
+        try {
+          localStorage.removeItem(PLAYLIST_KEY);
+        } catch {
+          /* ignore */
+        }
+        set({ playlist: null });
+      },
     }),
     {
       name: 'vlc:v2',

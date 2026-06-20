@@ -93,6 +93,9 @@ export function SequenceBuilderPage() {
   const loadChart = useStore((s) => s.loadChart);
   const saveCurrentAs = useStore((s) => s.saveCurrentAs);
   const savedCharts = useStore((s) => s.savedCharts);
+  const playlist = useStore((s) => s.playlist);
+  const rehydratePlaylist = useStore((s) => s.rehydratePlaylist);
+  const clearPlaylist = useStore((s) => s.clearPlaylist);
 
   const [presetValue, setPresetValue] = useState('');
   const [showImport, setShowImport] = useState(false);
@@ -110,6 +113,14 @@ export function SequenceBuilderPage() {
     }
     return null;
   }, [chart, selectedChordId]);
+
+  // Restore a previously-loaded playlist (its raw source lives under a dedicated
+  // localStorage key, separate from the persisted store) so it stays browsable
+  // across reloads without re-pasting.
+  useEffect(() => {
+    if (!playlist) rehydratePlaylist();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Performance order (repeats/endings expanded) → optimiser + diagrams.
   const flat = useMemo(() => flattenChart(chart), [chart]);
@@ -286,6 +297,19 @@ export function SequenceBuilderPage() {
         <button className="btn btn-sm btn-primary" onClick={() => setShowImport((v) => !v)} data-testid="import-toggle">
           Import iReal Pro
         </button>
+        {playlist && playlist.songs.length > 1 && (
+          <div className="playlist-chip" data-testid="playlist-chip">
+            <span className="muted">
+              Playlist: {playlist.name ?? 'Untitled'} · {playlist.songs.length} tunes
+            </span>
+            <button className="btn btn-sm" data-testid="playlist-browse" onClick={() => setShowImport(true)}>
+              Browse
+            </button>
+            <button className="btn btn-sm btn-ghost" data-testid="playlist-clear-chip" onClick={() => clearPlaylist()}>
+              Clear
+            </button>
+          </div>
+        )}
         <div className="control-group">
           <span className="label">Export</span>
           <div className="row">

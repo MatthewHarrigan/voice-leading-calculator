@@ -434,6 +434,70 @@ test('imports a multi-song playlist via the picker', async ({ page }) => {
   await expect(page.locator('.chart-meta')).toContainText('Key F');
 });
 
+test('playlist browser searches, keeps open on open, and stays out of persisted state', async ({ page }) => {
+  await gotoFresh(page);
+  await page.getByRole('link', { name: 'Sequence Builder' }).click();
+  await page.getByTestId('import-toggle').click();
+  await page.getByTestId('import-text').fill(PLAYLIST);
+  await page.getByTestId('import-submit').click();
+
+  const picker = page.getByTestId('playlist-picker');
+  await expect(picker.locator('.playlist-song')).toHaveCount(2);
+
+  // Search filters by title/composer.
+  await page.getByTestId('playlist-search').fill('Two');
+  await expect(picker.locator('.playlist-song')).toHaveCount(1);
+  await expect(picker.locator('.playlist-song')).toContainText('Tune Two');
+
+  // Opening a tune loads it but keeps the browser open for the next pick.
+  await picker.locator('.playlist-song').first().click();
+  await expect(page.locator('.chart-meta')).toContainText('Tune Two');
+  await expect(picker).toBeVisible();
+
+  // Clearing the search restores the full list.
+  await page.getByTestId('playlist-search').fill('');
+  await expect(picker.locator('.playlist-song')).toHaveCount(2);
+
+  // The ~1MB-capable playlist must NOT live in the persisted vlc:v2 blob.
+  const v2 = await page.evaluate(() => localStorage.getItem('vlc:v2'));
+  expect(JSON.parse(v2 ?? '{}').state?.playlist).toBeUndefined();
+  const src = await page.evaluate(() => localStorage.getItem('vlc:playlist'));
+  expect(src).toContain('Tune Two');
+});
+
+test('a loaded playlist survives reload and can be cleared', async ({ page }) => {
+  await gotoClean(page); // clears once; the reload below keeps localStorage
+  await page.getByRole('link', { name: 'Sequence Builder' }).click();
+  await page.getByTestId('import-toggle').click();
+  await page.getByTestId('import-text').fill(PLAYLIST);
+  await page.getByTestId('import-submit').click();
+  await expect(page.getByTestId('playlist-picker')).toBeVisible();
+
+  // Reload: the chip rehydrates from the dedicated key (no re-paste).
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Sequence Builder' }).click();
+  const chip = page.getByTestId('playlist-chip');
+  await expect(chip).toContainText('2 tunes');
+  await chip.getByTestId('playlist-browse').click();
+  await expect(page.getByTestId('playlist-picker')).toBeVisible();
+
+  // Clear removes the chip and the dedicated key.
+  await chip.getByTestId('playlist-clear-chip').click();
+  await expect(page.getByTestId('playlist-chip')).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem('vlc:playlist'))).toBeNull();
+});
+
+test('a single-song link loads immediately with no playlist chip', async ({ page }) => {
+  await gotoFresh(page);
+  await page.getByRole('link', { name: 'Sequence Builder' }).click();
+  await page.getByTestId('import-toggle').click();
+  await page.getByTestId('import-text').fill(VECTOR_920);
+  await page.getByTestId('import-submit').click();
+  await expect(page.getByTestId('import-panel')).toHaveCount(0); // auto-closed
+  await expect(page.locator('.chart-meta')).toContainText('9.20 Special');
+  await expect(page.getByTestId('playlist-chip')).toHaveCount(0);
+});
+
 test('renders stacked time signature, repeat dots, and alternate chords', async ({ page }) => {
   await gotoFresh(page);
   await page.getByRole('link', { name: 'Sequence Builder' }).click();
