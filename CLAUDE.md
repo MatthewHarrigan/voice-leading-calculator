@@ -43,8 +43,12 @@ The Sequence Builder is built around `IRealChart` (a measure-based model in
   repeats / 1st-2nd endings / one-bar repeats / D.C.–D.S. al Coda/Fine into the
   performance order that drives diagrams, the optimiser, and playback.
 - `chordParser.ts` maps iReal qualities to the four-part catalogue (best-effort,
-  e.g. C13→dom9); `src/music/chart.ts` bridges Song/SequenceChord ⇄ IRealChart
-  (`songToChart`, `chartToSequence`, `transposeChart`).
+  e.g. C13→dom9, ♯11→♭5 shell, ♭13→♯5 shell); `src/music/chart.ts` bridges
+  Song/SequenceChord ⇄ IRealChart (`songToChart`, `chartToSequence`,
+  `transposeChart`). Coverage is verified against the full iReal quality
+  vocabulary and all 6 default playlists (Jazz 1460, Brazilian 220, Latin 50,
+  Blues 50, Pop 400, Country 50 — 88k chords): every chord maps to a playable
+  voicing.
 - Beat durations within a bar are inferred by even distribution (not iReal's
   exact cell counting) — a deliberate, documented approximation.
 - Fixtures (`fixtures.ts`) are real forum charts of copyrighted tunes, used only

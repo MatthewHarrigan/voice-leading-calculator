@@ -35,6 +35,8 @@ export function mapQuality(quality: string): ChordTypeId {
       return 'min7b5';
     }
     if (body.includes('#5') || body.includes('+')) return 'min7s5';
+    // ♭6 (= ♯5) must be tested before the natural 6 so m♭6 ≠ m6.
+    if (body.includes('b6')) return 'min7s5';
     if (body.includes('6')) return body.includes('9') ? 'min69' : 'min6';
     if (/(9|11|13)/.test(body)) return 'min9';
     return 'min7';
@@ -53,17 +55,20 @@ export function mapQuality(quality: string): ChordTypeId {
   }
   // Augmented triad (no seventh).
   if (q === '+' || q === 'aug') return 'maj7s5';
+  // Major add9 (no 7th) — caught before the dominant branch so its 9 isn't read
+  // as a dominant.
+  if (q.includes('add9')) return 'maj9';
   // Dominant / extensions / sus / altered.
   if (/(7|9|11|13|sus|alt|\+)/.test(q)) {
     if (q.includes('sus')) return 'dom7sus4';
     if (q.includes('alt') || q.includes('b9')) return 'dom7b9';
     if (q.includes('#9')) return 'dom7s9';
     if (q.includes('b5') || q.includes('#11')) return 'dom7b5';
-    if (q.includes('#5') || q.includes('+')) return 'dom7s5';
+    // ♯5 / ♭13 (= ♯5) / aug — must precede the generic 13 test so 7♭13 ≠ 13.
+    if (q.includes('#5') || q.includes('+') || q.includes('b13')) return 'dom7s5';
     if (/(9|11|13)/.test(q)) return 'dom9';
     return 'dom7';
   }
-  if (q.includes('add9')) return 'maj9';
   // Bare triad and anything unrecognised: a plain major.
   return 'maj7';
 }

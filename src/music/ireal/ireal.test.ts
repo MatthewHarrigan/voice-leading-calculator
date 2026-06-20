@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { unscramble, scramble } from './unscramble';
 import { mapQuality } from './chordParser';
+import { CHORD_TYPES, type ChordTypeId } from '../chords';
+import { chartChordSymbol } from '../chart';
 import { isNavigationDirective, parseIRealSong, parseIRealURL, tokenizeMeasures } from './parse';
 import { toIRealURL, buildMusicTokens } from './serialize';
 import { flattenChart } from './flatten';
@@ -143,6 +145,55 @@ describe('playlists', () => {
     expect(pl.name).toBe('My Set');
     expect(pl.songs.map((s) => s.title)).toEqual(['Tune One', 'Tune Two']);
     expect(pl.songs[1].key).toBe('F');
+  });
+});
+
+// Every quality the iReal Pro editor can emit (canonical protocol list + the
+// vocabulary observed across all 6 default playlists: Jazz 1460, Brazilian 220,
+// Latin 50, Blues 50, Pop 400, Country 50).
+const FULL_VOCABULARY = [
+  '^', '-', '7', '^7', '-7', '7sus', 'h7', 'o7', '^9', '^13', '6', '69', '6/9', '^7#11', '^9#11',
+  '^7#5', '-6', '-69', '-6/9', '-^7', '-^9', '-9', '-11', '-7b5', 'h9', '-b6', '-#5', '9', '7b9',
+  '7#9', '7#11', '7b5', '7#5', '9#11', '9b5', '9#5', '7b13', '7#9#5', '7#9b5', '7#9#11', '7b9#11',
+  '7b9b5', '7b9#5', '7b9#9', '7b9b13', '7alt', 'alt', '13', '13#11', '13b9', '13#9', '7b9sus',
+  '7susadd3', '7add3sus', '9sus', '13sus', '7b13sus', '11', 'add9', '2', '5', '+', 'o', 'h', 'sus',
+  'min13', 'min^11', 'min^13', 'maj13#11', 'maj7b5', 'maj7#9', 'min7b6', 'min9b6', 'maj(add4)',
+  'min(add4)', '7(add13)', '+7', 'aug', 'o^7', '-add9',
+];
+
+describe('chord vocabulary coverage', () => {
+  test('every iReal quality maps to a playable four-part type with a symbol', () => {
+    for (const q of FULL_VOCABULARY) {
+      const type = mapQuality(q);
+      expect(CHORD_TYPES[type], `quality "${q}" -> "${type}" must be a real chord type`).toBeTruthy();
+      const symbol = chartChordSymbol({ root: 'C', quality: q, chordType: type });
+      expect(symbol.startsWith('C'), `quality "${q}" symbol "${symbol}"`).toBe(true);
+      expect(symbol.length).toBeGreaterThan(1);
+    }
+  });
+
+  test('maps each family (and #11 / ♭13 / altered) to the right four-part shell', () => {
+    const cases: Record<string, ChordTypeId> = {
+      // major
+      '^7': 'maj7', '^9': 'maj9', '^13': 'maj9', '6': 'maj6', '69': 'maj69', '6/9': 'maj69',
+      '^7#11': 'maj7b5', '^9#11': 'maj7b5', 'maj13#11': 'maj7b5', 'maj7b5': 'maj7b5', '^7#5': 'maj7s5',
+      'add9': 'maj9',
+      // dominant — incl. #11 (→ ♭5 shell) and ♭13 (→ ♯5 shell)
+      '7': 'dom7', '9': 'dom9', '13': 'dom9', '7sus': 'dom7sus4', '9sus': 'dom7sus4', '13sus': 'dom7sus4',
+      '7b9': 'dom7b9', '7#9': 'dom7s9', '7b5': 'dom7b5', '7#5': 'dom7s5', '7#11': 'dom7b5',
+      '9#11': 'dom7b5', '13#11': 'dom7b5', '7b13': 'dom7s5', '+7': 'dom7s5', '7alt': 'dom7b9',
+      alt: 'dom7b9', '13b9': 'dom7b9', '13#9': 'dom7s9',
+      // minor — incl. ♭6 family (→ ♯5 shell, not m6)
+      '-': 'min7', '-7': 'min7', '-6': 'min6', '-69': 'min69', '-9': 'min9', '-11': 'min9',
+      '-^7': 'minmaj7', '-^9': 'minmaj7', min13: 'min9', 'min^11': 'minmaj7', '-7b5': 'min7b5',
+      '-#5': 'min7s5', '-b6': 'min7s5', min7b6: 'min7s5', min9b6: 'min7s5', '-add9': 'min9',
+      // half-diminished, diminished, augmented
+      h7: 'min7b5', h9: 'min7b59', h: 'min7b5', o7: 'dim7', o: 'dim7', 'o^7': 'dimmaj7',
+      '+': 'maj7s5', aug: 'maj7s5',
+    };
+    for (const [q, expected] of Object.entries(cases)) {
+      expect(mapQuality(q), `quality "${q}"`).toBe(expected);
+    }
   });
 });
 
