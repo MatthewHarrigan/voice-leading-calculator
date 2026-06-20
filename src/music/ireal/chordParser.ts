@@ -30,8 +30,8 @@ export function mapQuality(quality: string): ChordTypeId {
     const body = q.replace(/^(-|min|m)/, '');
     if (/(\^|maj|△)/.test(body) || body.includes('#7')) return 'minmaj7';
     if (body.includes('b5')) {
-      if (body.includes('9')) return 'min7b59';
       if (body.includes('b9')) return 'min7b5b9';
+      if (body.includes('9')) return 'min7b59';
       return 'min7b5';
     }
     if (body.includes('#5') || body.includes('+')) return 'min7s5';

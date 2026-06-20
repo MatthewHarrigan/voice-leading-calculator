@@ -36,6 +36,10 @@ export interface IRealChord extends IRealChordRef {
   small?: boolean;
   /** Pretty display symbol, e.g. "Cmaj7", "G7♭9", "Eø7". */
   symbol: string;
+  /** App extension: a target note to place on top of the voicing (lead line). */
+  targetTopNote?: string;
+  /** App extension: a locked inversion (0–3) for this chord. */
+  preferredInversion?: number;
 }
 
 export interface IRealMeasure {
