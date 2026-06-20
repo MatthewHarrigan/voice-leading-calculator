@@ -137,6 +137,35 @@ describe('staff text, spacers, directives', () => {
   });
 });
 
+describe('subtle file-format features', () => {
+  test('n parses as a No-Chord cell', () => {
+    const m = tokenizeMeasures('n,   |', [4, 4]);
+    expect(m[0].chords[0].noChord).toBe(true);
+    expect(m[0].chords[0].symbol).toBe('N.C.');
+  });
+
+  test('an inline *comment* is consumed without polluting the chord', () => {
+    const m = tokenizeMeasures('C7*take the bridge*|', [4, 4]);
+    expect(m[0].chords).toHaveLength(1);
+    expect(m[0].chords[0].symbol).toBe('C7');
+  });
+
+  test('the U end-of-song marker is tolerated', () => {
+    const m = tokenizeMeasures('C7 U|', [4, 4]);
+    expect(m).toHaveLength(1);
+    expect(m[0].chords[0].symbol).toBe('C7');
+  });
+
+  test('a <Nx> repeat-count override drives the number of flatten passes', () => {
+    const measures = tokenizeMeasures('{C7 |G7<3x>}', [4, 4]);
+    const chart: IRealChart = { title: 't', timeSignature: [4, 4], measures };
+    const flat = flattenChart(chart);
+    // Two bars played three times.
+    expect(flat).toHaveLength(6);
+    expect(flat.map((b) => b.chords[0].symbol)).toEqual(['C7', 'G7', 'C7', 'G7', 'C7', 'G7']);
+  });
+});
+
 describe('playlists', () => {
   test('parses a multi-song playlist with a trailing name', () => {
     const url =

@@ -42,6 +42,26 @@ The Sequence Builder is built around `IRealChart` (a measure-based model in
   endings, repeats, time sigs, coda/segno, staff text); `flatten.ts` expands
   repeats / 1st-2nd endings / one-bar repeats / D.C.–D.S. al Coda/Fine into the
   performance order that drives diagrams, the optimiser, and playback.
+- Format coverage was audited against the canonical iReal Pro protocol and the
+  community parsers. The full token vocabulary is handled: barlines/endings/
+  sections, time-sig changes (incl. `T12`=12/8), `n` N.C., `W`/`W/bass` inherited
+  root, `p` slashes, latching `s`/`l` chord size, alternate chords `(…)`, inline
+  `*…*` comments, `Y` spacers, `<*nn>` staff-text vertical offset, `<Nx>` repeat-
+  count overrides (feed `flatten`'s pass count), and the `U` end marker. Known
+  deliberate simplifications: the header transpose field (idx 5) is ignored
+  (concert-pitch tool), and only two codas are modelled.
+
+### Lead-sheet rendering (iReal layout parity)
+`ChartView` exposes a shared `ChartGrid` (`components/ChartView.tsx`) that draws
+the structural chrome on iReal's 16-cell grid — open-staff vertical barlines (no
+cell boxes), tall stacked time signatures, outlined section boxes, full-width
+ending brackets, simile/repeat signs, repeat dots and staff text. The chord
+score and the guitar-diagram sheet (`GuitarChartView.tsx`) both render through
+`ChartGrid`, so the guitar view is laid out identically to the score. `chartChrome.tsx`
+holds the shared marks/signs and the `ChordSymbol` jazz typesetter (big root,
+raised quality, pretty accidentals) used by both. A persisted `chartViewMode`
+(`chart`/`guitar`/`both`) toggles which sheets show; layout maths and the
+`structuralClasses`/row-edge helpers live in the pure `chartLayout.ts`.
 - `chordParser.ts` maps iReal qualities to the four-part catalogue (best-effort,
   e.g. C13→dom9, ♯11→♭5 shell, ♭13→♯5 shell); `src/music/chart.ts` bridges
   Song/SequenceChord ⇄ IRealChart (`songToChart`, `chartToSequence`,
@@ -64,12 +84,14 @@ The Sequence Builder is built around `IRealChart` (a measure-based model in
   guide line is tracked on the top string (B for middle, high-E for upper).
 
 ## Testing
-- Unit: `src/music/**/*.test.ts` (117 tests) cover spelling, the chord catalogue, drop-2 voicing,
-  the b9 rule, the optimiser, progressions, the song model, the Song/Chart converters, and the
-  iReal Pro engine (verified against the "9.20 Special" spec vector — 26 authored bars expand to
-  32 — and 5 real standard fixtures with round-trips).
-- E2E: `e2e/app.spec.ts` (18 tests) exercises every page in a real browser, including iReal
-  import (paste + standards), structure rendering, and measure editing.
+- Unit: `src/music/**/*.test.ts` + `src/components/chartLayout.test.ts` (144 tests) cover spelling,
+  the chord catalogue, drop-2 voicing, the b9 rule, the optimiser, progressions, the song model, the
+  Song/Chart converters, the lead-sheet layout grid, and the iReal Pro engine (verified against the
+  "9.20 Special" spec vector — 26 authored bars expand to 32 — plus subtle-token coverage and 5 real
+  standard fixtures with round-trips).
+- E2E: `e2e/app.spec.ts` (25 tests) exercises every page in a real browser, including iReal import
+  (paste + standards), structure rendering, measure editing, the chart/guitar/both view toggle, and
+  that the guitar sheet mirrors the score's chrome.
 - Always keep `npm test`, `npm run test:e2e`, `npm run lint`, and `npm run typecheck` green.
 
 ## Deployment
