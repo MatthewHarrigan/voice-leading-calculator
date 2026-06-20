@@ -22,6 +22,23 @@ describe('computeLayout', () => {
     expect(layout[3]).toEqual({ row: 2, col: 8, span: 4, rowStart: true, rowEnd: true });
   });
 
+  test('re-bases the grid at each section so a wide bar cannot indent later sections', () => {
+    // Mirrors the real Stella: a 5-cell bar in section A drifts the cumulative
+    // cell count by one, but section B must still begin flush-left on a new row.
+    const c = chart([
+      bar({ section: 'A', cell: 0, cells: 4 }),
+      bar({ cell: 4, cells: 4 }),
+      bar({ cell: 8, cells: 5 }), // wide bar (e.g. two chords + an alternate)
+      bar({ cell: 13, cells: 3 }),
+      bar({ section: 'B', cell: 16, cells: 4 }), // would be col 0 already…
+      bar({ section: 'C', cell: 65, cells: 4 }), // …but this one drifted to col 1
+    ]);
+    const layout = computeLayout(c);
+    expect(layout[2]).toMatchObject({ row: 0, col: 8, span: 5 }); // wide bar stays put
+    expect(layout[4]).toMatchObject({ row: 1, col: 0 }); // section B flush-left, new row
+    expect(layout[5]).toMatchObject({ row: 2, col: 0 }); // section C flush-left despite drift
+  });
+
   test('packs left-to-right when no cell metadata is present (manual chart)', () => {
     const c = chart(Array.from({ length: 6 }, () => bar()));
     const layout = computeLayout(c);

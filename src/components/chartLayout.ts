@@ -20,6 +20,12 @@ export interface Placement {
  * Lay measures out on iReal Pro's 16-cell grid: when the chart carries imported
  * cell positions we honour them exactly (so 4 bars fall per line and 2nd-time
  * bars align under 1st-time bars); otherwise we pack bars left-to-right.
+ *
+ * The grid is re-based at every section/rehearsal mark: like iReal Pro, a new
+ * section begins a fresh line flush at the left margin, and cells are measured
+ * relative to that section's start. This keeps endings aligned within a section
+ * (via the imported padding) while preventing a wide bar's cell drift from
+ * indenting later sections (e.g. a 2-chord-with-alternate bar in Stella).
  */
 export function computeLayout(chart: IRealChart): Placement[] {
   const ms = chart.measures;
@@ -27,12 +33,22 @@ export function computeLayout(chart: IRealChart): Placement[] {
 
   const base: { row: number; col: number; span: number }[] = [];
   if (hasGrid) {
-    for (const m of ms) {
-      const start = m.cell!;
-      const col = start % CELLS_PER_ROW;
+    let sectionBaseCell = 0;
+    let sectionBaseRow = 0;
+    let prevRow = 0;
+    ms.forEach((m, idx) => {
+      // A section mark after the first bar starts a new line, re-based here.
+      if (idx > 0 && m.section != null) {
+        sectionBaseCell = m.cell!;
+        sectionBaseRow = prevRow + 1;
+      }
+      const rel = m.cell! - sectionBaseCell;
+      const col = ((rel % CELLS_PER_ROW) + CELLS_PER_ROW) % CELLS_PER_ROW;
+      const row = sectionBaseRow + Math.floor(rel / CELLS_PER_ROW);
       const span = Math.min(Math.max(1, m.cells!), CELLS_PER_ROW - col);
-      base.push({ row: Math.floor(start / CELLS_PER_ROW), col, span });
-    }
+      base.push({ row, col, span });
+      prevRow = row;
+    });
   } else {
     let row = 0;
     let col = 0;
