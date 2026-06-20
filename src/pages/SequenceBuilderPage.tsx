@@ -3,7 +3,7 @@ import { type ChordTypeId } from '@/music/chords';
 import { type SequenceChord } from '@/music/song';
 import { chartToSequence, measureStartBeats } from '@/music/chart';
 import { flattenChart, toIRealHTML, toIRealURL } from '@/music/ireal';
-import type { IRealChart, IRealChord, IRealMeasure } from '@/music/ireal/types';
+import type { IRealChord } from '@/music/ireal/types';
 import {
   generateChordVoicing,
   hasFlatNineAvoidInterval,
@@ -24,9 +24,8 @@ import { pitchClassOf } from '@/music/notes';
 import { SONG_PRESETS } from '@/data/presets';
 import { useStore } from '@/state/store';
 import { ChordTypeSelect, NoteSelect } from '@/components/pickers';
-import { PlayableDiagram } from '@/components/PlayableDiagram';
 import { ChartView } from '@/components/ChartView';
-import { computeLayout } from '@/components/chartLayout';
+import { GuitarChartView } from '@/components/GuitarChartView';
 import { ImportPanel } from '@/components/ImportPanel';
 import { MeasureEditor } from '@/components/MeasureEditor';
 import { useInspector } from '@/components/inspectorContext';
@@ -139,6 +138,29 @@ export function SequenceBuilderPage() {
     return idx;
   }, [playBeat, barStartBeats]);
   const playingMeasureId = playingIndex >= 0 ? (flat[playingIndex]?.id ?? null) : null;
+
+  // Optimised voicings grouped under their authored measure (first pass through
+  // the form), so the guitar view mirrors the chart's bar layout exactly.
+  const optimizedByMeasure = useMemo(() => {
+    const out = new Map<string, OptimizedSeqChord[]>();
+    if (!optimized) return out;
+    const byBar = new Map<number, OptimizedSeqChord[]>();
+    for (const c of optimized) {
+      const list = byBar.get(c.barIndex);
+      if (list) list.push(c);
+      else byBar.set(c.barIndex, [c]);
+    }
+    byBar.forEach((list) => list.sort((a, b) => a.beat - b.beat));
+    const seen = new Set<string>();
+    flat.forEach((m, barIndex) => {
+      if (seen.has(m.id)) return; // repeated bars share an id — show the first pass only
+      const chords = byBar.get(barIndex);
+      if (!chords || chords.length === 0) return;
+      seen.add(m.id);
+      out.set(m.id, chords);
+    });
+    return out;
+  }, [optimized, flat]);
 
   const chordCount = chart.measures.reduce((n, m) => n + m.chords.length, 0);
 
@@ -511,12 +533,7 @@ export function SequenceBuilderPage() {
             </label>
           </div>
 
-          <OptimizedDiagramGrid
-            optimized={optimized}
-            flat={flat}
-            chart={chart}
-            playingMeasureId={playingMeasureId}
-          />
+          <GuitarChartView chart={chart} byMeasure={optimizedByMeasure} playingMeasureId={playingMeasureId} />
           <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
             Diagrams mirror the chart layout — one voicing per bar (first pass through the form).
           </p>
@@ -539,91 +556,6 @@ function FormField({ label, children }: { label: string; children: React.ReactNo
     <div className="control-group">
       <span className="label">{label}</span>
       {children}
-    </div>
-  );
-}
-
-function OptimizedCard({ chord, playing }: { chord: OptimizedSeqChord; playing?: boolean }) {
-  const lead = topNoteOf(chord.fingering, chord.stringSet);
-  return (
-    <PlayableDiagram
-      variant="bare"
-      className={`optimized-chord${playing ? ' playing' : ''}`}
-      chord={{
-        fingering: chord.fingering,
-        rootDisplay: chord.displayRoot,
-        chordType: chord.chordType,
-        symbol: chord.symbol,
-        inversion: chord.inversion,
-        stringSet: chord.stringSet,
-        leadNote: lead,
-        targetTopNote: chord.targetTopNote,
-      }}
-    />
-  );
-}
-
-/**
- * The optimised voicings laid out on the same 16-cell grid as the chart, so each
- * diagram sits under its bar (4 bars per line, endings aligned). Shows the first
- * pass through the form (one voicing per authored bar).
- */
-function OptimizedDiagramGrid({
-  optimized,
-  flat,
-  chart,
-  playingMeasureId,
-}: {
-  optimized: OptimizedSeqChord[];
-  flat: IRealMeasure[];
-  chart: IRealChart;
-  playingMeasureId: string | null;
-}) {
-  const groups = useMemo(() => {
-    const layout = computeLayout(chart);
-    const authoredIndexById = new Map(chart.measures.map((m, i) => [m.id, i]));
-    // `optimized` carries barIndex = position in the flattened performance order;
-    // `flat` is the same flattenChart(chart) order, so flat[barIndex] is that
-    // chord's measure and flat[i].id is its authored id. This holds only at
-    // wholeRepeats=1 (the page's default) — cloned passes would get fresh ids.
-    const byBar = new Map<number, OptimizedSeqChord[]>();
-    for (const c of optimized) {
-      const list = byBar.get(c.barIndex);
-      if (list) list.push(c);
-      else byBar.set(c.barIndex, [c]);
-    }
-    byBar.forEach((list) => list.sort((a, b) => a.beat - b.beat));
-
-    const out: { id: string; row: number; col: number; span: number; chords: OptimizedSeqChord[] }[] = [];
-    const seen = new Set<string>();
-    flat.forEach((m, barIndex) => {
-      // Repeated bars share an authored id; show only the first pass's voicing so
-      // the diagrams mirror the authored chart (one per bar), not the expansion.
-      if (seen.has(m.id)) return;
-      const chords = byBar.get(barIndex);
-      if (!chords || chords.length === 0) return;
-      const authoredIdx = authoredIndexById.get(m.id);
-      if (authoredIdx == null) return;
-      seen.add(m.id);
-      const place = layout[authoredIdx];
-      out.push({ id: m.id, row: place.row, col: place.col, span: place.span, chords });
-    });
-    return out;
-  }, [optimized, flat, chart]);
-
-  return (
-    <div className="optimized-grid optimized-chart-grid" style={{ marginTop: 14 }}>
-      {groups.map((g) => (
-        <div
-          key={g.id}
-          className="optimized-measure"
-          style={{ gridColumn: `${g.col + 1} / span ${g.span}`, gridRow: g.row + 1 }}
-        >
-          {g.chords.map((c) => (
-            <OptimizedCard key={c.id} chord={c} playing={g.id === playingMeasureId} />
-          ))}
-        </div>
-      ))}
     </div>
   );
 }

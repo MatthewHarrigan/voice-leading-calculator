@@ -20,6 +20,8 @@ export interface ChordDiagramProps {
   stringSet: StringSet;
   title?: string;
   subtitle?: string;
+  /** Show the chord title inside the SVG (off when a header sits above it). */
+  showTitle?: boolean;
   leadNote?: string | null;
   showIntervals?: boolean;
   highlightAvoid?: boolean;
@@ -33,6 +35,7 @@ export function ChordDiagram({
   stringSet,
   title,
   subtitle,
+  showTitle = true,
   leadNote,
   showIntervals = true,
   highlightAvoid = false,
@@ -82,7 +85,7 @@ export function ChordDiagram({
       aria-label={ariaLabel ?? title ?? 'chord diagram'}
       preserveAspectRatio="xMidYMid meet"
     >
-      {title && (
+      {showTitle && title && (
         <text x={W / 2} y={15} className="cd-title">
           {title}
           {subtitle ? ` ${subtitle}` : ''}

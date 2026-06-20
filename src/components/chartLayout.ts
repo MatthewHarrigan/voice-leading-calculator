@@ -2,7 +2,7 @@
 // mirrored diagram grid. Kept out of the component files so fast-refresh stays
 // happy (component modules should only export components).
 
-import type { IRealChart } from '@/music/ireal/types';
+import type { IRealChart, IRealMeasure } from '@/music/ireal/types';
 
 export const CELLS_PER_ROW = 16;
 
@@ -10,6 +10,10 @@ export interface Placement {
   row: number;
   col: number;
   span: number;
+  /** First measure on its row (gets a left barline). */
+  rowStart: boolean;
+  /** Last measure on its row (gets a closing barline on the right). */
+  rowEnd: boolean;
 }
 
 /**
@@ -20,29 +24,50 @@ export interface Placement {
 export function computeLayout(chart: IRealChart): Placement[] {
   const ms = chart.measures;
   const hasGrid = ms.length > 0 && ms.every((m) => typeof m.cell === 'number' && typeof m.cells === 'number');
+
+  const base: { row: number; col: number; span: number }[] = [];
   if (hasGrid) {
-    return ms.map((m) => {
+    for (const m of ms) {
       const start = m.cell!;
       const col = start % CELLS_PER_ROW;
       const span = Math.min(Math.max(1, m.cells!), CELLS_PER_ROW - col);
-      return { row: Math.floor(start / CELLS_PER_ROW), col, span };
-    });
-  }
-  const out: Placement[] = [];
-  let row = 0;
-  let col = 0;
-  for (const m of ms) {
-    const span = Math.min(Math.max(1, m.cells ?? (m.timeSig ?? chart.timeSignature)[0]), CELLS_PER_ROW);
-    if (col + span > CELLS_PER_ROW) {
-      row += 1;
-      col = 0;
+      base.push({ row: Math.floor(start / CELLS_PER_ROW), col, span });
     }
-    out.push({ row, col, span });
-    col += span;
-    if (col >= CELLS_PER_ROW) {
-      row += 1;
-      col = 0;
+  } else {
+    let row = 0;
+    let col = 0;
+    for (const m of ms) {
+      const span = Math.min(Math.max(1, m.cells ?? (m.timeSig ?? chart.timeSignature)[0]), CELLS_PER_ROW);
+      if (col + span > CELLS_PER_ROW) {
+        row += 1;
+        col = 0;
+      }
+      base.push({ row, col, span });
+      col += span;
+      if (col >= CELLS_PER_ROW) {
+        row += 1;
+        col = 0;
+      }
     }
   }
-  return out;
+
+  // Mark the first and last measure of each row so the lead-sheet renderer can
+  // draw a left barline at the start and a closing barline at the end of a line.
+  return base.map((p, i) => ({
+    ...p,
+    rowStart: p.col === 0 || i === 0 || base[i - 1].row !== p.row,
+    rowEnd: i === base.length - 1 || base[i + 1].row !== p.row,
+  }));
+}
+
+/** Structural (barline + row-edge) CSS classes for a measure, shared by views. */
+export function structuralClasses(m: IRealMeasure, place: Placement): string {
+  return [
+    m.open ? `open-${m.open}` : '',
+    m.close ? `close-${m.close}` : '',
+    place.rowStart ? 'row-start' : '',
+    place.rowEnd ? 'row-end' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 }

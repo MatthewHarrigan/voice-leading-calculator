@@ -9,6 +9,8 @@ interface PlayableDiagramProps {
   caption?: ReactNode;
   showIntervals?: boolean;
   highlightAvoid?: boolean;
+  /** Render the chord title inside the diagram (off when a header sits above). */
+  showTitle?: boolean;
   /** 'card' wraps in a bordered card; 'bare' renders just the diagram. */
   variant?: 'card' | 'bare';
   className?: string;
@@ -28,6 +30,7 @@ export function PlayableDiagram({
   caption,
   showIntervals = true,
   highlightAvoid = false,
+  showTitle = true,
   variant = 'card',
   className,
 }: PlayableDiagramProps) {
@@ -92,6 +95,7 @@ export function PlayableDiagram({
       rootDisplay={chord.rootDisplay}
       stringSet={chord.stringSet}
       title={chord.title ?? label}
+      showTitle={showTitle}
       leadNote={chord.leadNote ?? null}
       showIntervals={showIntervals}
       highlightAvoid={highlightAvoid}

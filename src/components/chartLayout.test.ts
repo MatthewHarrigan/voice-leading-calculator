@@ -17,30 +17,40 @@ describe('computeLayout', () => {
       bar({ cell: 40, cells: 4 }), // 2nd ending, pushed under the 1st (col 8, row 2)
     ]);
     const layout = computeLayout(c);
-    expect(layout[0]).toEqual({ row: 0, col: 0, span: 4 });
-    expect(layout[2]).toEqual({ row: 0, col: 8, span: 4 });
-    expect(layout[3]).toEqual({ row: 2, col: 8, span: 4 });
+    expect(layout[0]).toEqual({ row: 0, col: 0, span: 4, rowStart: true, rowEnd: false });
+    expect(layout[2]).toEqual({ row: 0, col: 8, span: 4, rowStart: false, rowEnd: true });
+    expect(layout[3]).toEqual({ row: 2, col: 8, span: 4, rowStart: true, rowEnd: true });
   });
 
   test('packs left-to-right when no cell metadata is present (manual chart)', () => {
     const c = chart(Array.from({ length: 6 }, () => bar()));
     const layout = computeLayout(c);
     // 4/4 bars => 4 per 16-cell row.
-    expect(layout[0]).toEqual({ row: 0, col: 0, span: 4 });
-    expect(layout[3]).toEqual({ row: 0, col: 12, span: 4 });
-    expect(layout[4]).toEqual({ row: 1, col: 0, span: 4 });
+    expect(layout[0]).toEqual({ row: 0, col: 0, span: 4, rowStart: true, rowEnd: false });
+    expect(layout[3]).toEqual({ row: 0, col: 12, span: 4, rowStart: false, rowEnd: true });
+    expect(layout[4]).toEqual({ row: 1, col: 0, span: 4, rowStart: true, rowEnd: false });
   });
 
   test('falls back to packing if any measure is missing cell metadata', () => {
     const c = chart([bar({ cell: 0, cells: 4 }), bar(), bar({ cell: 8, cells: 4 })]);
     const layout = computeLayout(c);
-    expect(layout[0]).toEqual({ row: 0, col: 0, span: 4 });
-    expect(layout[1]).toEqual({ row: 0, col: 4, span: 4 });
-    expect(layout[2]).toEqual({ row: 0, col: 8, span: 4 });
+    expect(layout[0]).toEqual({ row: 0, col: 0, span: 4, rowStart: true, rowEnd: false });
+    expect(layout[1]).toEqual({ row: 0, col: 4, span: 4, rowStart: false, rowEnd: false });
+    expect(layout[2]).toEqual({ row: 0, col: 8, span: 4, rowStart: false, rowEnd: true });
   });
 
   test('clamps an over-wide imported measure to the row boundary', () => {
     const c = chart([bar({ cell: 14, cells: 4 })]);
-    expect(computeLayout(c)[0]).toEqual({ row: 0, col: 14, span: 2 });
+    expect(computeLayout(c)[0]).toEqual({ row: 0, col: 14, span: 2, rowStart: true, rowEnd: true });
+  });
+
+  test('marks the first and last bar of each row for barline drawing', () => {
+    const c = chart(Array.from({ length: 5 }, () => bar()));
+    const layout = computeLayout(c);
+    // Row 0 spans bars 0–3; bar 4 starts row 1.
+    expect(layout[0].rowStart).toBe(true);
+    expect(layout[3].rowEnd).toBe(true);
+    expect(layout[4].rowStart).toBe(true);
+    expect(layout[4].rowEnd).toBe(true); // last bar overall
   });
 });

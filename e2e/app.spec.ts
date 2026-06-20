@@ -301,12 +301,13 @@ test('imports a pasted iReal Pro link with sections, endings and repeats', async
 
   await expect(page.locator('.chart-meta')).toContainText('9.20 Special');
   await expect(page.locator('.chart-meta')).toContainText('Key C');
-  // First/second endings and a repeat barline are rendered.
-  await expect(page.locator('.ending-mark')).toHaveCount(2);
+  // First/second endings and a repeat barline are rendered (scope to the score;
+  // the guitar-diagram view mirrors the same chrome, so endings appear in both).
+  await expect(page.locator('.chart-view .ending-mark')).toHaveCount(2);
   await expect(page.locator('.chart-measure.close-repeat')).not.toHaveCount(0);
   await expect(page.locator('.bar-repeat')).not.toHaveCount(0);
   // Section marks A and B.
-  await expect(page.locator('.section-mark')).not.toHaveCount(0);
+  await expect(page.locator('.chart-view .section-mark')).not.toHaveCount(0);
 
   // It can be played and stopped (structure-aware).
   await page.getByRole('button', { name: 'Play sequence' }).click();
@@ -411,6 +412,9 @@ test('optimised diagrams mirror the chart bar layout', async ({ page }) => {
   await expect(page.locator('.optimized-chart-grid')).toBeVisible();
   await expect(page.locator('.optimized-measure')).not.toHaveCount(0);
   await expect(page.locator('.optimized-grid .optimized-chord')).not.toHaveCount(0);
+  // The guitar sheet mirrors the score's structural chrome (sections, endings).
+  await expect(page.locator('.optimized-chart-grid .section-mark')).not.toHaveCount(0);
+  await expect(page.locator('.optimized-chart-grid .ending-mark')).not.toHaveCount(0);
 });
 
 const PLAYLIST =
