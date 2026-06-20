@@ -804,3 +804,180 @@ input[type='text'] {
   overflow: hidden;
   clip: rect(0 0 0 0);
 }
+
+/* ---------- iReal-style chart view ---------- */
+.text-input {
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  color: var(--ink);
+  font: inherit;
+  min-width: 140px;
+}
+.text-input.narrow {
+  min-width: 64px;
+  width: 72px;
+}
+.chart-meta-bar {
+  align-items: flex-end;
+}
+
+.chart-view {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 20px;
+}
+.chart-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+}
+.chart-measure {
+  position: relative;
+  min-height: 74px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-left-width: 2px;
+  padding: 18px 8px 6px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.12s, box-shadow 0.12s;
+}
+.chart-measure:hover {
+  background: var(--surface-2);
+}
+.chart-measure.measure-selected {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.chart-measure.measure-insertion::after {
+  content: '▸';
+  position: absolute;
+  bottom: 2px;
+  right: 5px;
+  font-size: 11px;
+  color: var(--accent);
+}
+.chart-measure-pad {
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+  min-height: 0;
+}
+/* Barlines */
+.chart-measure.open-double { border-left-width: 4px; }
+.chart-measure.open-repeat { border-left: 5px double var(--ink); }
+.chart-measure.close-double { border-right-width: 4px; }
+.chart-measure.close-repeat { border-right: 5px double var(--ink); }
+.chart-measure.close-final { border-right: 5px solid var(--ink); }
+
+.measure-marks {
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.section-mark {
+  font-weight: 700;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-radius: 3px;
+  padding: 0 5px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.time-sig {
+  font-family: var(--serif);
+  font-weight: 600;
+  color: var(--ink);
+}
+.ending-mark {
+  margin-left: auto;
+  border-top: 2px solid var(--ink);
+  border-left: 2px solid var(--ink);
+  padding: 0 4px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.nav-mark {
+  font-size: 14px;
+  color: var(--ink);
+}
+.measure-cells {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+}
+.measure-cells .sequence-chord {
+  cursor: pointer;
+  margin: 0;
+  min-width: 0;
+}
+.sequence-chord .sc-bass {
+  font-size: 11px;
+  color: var(--muted);
+}
+.sequence-chord .sc-alt {
+  display: block;
+  font-size: 10px;
+  color: var(--muted);
+}
+.sequence-chord.small .sc-symbol {
+  font-size: 11px;
+}
+.bar-repeat {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.measure-empty {
+  color: var(--faint);
+  font-size: 18px;
+}
+.measure-text {
+  position: absolute;
+  bottom: 2px;
+  left: 6px;
+  font-size: 10px;
+  font-style: italic;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* Import panel */
+.import-panel,
+.measure-editor {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.import-textarea {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  color: var(--ink);
+  font-family: var(--mono, monospace);
+  font-size: 12px;
+  resize: vertical;
+  margin: 8px 0;
+}
+.import-error {
+  color: #c0392b;
+  font-size: 13px;
+  margin: 4px 0;
+}

@@ -65,6 +65,8 @@ export interface IRealMeasure {
 }
 
 export interface IRealChart {
+  /** Optional identifier for saved charts. */
+  id?: string;
   title: string;
   composer?: string;
   style?: string;

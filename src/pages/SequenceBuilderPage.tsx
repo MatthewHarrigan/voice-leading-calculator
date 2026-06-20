@@ -1,11 +1,9 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState } from 'react';
 import { type ChordTypeId } from '@/music/chords';
-import {
-  assignDisplayLanes,
-  playbackOrder,
-  sequenceBarCount,
-  type SequenceChord,
-} from '@/music/song';
+import { type SequenceChord } from '@/music/song';
+import { chartToSequence } from '@/music/chart';
+import { flattenChart, toIRealHTML, toIRealURL } from '@/music/ireal';
+import type { IRealChord } from '@/music/ireal/types';
 import {
   generateChordVoicing,
   hasFlatNineAvoidInterval,
@@ -23,19 +21,37 @@ import {
 
 type OptimizedSeqChord = OptimizedChord<SequenceChord>;
 import { pitchClassOf } from '@/music/notes';
-import { beatPosition } from '@/music/timing';
 import { SONG_PRESETS } from '@/data/presets';
 import { useStore } from '@/state/store';
 import { ChordTypeSelect, NoteSelect } from '@/components/pickers';
 import { PlayableDiagram } from '@/components/PlayableDiagram';
+import { ChartView } from '@/components/ChartView';
+import { ImportPanel } from '@/components/ImportPanel';
+import { MeasureEditor } from '@/components/MeasureEditor';
 import { useInspector } from '@/components/inspectorContext';
 import { getChordPlayer } from '@/audio/player';
 import { useSequencePlaying } from '@/audio/useSequencePlaying';
 
+const TRANSPOSE_STEPS = [-1, 1];
+
+function download(filename: string, content: string, mime: string) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function slug(title: string) {
+  return title.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'chart';
+}
+
 export function SequenceBuilderPage() {
   const chart = useStore((s) => s.chart);
-  const chartTitle = useStore((s) => s.chartTitle);
-  const chartKey = useStore((s) => s.chartKey);
   const stringSet = useStore((s) => s.stringSet);
   const avoidB9 = useStore((s) => s.avoidB9);
   const audioEnabled = useStore((s) => s.audioEnabled);
@@ -50,20 +66,32 @@ export function SequenceBuilderPage() {
   const setBassline = useStore((s) => s.setBassline);
   const bassSolo = useStore((s) => s.bassSolo);
   const setBassSolo = useStore((s) => s.setBassSolo);
-  const insertion = useStore((s) => s.insertion);
-  const setInsertion = useStore((s) => s.setInsertion);
+  const repeatForm = useStore((s) => s.repeatForm);
+  const setRepeatForm = useStore((s) => s.setRepeatForm);
+
   const selectedChordId = useStore((s) => s.selectedChordId);
+  const selectedMeasureId = useStore((s) => s.selectedMeasureId);
+  const insertionMeasureId = useStore((s) => s.insertionMeasureId);
   const selectChord = useStore((s) => s.selectChord);
+  const selectMeasure = useStore((s) => s.selectMeasure);
   const addChord = useStore((s) => s.addChord);
   const updateChord = useStore((s) => s.updateChord);
   const removeChord = useStore((s) => s.removeChord);
-  const moveChord = useStore((s) => s.moveChord);
+
+  const setChartTitle = useStore((s) => s.setChartTitle);
+  const setChartKey = useStore((s) => s.setChartKey);
+  const setChartStyle = useStore((s) => s.setChartStyle);
+  const setTimeSignature = useStore((s) => s.setTimeSignature);
+  const transpose = useStore((s) => s.transpose);
+
   const clearChart = useStore((s) => s.clearChart);
   const loadSong = useStore((s) => s.loadSong);
+  const loadChart = useStore((s) => s.loadChart);
   const saveCurrentAs = useStore((s) => s.saveCurrentAs);
-  const savedPresets = useStore((s) => s.savedPresets);
+  const savedCharts = useStore((s) => s.savedCharts);
 
   const [presetValue, setPresetValue] = useState('');
+  const [showImport, setShowImport] = useState(false);
   const [form, setForm] = useState<{ root: string; chordType: ChordTypeId; duration: number; lead: string }>({
     root: 'C',
     chordType: 'maj7',
@@ -71,41 +99,56 @@ export function SequenceBuilderPage() {
     lead: '',
   });
 
-  const barCount = Math.max(sequenceBarCount(chart), 1);
-  const ordered = useMemo(() => playbackOrder(chart), [chart]);
-  const selected = chart.find((c) => c.id === selectedChordId) ?? null;
+  const selectedChord = useMemo(() => {
+    for (const m of chart.measures) {
+      const c = m.chords.find((x) => x.id === selectedChordId);
+      if (c) return c;
+    }
+    return null;
+  }, [chart, selectedChordId]);
+
+  // Performance order (repeats/endings expanded) → optimiser + diagrams.
+  const flat = useMemo(() => flattenChart(chart), [chart]);
+  const barStartBeats = useMemo(() => {
+    const arr: number[] = [];
+    let acc = 0;
+    flat.forEach((m) => {
+      arr.push(acc);
+      acc += (m.timeSig ?? chart.timeSignature)[0];
+    });
+    return arr;
+  }, [flat, chart.timeSignature]);
+
+  const sequence = useMemo(() => chartToSequence(chart, { stringSet }), [chart, stringSet]);
 
   const optimized = useMemo(() => {
-    if (ordered.length === 0) return null;
+    if (sequence.length === 0) return null;
     try {
-      return optimizeVoiceLeading(ordered, { startingInversion, avoidB9 });
+      return optimizeVoiceLeading(sequence, { startingInversion, avoidB9 });
     } catch {
       return null;
     }
-  }, [ordered, startingInversion, avoidB9]);
+  }, [sequence, startingInversion, avoidB9]);
 
   const transitions = optimized ? movementTransitions(optimized) : [];
   const guide = optimized ? guideLineAnalysis(optimized) : null;
 
-  const handleAdd = () => {
+  const chordCount = chart.measures.reduce((n, m) => n + m.chords.length, 0);
+
+  const handleAdd = () =>
     addChord({
       root: form.root,
       chordType: form.chordType,
-      barIndex: insertion.barIndex,
-      beat: insertion.beat,
-      duration: form.duration,
+      beats: form.duration,
       targetTopNote: form.lead || undefined,
     });
-  };
 
   const handleUpdate = () => {
-    if (!selected) return;
-    updateChord(selected.id, {
-      displayRoot: form.root,
+    if (!selectedChord) return;
+    updateChord(selectedChord.id, {
+      root: form.root,
       chordType: form.chordType,
-      durationBeats: form.duration,
-      beat: insertion.beat,
-      barIndex: insertion.barIndex,
+      beats: form.duration,
       targetTopNote: form.lead || undefined,
     });
   };
@@ -113,33 +156,33 @@ export function SequenceBuilderPage() {
   const loadPreset = () => {
     if (!presetValue) return;
     const [source, id] = presetValue.split(':');
-    const preset =
-      source === 'built-in'
-        ? SONG_PRESETS.find((p) => p.id === id)
-        : savedPresets.find((p) => p.id === id);
-    if (preset) loadSong(preset);
+    if (source === 'built-in') {
+      const preset = SONG_PRESETS.find((p) => p.id === id);
+      if (preset) loadSong(preset);
+    } else {
+      const saved = savedCharts.find((c) => c.id === id);
+      if (saved) loadChart(saved);
+    }
   };
 
-  const selectForEdit = (chord: SequenceChord) => {
+  const selectForEdit = (chord: IRealChord) => {
     selectChord(chord.id);
     setForm({
-      root: chord.displayRoot,
-      chordType: chord.chordType,
-      duration: chord.durationBeats,
+      root: chord.root,
+      chordType: chord.chordType ?? 'maj7',
+      duration: chord.beats,
       lead: chord.targetTopNote ?? '',
     });
-    setInsertion({ barIndex: chord.barIndex, beat: chord.beat });
   };
 
   const playAll = () => {
     if (!optimized || !audioEnabled) return;
-    const beatsPerBar = 4;
+    const beatsPerBar = chart.timeSignature[0];
     const events = optimized.map((chord) => ({
       fingering: chord.fingering,
       stringSet: chord.stringSet,
-      startBeat: beatPosition(chord.barIndex, chord.beat, beatsPerBar),
+      startBeat: (barStartBeats[chord.barIndex] ?? chord.barIndex * beatsPerBar) + (chord.beat - 1),
       durationBeats: chord.durationBeats,
-      // Root, dropped into a low bass register (E2 = 40 is the lowest).
       bassMidi: 40 + ((pitchClassOf(chord.displayRoot) - 4 + 12) % 12),
     }));
     getChordPlayer().playArrangement(events, {
@@ -148,6 +191,7 @@ export function SequenceBuilderPage() {
       metronome,
       bassline,
       soloBass: bassSolo,
+      loop: repeatForm,
     });
   };
 
@@ -156,8 +200,8 @@ export function SequenceBuilderPage() {
       <div className="page-header">
         <h1>Sequence Builder</h1>
         <p>
-          Build a lead-sheet chart, then let the optimiser choose drop 2 voicings with the smoothest
-          voice leading. Lock a chord&rsquo;s inversion or set a lead note to shape the top line.
+          Build or import a lead-sheet chart — sections, repeats, endings and time signatures — then let
+          the optimiser choose drop 2 voicings with the smoothest voice leading and play it back in time.
         </p>
       </div>
 
@@ -174,9 +218,9 @@ export function SequenceBuilderPage() {
                   </option>
                 ))}
               </optgroup>
-              {savedPresets.length > 0 && (
+              {savedCharts.length > 0 && (
                 <optgroup label="Saved">
-                  {savedPresets.map((p) => (
+                  {savedCharts.map((p) => (
                     <option key={p.id} value={`saved:${p.id}`}>
                       {p.title}
                     </option>
@@ -190,10 +234,39 @@ export function SequenceBuilderPage() {
           </div>
         </div>
 
+        <button className="btn btn-sm btn-primary" onClick={() => setShowImport((v) => !v)} data-testid="import-toggle">
+          Import iReal Pro
+        </button>
+        <div className="control-group">
+          <span className="label">Export</span>
+          <div className="row">
+            <button
+              className="btn btn-sm"
+              data-testid="export-link"
+              onClick={() => {
+                const url = toIRealURL(chart);
+                navigator.clipboard?.writeText(url).catch(() => {});
+                window.prompt('iReal Pro link (copy):', url);
+              }}
+            >
+              Link
+            </button>
+            <button className="btn btn-sm" onClick={() => download(`${slug(chart.title)}.html`, toIRealHTML(chart), 'text/html')}>
+              .html
+            </button>
+            <button
+              className="btn btn-sm"
+              onClick={() => download(`${slug(chart.title)}.json`, JSON.stringify(chart, null, 2), 'application/json')}
+            >
+              .json
+            </button>
+          </div>
+        </div>
+
         <button
           className="btn btn-sm"
           onClick={() => {
-            const name = window.prompt('Name this chart:');
+            const name = window.prompt('Name this chart:', chart.title);
             if (name) saveCurrentAs(name);
           }}
         >
@@ -204,38 +277,82 @@ export function SequenceBuilderPage() {
         </button>
       </div>
 
-      <div className="chart-meta">
-        <strong>{chartTitle}</strong> · Key {chartKey} · {barCount} bar{barCount === 1 ? '' : 's'} ·{' '}
-        {chart.length} chord{chart.length === 1 ? '' : 's'}
-      </div>
+      {showImport && (
+        <ImportPanel
+          onClose={() => setShowImport(false)}
+          onImported={(title) => {
+            setShowImport(false);
+            void title;
+          }}
+        />
+      )}
 
-      {/* Add / edit form */}
-      <div className="control-bar">
-        <FormField label="Bar">
+      {/* Chart metadata */}
+      <div className="control-bar chart-meta-bar">
+        <FormField label="Title">
+          <input
+            className="text-input"
+            value={chart.title}
+            onChange={(e) => setChartTitle(e.target.value)}
+            aria-label="Chart title"
+          />
+        </FormField>
+        <FormField label="Key">
+          <NoteSelect value={keyTonic(chart.key)} onChange={(t) => setChartKey(applyKeyMode(t, chart.key))} aria-label="Chart key" />
+        </FormField>
+        <FormField label="Style">
+          <input
+            className="text-input"
+            value={chart.style ?? ''}
+            onChange={(e) => setChartStyle(e.target.value)}
+            aria-label="Style"
+            placeholder="e.g. Medium Swing"
+          />
+        </FormField>
+        <FormField label="Time">
           <select
-            value={insertion.barIndex + 1}
-            onChange={(e) => setInsertion({ barIndex: Number(e.target.value) - 1 })}
-            aria-label="Bar"
+            value={`${chart.timeSignature[0]}/${chart.timeSignature[1]}`}
+            onChange={(e) => {
+              const [n, d] = e.target.value.split('/').map(Number);
+              setTimeSignature([n, d]);
+            }}
+            aria-label="Time signature"
           >
-            {Array.from({ length: Math.max(barCount, 1) + 1 }, (_, i) => (
-              <option key={i} value={i + 1}>
-                {i + 1}
+            {['4/4', '3/4', '2/4', '6/8', '5/4', '12/8', '2/2'].map((ts) => (
+              <option key={ts} value={ts}>
+                {ts}
               </option>
             ))}
           </select>
         </FormField>
-        <FormField label="Beat">
-          <select
-            value={insertion.beat}
-            onChange={(e) => setInsertion({ beat: Number(e.target.value) })}
-            aria-label="Beat"
-          >
-            {[1, 2, 3, 4].map((b) => (
-              <option key={b} value={b}>
-                {b}
-              </option>
+        <FormField label="Transpose">
+          <div className="row">
+            {TRANSPOSE_STEPS.map((step) => (
+              <button key={step} className="btn btn-sm" onClick={() => transpose(step)} title={`Transpose ${step > 0 ? 'up' : 'down'} a semitone`}>
+                {step > 0 ? '+½' : '−½'}
+              </button>
             ))}
-          </select>
+          </div>
+        </FormField>
+      </div>
+
+      <div className="chart-meta">
+        <strong>{chart.title}</strong> · Key {chart.key ?? 'C'} · {chart.measures.length} bar
+        {chart.measures.length === 1 ? '' : 's'} · {chordCount} chord{chordCount === 1 ? '' : 's'}
+        {chart.composer ? ` · ${chart.composer}` : ''}
+      </div>
+
+      {/* Add / edit chord */}
+      <div className="control-bar">
+        <FormField label="Root">
+          <NoteSelect value={form.root} onChange={(root) => setForm({ ...form, root })} aria-label="Root" />
+        </FormField>
+        <FormField label="Chord">
+          <ChordTypeSelect
+            value={form.chordType}
+            onChange={(chordType) => setForm({ ...form, chordType })}
+            aria-label="Chord type"
+          />
         </FormField>
         <FormField label="Duration">
           <select
@@ -250,16 +367,6 @@ export function SequenceBuilderPage() {
             ))}
           </select>
         </FormField>
-        <FormField label="Root">
-          <NoteSelect value={form.root} onChange={(root) => setForm({ ...form, root })} aria-label="Root" />
-        </FormField>
-        <FormField label="Chord">
-          <ChordTypeSelect
-            value={form.chordType}
-            onChange={(chordType) => setForm({ ...form, chordType })}
-            aria-label="Chord type"
-          />
-        </FormField>
         <FormField label="Lead note">
           <NoteSelect
             value={form.lead}
@@ -273,37 +380,44 @@ export function SequenceBuilderPage() {
           <button type="button" className="btn btn-primary btn-sm" onClick={handleAdd}>
             Add Chord
           </button>
-          <button type="button" className="btn btn-sm" onClick={handleUpdate} disabled={!selected}>
+          <button type="button" className="btn btn-sm" onClick={handleUpdate} disabled={!selectedChord}>
             Update Chord
           </button>
-          {selected && (
-            <button type="button" className="btn btn-sm btn-danger" onClick={() => removeChord(selected.id)}>
+          {selectedChord && (
+            <button type="button" className="btn btn-sm btn-danger" onClick={() => removeChord(selectedChord.id)}>
               Remove
             </button>
           )}
         </div>
       </div>
 
-      {/* Chart grid */}
-      {chart.length === 0 ? (
-        <p className="empty-hint">Your chord sequence will appear here. Add a chord or load a preset.</p>
+      {/* The chart */}
+      {chordCount === 0 && chart.measures.length <= 1 ? (
+        <p className="empty-hint">
+          Your chart will appear here. Add a chord, load a preset, or import an iReal Pro link.
+        </p>
       ) : (
-        <ChartGrid
+        <ChartView
           chart={chart}
-          barCount={barCount}
-          selectedId={selectedChordId}
-          onSelect={selectForEdit}
-          onBarClick={(barIndex, beat) => setInsertion({ barIndex, beat })}
-          onMove={moveChord}
+          selectedChordId={selectedChordId}
+          selectedMeasureId={selectedMeasureId}
+          insertionMeasureId={insertionMeasureId}
+          onSelectChord={(id) => {
+            const found = chart.measures.flatMap((m) => m.chords).find((c) => c.id === id);
+            if (found) selectForEdit(found);
+          }}
+          onSelectMeasure={selectMeasure}
         />
       )}
 
+      {selectedMeasureId && <MeasureEditor measureId={selectedMeasureId} />}
+
       {/* Voicing analysis for the selected chord */}
-      {selected && (
-        <VoicingAnalysis chord={selected} stringSet={stringSet} avoidB9={avoidB9} />
+      {selectedChord && selectedChord.chordType && (
+        <VoicingAnalysis chord={selectedChord} stringSet={stringSet} avoidB9={avoidB9} />
       )}
 
-      {/* Optimized output */}
+      {/* Optimised output */}
       {optimized && (
         <section className="analysis-panel">
           <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
@@ -343,7 +457,7 @@ export function SequenceBuilderPage() {
                 <input
                   type="range"
                   min={40}
-                  max={240}
+                  max={300}
                   step={1}
                   value={tempo}
                   onChange={(e) => setTempo(Number(e.target.value))}
@@ -354,34 +468,23 @@ export function SequenceBuilderPage() {
               </div>
             </div>
             <label className="switch" title="Click track on every beat during playback">
-              <input
-                type="checkbox"
-                checked={metronome}
-                onChange={(e) => setMetronome(e.target.checked)}
-                data-testid="metronome"
-              />
+              <input type="checkbox" checked={metronome} onChange={(e) => setMetronome(e.target.checked)} data-testid="metronome" />
               Metronome
             </label>
             <label className="switch" title="Play each chord's root as a bass note">
-              <input
-                type="checkbox"
-                checked={bassline}
-                onChange={(e) => setBassline(e.target.checked)}
-                data-testid="bassline"
-              />
+              <input type="checkbox" checked={bassline} onChange={(e) => setBassline(e.target.checked)} data-testid="bassline" />
               Bass line
             </label>
             {bassline && (
               <label className="switch" title="Mute the chords — hear only the bass line">
-                <input
-                  type="checkbox"
-                  checked={bassSolo}
-                  onChange={(e) => setBassSolo(e.target.checked)}
-                  data-testid="bass-solo"
-                />
+                <input type="checkbox" checked={bassSolo} onChange={(e) => setBassSolo(e.target.checked)} data-testid="bass-solo" />
                 Solo
               </label>
             )}
+            <label className="switch" title="Loop the whole chart until you press Stop">
+              <input type="checkbox" checked={repeatForm} onChange={(e) => setRepeatForm(e.target.checked)} data-testid="repeat-form" />
+              Repeat form
+            </label>
           </div>
 
           <div className="optimized-grid" style={{ marginTop: 14 }}>
@@ -397,96 +500,20 @@ export function SequenceBuilderPage() {
   );
 }
 
+function keyTonic(key: string | undefined): string {
+  if (!key) return 'C';
+  const m = /^([A-G][#b]?)/.exec(key.trim());
+  return m ? m[1] : 'C';
+}
+function applyKeyMode(tonic: string, prevKey: string | undefined): string {
+  return prevKey && /minor|min|m$/i.test(prevKey) ? `${tonic} minor` : tonic;
+}
+
 function FormField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="control-group">
       <span className="label">{label}</span>
       {children}
-    </div>
-  );
-}
-
-function ChartGrid({
-  chart,
-  barCount,
-  selectedId,
-  onSelect,
-  onBarClick,
-  onMove,
-}: {
-  chart: SequenceChord[];
-  barCount: number;
-  selectedId: string | null;
-  onSelect: (chord: SequenceChord) => void;
-  onBarClick: (barIndex: number, beat: number) => void;
-  onMove: (id: string, barIndex: number, beat: number) => void;
-}) {
-  const beatFromEvent = (e: React.MouseEvent | React.DragEvent) => {
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    return Math.min(4, Math.max(1, Math.floor(((e.clientX - rect.left) / rect.width) * 4) + 1));
-  };
-  const rows: number[][] = [];
-  for (let i = 0; i < barCount; i += 4) {
-    rows.push(Array.from({ length: Math.min(4, barCount - i) }, (_, k) => i + k));
-  }
-
-  return (
-    <div>
-      {rows.map((row, ri) => (
-        <div className="chart-grid" key={ri}>
-          {row.map((barIndex) => {
-            const barChords = chart.filter((c) => c.barIndex === barIndex);
-            const lanes = assignDisplayLanes(barChords);
-            const laneCount = lanes.reduce((m, l) => Math.max(m, l.laneCount), 1);
-            const style: CSSProperties =
-              laneCount > 1 ? { gridTemplateRows: `repeat(${laneCount}, minmax(0, auto))` } : {};
-            return (
-              <div
-                className="chord-bar"
-                data-bar-number={barIndex + 1}
-                key={barIndex}
-                style={style}
-                onClick={(e) => onBarClick(barIndex, beatFromEvent(e))}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const id = e.dataTransfer.getData('text/plain');
-                  if (id) onMove(id, barIndex, beatFromEvent(e));
-                }}
-              >
-                <span className="bar-number">{barIndex + 1}</span>
-                {lanes.map(({ chord, beat, span, lane }) => (
-                  <div
-                    key={chord.id}
-                    className={`sequence-chord${selectedId === chord.id ? ' selected' : ''}`}
-                    data-beat={beat}
-                    data-beat-span={span}
-                    data-lane={lane}
-                    draggable
-                    style={{ gridColumn: `${beat} / span ${span}`, gridRow: String(lane) }}
-                    onDragStart={(e) => {
-                      e.stopPropagation();
-                      e.dataTransfer.setData('text/plain', chord.id);
-                      e.dataTransfer.effectAllowed = 'move';
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelect(chord);
-                    }}
-                  >
-                    <span className="sc-symbol">{chord.symbol}</span>
-                    <span className="sc-meta">beat {beat}</span>
-                    {chord.targetTopNote && <span className="sc-lead">lead {chord.targetTopNote}</span>}
-                    {Number.isInteger(chord.preferredInversion) && (
-                      <span className="sc-meta">{inversionName(chord.preferredInversion!).replace(' Inversion', '')} locked</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            );
-          })}
-        </div>
-      ))}
     </div>
   );
 }
@@ -532,12 +559,6 @@ function MovementAnalysis({
             <strong>Top voice:</strong> {top} on {c.stringSet === 'upper' ? 'E string' : 'B string'}
           </>
         )}
-        {c.targetTopNote && (
-          <>
-            <br />
-            <strong>Lead target:</strong> {c.targetTopNote}
-          </>
-        )}
       </div>
     );
   }
@@ -546,8 +567,8 @@ function MovementAnalysis({
   return (
     <div style={{ marginTop: 16 }}>
       <div>
-        <strong>Total voice movement:</strong> {total} ·{' '}
-        <strong>Average:</strong> {(total / Math.max(1, transitions.length)).toFixed(1)}
+        <strong>Total voice movement:</strong> {total} · <strong>Average:</strong>{' '}
+        {(total / Math.max(1, transitions.length)).toFixed(1)}
       </div>
       <div className="muted" style={{ marginTop: 4 }}>
         {transitions.map((t, i) => (
@@ -584,19 +605,20 @@ function VoicingAnalysis({
   stringSet,
   avoidB9,
 }: {
-  chord: SequenceChord;
+  chord: IRealChord;
   stringSet: 'middle' | 'upper';
   avoidB9: boolean;
 }) {
   const setPreferredInversion = useStore((s) => s.setPreferredInversion);
   const { inspect } = useInspector();
+  const chordType = chord.chordType!;
 
   const analyses = ([0, 1, 2, 3] as Inversion[]).map((inv) => {
-    const voicing = generateChordVoicing(chord.displayRoot, chord.chordType, inv, stringSet);
+    const voicing = generateChordVoicing(chord.root, chordType, inv, stringSet);
     return {
       inv,
       voicing,
-      usable: voicing ? shouldUseVoicing(voicing, stringSet, chord.chordType, avoidB9) : false,
+      usable: voicing ? shouldUseVoicing(voicing, stringSet, chordType, avoidB9) : false,
       avoid: voicing ? hasFlatNineAvoidInterval(voicing, stringSet) : false,
     };
   });
@@ -630,8 +652,8 @@ function VoicingAnalysis({
             onDoubleClick={() =>
               inspect({
                 fingering: a.voicing!,
-                rootDisplay: chord.displayRoot,
-                chordType: chord.chordType,
+                rootDisplay: chord.root,
+                chordType,
                 symbol: chord.symbol,
                 inversion: a.inv,
                 stringSet,

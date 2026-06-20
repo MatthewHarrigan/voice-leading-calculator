@@ -7,12 +7,28 @@
 // pure (no React).
 
 import { chordSymbol, type ChordTypeId } from './chords';
-import { pitchClassOf, sharpName } from './notes';
+import { accidentalForKey, parseKey, pitchClassOf, sharpName, spellNote } from './notes';
 import { flattenChart } from './ireal/flatten';
 import type { IRealChart, IRealChord, IRealChordRef, IRealMeasure } from './ireal/types';
 import { prettyChordSymbol } from './ireal/chordParser';
 import { type SequenceChord, type Song, uid } from './song';
 import type { StringSet } from './tuning';
+
+function prettyRoot(note: string): string {
+  return note.replace(/b/g, '♭').replace(/#/g, '♯');
+}
+
+/**
+ * Display symbol for a chart chord: catalogue chords get the app's typeset
+ * symbol (e.g. "Cm(maj7)"), imported chords keep their iReal text (e.g. "C13").
+ */
+export function chartChordSymbol(ref: IRealChordRef): string {
+  if (ref.chordType && IREAL_QUALITY_BY_TYPE[ref.chordType] === ref.quality) {
+    const base = chordSymbol(ref.root, ref.chordType);
+    return ref.bass ? `${base}/${prettyRoot(ref.bass)}` : base;
+  }
+  return prettyChordSymbol(ref);
+}
 
 /** iReal quality string for each catalogue type (chosen so it round-trips). */
 export const IREAL_QUALITY_BY_TYPE: Record<ChordTypeId, string> = {
@@ -54,13 +70,47 @@ export function chordFromType(
   beats: number,
   extras: { targetTopNote?: string; preferredInversion?: number } = {},
 ): IRealChord {
+  const ref = refFromType(root, chordType);
   return {
     id: uid('c'),
-    ...refFromType(root, chordType),
+    ...ref,
     beats: Math.max(1, beats),
-    symbol: chordSymbol(root, chordType),
+    symbol: chartChordSymbol(ref),
     ...(extras.targetTopNote ? { targetTopNote: extras.targetTopNote } : {}),
     ...(Number.isInteger(extras.preferredInversion) ? { preferredInversion: extras.preferredInversion } : {}),
+  };
+}
+
+/** Transpose every chord (and the key) by a number of semitones. */
+export function transposeChart(chart: IRealChart, semitones: number): IRealChart {
+  const shift = ((semitones % 12) + 12) % 12;
+  if (shift === 0) return chart;
+  const keyCtx = parseKey(chart.key);
+  const newKeyTonic = keyCtx
+    ? spellNote((pitchClassOf(keyCtx.tonic) + shift) % 12, accidentalForKey(keyCtx))
+    : undefined;
+  const newKey =
+    keyCtx && newKeyTonic ? (keyCtx.mode === 'minor' ? `${newKeyTonic} minor` : newKeyTonic) : chart.key;
+  const acc = accidentalForKey(parseKey(newKey ?? chart.key));
+
+  const shiftNote = (note: string) => spellNote((pitchClassOf(note) + shift) % 12, acc);
+  const shiftRef = <T extends IRealChordRef>(ref: T): T => {
+    const root = shiftNote(ref.root);
+    const bass = ref.bass ? shiftNote(ref.bass) : undefined;
+    return { ...ref, root, ...(bass ? { bass } : { bass: undefined }) };
+  };
+
+  return {
+    ...chart,
+    key: newKey,
+    measures: chart.measures.map((m) => ({
+      ...m,
+      chords: m.chords.map((c) => {
+        if (c.noChord) return c;
+        const moved = shiftRef(c);
+        return { ...moved, symbol: chartChordSymbol(moved) };
+      }),
+    })),
   };
 }
 

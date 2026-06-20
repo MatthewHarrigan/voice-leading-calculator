@@ -61,6 +61,8 @@ export interface ArrangementOptions {
   bassline?: boolean;
   /** When true (with bassline), play only the bass — mute the chord strums. */
   soloBass?: boolean;
+  /** When true, loop the whole arrangement until stopped. */
+  loop?: boolean;
 }
 
 export class ChordPlayer {
@@ -451,8 +453,10 @@ export class ChordPlayer {
       this.setSeqPlaying(true);
       const t0 = performance.now();
 
-      const scheduleBeat = (beat: number) => {
+      // `abs` is an ever-increasing beat counter so looping stays drift-free.
+      const scheduleBeat = (abs: number) => {
         if (token !== this.seqToken) return;
+        const beat = options.loop ? abs % totalBeats : abs;
         const at = ctx.currentTime + 0.06;
         if (options.metronome) this.metronomeClick(at, beat % beatsPerBar === 0);
         const soloing = !!(options.bassline && options.soloBass);
@@ -464,8 +468,8 @@ export class ChordPlayer {
             this.pluckString(6, e.bassMidi, at, dur);
           }
         }
-        const next = beat + 1;
-        if (next < totalBeats) {
+        const next = abs + 1;
+        if (options.loop || next < totalBeats) {
           const targetMs = t0 + next * spb * 1000;
           this.seqTimer = setTimeout(() => scheduleBeat(next), Math.max(0, targetMs - performance.now()));
         } else {

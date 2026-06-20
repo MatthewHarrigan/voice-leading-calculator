@@ -1,28 +1,25 @@
-// Single source of truth: global settings + the editable chart.
-// Derived data (optimised voicings, analysis) is computed in components.
+// Single source of truth: global settings + the editable iReal-style chart.
+// Derived data (optimised voicings, analysis, the flat performance order) is
+// computed in components from the chart.
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { CHORD_TYPES, chordSymbol, type ChordTypeId } from '@/music/chords';
-import { pitchClassOf, sharpName } from '@/music/notes';
+import { type ChordTypeId } from '@/music/chords';
 import type { StringSet } from '@/music/tuning';
 import {
-  createEmptySong,
-  flattenSong,
-  sequenceBarCount,
-  uid,
-  type SequenceChord,
-  type Song,
-} from '@/music/song';
+  chartToSequence,
+  chordFromType,
+  createEmptyChart,
+  sequenceToChart,
+  songToChart,
+  transposeChart,
+} from '@/music/chart';
+import { parseIRealURL } from '@/music/ireal/parse';
+import type { BarlineClose, BarlineOpen, IRealChart, IRealChord, IRealMeasure } from '@/music/ireal/types';
+import { createEmptySong, uid, type SequenceChord, type Song } from '@/music/song';
 
 export type Theme = 'light' | 'dark';
 export type SortMode = 'default' | 'string';
-
-export interface InsertionPoint {
-  barIndex: number;
-  beat: number;
-  duration: number;
-}
 
 interface AppState {
   // --- global settings ---
@@ -36,18 +33,19 @@ interface AppState {
   metronome: boolean;
   bassline: boolean;
   bassSolo: boolean;
+  repeatForm: boolean; // loop the whole chart during playback
 
-  // --- editable chart (flat runtime model) ---
-  chartTitle: string;
-  chartKey: string;
-  chart: SequenceChord[];
+  // --- editable chart ---
+  chart: IRealChart;
   selectedChordId: string | null;
-  insertion: InsertionPoint;
+  selectedMeasureId: string | null;
+  /** Measure new chords are appended to (defaults to the last measure). */
+  insertionMeasureId: string | null;
 
   // --- saved charts ---
-  savedPresets: Song[];
+  savedCharts: IRealChart[];
 
-  // --- actions ---
+  // --- setters ---
   setStringSet: (s: StringSet) => void;
   setAvoidB9: (v: boolean) => void;
   setSortMode: (m: SortMode) => void;
@@ -58,119 +56,127 @@ interface AppState {
   setMetronome: (v: boolean) => void;
   setBassline: (v: boolean) => void;
   setBassSolo: (v: boolean) => void;
+  setRepeatForm: (v: boolean) => void;
 
+  // --- chart meta ---
+  setChartTitle: (title: string) => void;
+  setChartKey: (key: string) => void;
+  setChartStyle: (style: string) => void;
+  setChartRepeats: (n: number) => void;
+  setTimeSignature: (sig: [number, number]) => void;
+  transpose: (semitones: number) => void;
+
+  // --- chords ---
   addChord: (input: AddChordInput) => void;
-  updateChord: (id: string, patch: Partial<SequenceChord>) => void;
+  updateChord: (id: string, patch: ChordPatch) => void;
   removeChord: (id: string) => void;
-  moveChord: (id: string, barIndex: number, beat: number) => void;
   setPreferredInversion: (id: string, inversion: number | null) => void;
   selectChord: (id: string | null) => void;
-  setInsertion: (point: Partial<InsertionPoint>) => void;
+
+  // --- measures ---
+  selectMeasure: (id: string | null) => void;
+  setInsertionMeasure: (id: string | null) => void;
+  patchMeasure: (id: string, patch: MeasurePatch) => void;
+  insertMeasureAfter: (id: string | null) => void;
+  deleteMeasure: (id: string) => void;
+
+  // --- chart lifecycle ---
   clearChart: () => void;
+  newChart: () => void;
+  loadChart: (chart: IRealChart) => void;
   loadSong: (song: Song) => void;
+  importIRealText: (text: string) => { ok: true; title: string } | { ok: false; error: string };
   saveCurrentAs: (title: string) => void;
-  deleteSavedPreset: (id: string) => void;
+  deleteSavedChart: (id: string) => void;
 }
 
 export interface AddChordInput {
   root: string;
   chordType: ChordTypeId;
-  barIndex?: number;
-  beat?: number;
-  duration?: number;
+  beats?: number;
   targetTopNote?: string;
 }
 
-function makeSequenceChord(input: AddChordInput, stringSet: StringSet): SequenceChord {
-  const duration = Math.max(1, Math.min(4, input.duration ?? 4));
+export interface ChordPatch {
+  root?: string;
+  chordType?: ChordTypeId;
+  beats?: number;
+  targetTopNote?: string | undefined;
+}
+
+export interface MeasurePatch {
+  open?: BarlineOpen;
+  close?: BarlineClose;
+  section?: string | undefined;
+  ending?: number | undefined;
+  timeSig?: [number, number] | undefined;
+  barRepeat?: (1 | 2) | undefined;
+  coda?: boolean;
+  segno?: boolean;
+  fermata?: boolean;
+  staffText?: string | undefined;
+}
+
+const DEFAULT_TEMPO = 100;
+
+function lastMeasure(chart: IRealChart): IRealMeasure {
+  return chart.measures[chart.measures.length - 1];
+}
+
+/** Re-derive incidental invariants: measure 1 has a time sig, last bar is final. */
+function normalize(chart: IRealChart): IRealChart {
+  if (chart.measures.length === 0) {
+    chart.measures.push({ id: uid('m'), chords: [], timeSig: chart.timeSignature });
+  }
+  if (!chart.measures[0].timeSig) chart.measures[0].timeSig = chart.timeSignature;
+  const last = lastMeasure(chart);
+  if (!last.close) last.close = 'final';
+  // Only the final measure should carry the 'final' barline.
+  chart.measures.forEach((m, i) => {
+    if (i < chart.measures.length - 1 && m.close === 'final') m.close = 'single';
+  });
+  return chart;
+}
+
+function barBeatsOf(chart: IRealChart, m: IRealMeasure): number {
+  return (m.timeSig ?? chart.timeSignature)[0];
+}
+
+function cloneChart(chart: IRealChart): IRealChart {
   return {
-    id: uid(),
-    root: sharpName(pitchClassOf(input.root)),
-    displayRoot: input.root,
-    chordType: input.chordType,
-    symbol: chordSymbol(input.root, input.chordType),
-    barIndex: input.barIndex ?? 0,
-    beat: input.beat ?? 1,
-    durationBeats: duration,
-    stringSet,
-    targetTopNote: input.targetTopNote || undefined,
+    ...chart,
+    timeSignature: [...chart.timeSignature] as [number, number],
+    measures: chart.measures.map((m) => ({
+      ...m,
+      timeSig: m.timeSig ? ([...m.timeSig] as [number, number]) : undefined,
+      chords: m.chords.map((c) => ({ ...c })),
+    })),
   };
 }
 
-/** Find the next open (barIndex, beat) slot that fits `duration` beats. */
-function findOpenSlot(
-  chart: SequenceChord[],
-  startBar: number,
-  startBeat: number,
-  duration: number,
-): { barIndex: number; beat: number } {
-  const occupied = (bar: number, beat: number) =>
-    chart.some(
-      (c) => c.barIndex === bar && beat >= c.beat && beat < c.beat + c.durationBeats,
-    );
-  let bar = startBar;
-  let beat = startBeat;
-  for (let guard = 0; guard < 512; guard++) {
-    let fits = beat + duration <= 5;
-    if (fits) {
-      for (let b = beat; b < beat + duration; b++) {
-        if (occupied(bar, b)) {
-          fits = false;
-          break;
-        }
-      }
-    }
-    if (fits) return { barIndex: bar, beat };
-    beat += 1;
-    if (beat > 4) {
-      beat = 1;
-      bar += 1;
-    }
+function findChord(chart: IRealChart, id: string): { m: IRealMeasure; c: IRealChord } | null {
+  for (const m of chart.measures) {
+    const c = m.chords.find((x) => x.id === id);
+    if (c) return { m, c };
   }
-  return { barIndex: bar, beat: 1 };
+  return null;
 }
 
-const DEFAULT_INSERTION: InsertionPoint = { barIndex: 0, beat: 1, duration: 4 };
-
-/** Repair or reject a persisted chord so a stale/garbage blob can't crash the app. */
-function normalizeSeqChord(raw: unknown, defaultStringSet: StringSet): SequenceChord | null {
-  if (!raw || typeof raw !== 'object') return null;
-  const c = raw as Record<string, unknown>;
-  const displayRoot = typeof c.displayRoot === 'string' ? c.displayRoot : (c.root as string);
-  const chordType = c.chordType as ChordTypeId;
-  if (typeof displayRoot !== 'string' || !CHORD_TYPES[chordType]) return null;
-  let root: string;
+/** Repair a persisted chart blob (or convert a legacy SequenceChord[]). */
+function normalizeStoredChart(raw: unknown, title: string, key: string): IRealChart {
   try {
-    root = sharpName(pitchClassOf(displayRoot));
+    if (Array.isArray(raw)) {
+      return normalize(sequenceToChart(raw as SequenceChord[], title || 'Untitled Chart', key || 'C'));
+    }
+    if (raw && typeof raw === 'object' && Array.isArray((raw as IRealChart).measures)) {
+      const chart = raw as IRealChart;
+      if (!Array.isArray(chart.measures) || chart.measures.length === 0) return createEmptyChart(title, key);
+      return normalize(cloneChart(chart));
+    }
   } catch {
-    return null;
+    /* fall through */
   }
-  const inv = c.preferredInversion;
-  return {
-    id: typeof c.id === 'string' ? c.id : uid(),
-    root,
-    displayRoot,
-    chordType,
-    symbol: chordSymbol(displayRoot, chordType),
-    barIndex: Number.isFinite(c.barIndex) ? (c.barIndex as number) : 0,
-    beat: Number.isFinite(c.beat) ? (c.beat as number) : 1,
-    durationBeats: Number.isFinite(c.durationBeats) ? (c.durationBeats as number) : 4,
-    stringSet: c.stringSet === 'upper' ? 'upper' : defaultStringSet,
-    targetTopNote: typeof c.targetTopNote === 'string' ? c.targetTopNote : undefined,
-    preferredInversion:
-      Number.isInteger(inv) && (inv as number) >= 0 && (inv as number) <= 3
-        ? (inv as number)
-        : undefined,
-  };
-}
-
-function isPlausibleSong(raw: unknown): boolean {
-  return (
-    !!raw &&
-    typeof raw === 'object' &&
-    Array.isArray((raw as { sections?: unknown }).sections) &&
-    typeof (raw as { id?: unknown }).id === 'string'
-  );
+  return createEmptyChart(title || 'Untitled Chart', key || 'C');
 }
 
 export const useStore = create<AppState>()(
@@ -182,165 +188,245 @@ export const useStore = create<AppState>()(
       theme: 'light',
       audioEnabled: true,
       startingInversion: 0,
-      tempo: 100,
+      tempo: DEFAULT_TEMPO,
       metronome: false,
       bassline: false,
       bassSolo: false,
+      repeatForm: false,
 
-      chartTitle: 'Untitled Chart',
-      chartKey: 'C',
-      chart: [],
+      chart: createEmptyChart(),
       selectedChordId: null,
-      insertion: { ...DEFAULT_INSERTION },
+      selectedMeasureId: null,
+      insertionMeasureId: null,
 
-      savedPresets: [],
+      savedCharts: [],
 
-      setStringSet: (stringSet) =>
-        set((state) => ({
-          stringSet,
-          chart: state.chart.map((c) => ({ ...c, stringSet })),
-        })),
+      setStringSet: (stringSet) => set({ stringSet }),
       setAvoidB9: (avoidB9) => set({ avoidB9 }),
       setSortMode: (sortMode) => set({ sortMode }),
-      toggleTheme: () => set((state) => ({ theme: state.theme === 'light' ? 'dark' : 'light' })),
+      toggleTheme: () => set((s) => ({ theme: s.theme === 'light' ? 'dark' : 'light' })),
       setAudioEnabled: (audioEnabled) => set({ audioEnabled }),
       setStartingInversion: (startingInversion) => set({ startingInversion }),
-      setTempo: (tempo) => set({ tempo: Math.max(40, Math.min(240, Math.round(tempo))) }),
+      setTempo: (tempo) => set({ tempo: Math.max(40, Math.min(320, Math.round(tempo))) }),
       setMetronome: (metronome) => set({ metronome }),
       setBassline: (bassline) => set({ bassline }),
       setBassSolo: (bassSolo) => set({ bassSolo }),
+      setRepeatForm: (repeatForm) => set({ repeatForm }),
+
+      setChartTitle: (title) => set((s) => ({ chart: { ...s.chart, title } })),
+      setChartKey: (key) => set((s) => ({ chart: { ...s.chart, key } })),
+      setChartStyle: (style) => set((s) => ({ chart: { ...s.chart, style } })),
+      setChartRepeats: (n) =>
+        set((s) => ({ chart: { ...s.chart, repeats: Math.max(1, Math.min(16, Math.round(n))) } })),
+
+      setTimeSignature: (sig) =>
+        set((s) => {
+          const chart = cloneChart(s.chart);
+          chart.timeSignature = sig;
+          if (chart.measures[0]) chart.measures[0].timeSig = sig;
+          return { chart };
+        }),
+
+      transpose: (semitones) => set((s) => ({ chart: normalize(transposeChart(s.chart, semitones)) })),
 
       addChord: (input) =>
-        set((state) => {
-          const duration = Math.max(1, Math.min(4, input.duration ?? state.insertion.duration));
-          const slot = findOpenSlot(
-            state.chart,
-            input.barIndex ?? state.insertion.barIndex,
-            input.beat ?? state.insertion.beat,
-            duration,
-          );
-          const chord = makeSequenceChord(
-            { ...input, ...slot, duration },
-            state.stringSet,
-          );
-          const next = [...state.chart, chord];
-          const nextBeatPos = slot.beat + duration;
-          const insertion: InsertionPoint = {
-            barIndex: nextBeatPos > 4 ? slot.barIndex + 1 : slot.barIndex,
-            beat: ((nextBeatPos - 1) % 4) + 1,
-            duration,
-          };
-          return { chart: next, insertion };
+        set((s) => {
+          const chart = cloneChart(s.chart);
+          const beats = Math.max(1, Math.min(8, input.beats ?? 4));
+          const targetId = s.insertionMeasureId ?? lastMeasure(chart).id;
+          let idx = chart.measures.findIndex((m) => m.id === targetId);
+          if (idx < 0) idx = chart.measures.length - 1;
+          const measure = chart.measures[idx];
+          const used = measure.chords.reduce((sum, c) => sum + (c.beats || 0), 0);
+          const cap = barBeatsOf(chart, measure);
+          const chord = chordFromType(input.root, input.chordType, beats, {
+            targetTopNote: input.targetTopNote,
+          });
+          let nextInsertion = measure.id;
+          if (measure.chords.length === 0 || used + beats <= cap) {
+            measure.chords.push(chord);
+          } else {
+            const fresh: IRealMeasure = { id: uid('m'), chords: [chord] };
+            chart.measures.splice(idx + 1, 0, fresh);
+            nextInsertion = fresh.id;
+          }
+          return { chart: normalize(chart), insertionMeasureId: nextInsertion };
         }),
 
       updateChord: (id, patch) =>
-        set((state) => ({
-          chart: state.chart.map((c) => {
-            if (c.id !== id) return c;
-            const merged = { ...c, ...patch };
-            if (patch.displayRoot) {
-              merged.root = sharpName(pitchClassOf(patch.displayRoot));
-              merged.symbol = chordSymbol(patch.displayRoot, merged.chordType);
-            } else if (patch.chordType) {
-              merged.symbol = chordSymbol(merged.displayRoot, patch.chordType);
-            }
-            return merged;
-          }),
-        })),
+        set((s) => {
+          const chart = cloneChart(s.chart);
+          const hit = findChord(chart, id);
+          if (!hit) return {};
+          const replaced = chordFromType(
+            patch.root ?? hit.c.root,
+            patch.chordType ?? hit.c.chordType ?? 'maj7',
+            patch.beats ?? hit.c.beats,
+            {
+              targetTopNote: 'targetTopNote' in patch ? patch.targetTopNote : hit.c.targetTopNote,
+              preferredInversion: hit.c.preferredInversion,
+            },
+          );
+          replaced.id = hit.c.id;
+          hit.m.chords = hit.m.chords.map((c) => (c.id === id ? replaced : c));
+          return { chart };
+        }),
 
       removeChord: (id) =>
-        set((state) => ({
-          chart: state.chart.filter((c) => c.id !== id),
-          selectedChordId: state.selectedChordId === id ? null : state.selectedChordId,
-        })),
-
-      moveChord: (id, barIndex, beat) =>
-        set((state) => ({
-          chart: state.chart.map((c) => (c.id === id ? { ...c, barIndex, beat } : c)),
-        })),
+        set((s) => {
+          const chart = cloneChart(s.chart);
+          const hit = findChord(chart, id);
+          if (hit) hit.m.chords = hit.m.chords.filter((c) => c.id !== id);
+          return {
+            chart: normalize(chart),
+            selectedChordId: s.selectedChordId === id ? null : s.selectedChordId,
+          };
+        }),
 
       setPreferredInversion: (id, inversion) =>
-        set((state) => ({
-          chart: state.chart.map((c) =>
-            c.id === id
-              ? { ...c, preferredInversion: inversion === null ? undefined : inversion }
-              : c,
-          ),
-        })),
+        set((s) => {
+          const chart = cloneChart(s.chart);
+          const hit = findChord(chart, id);
+          if (hit) {
+            if (inversion === null) delete hit.c.preferredInversion;
+            else hit.c.preferredInversion = inversion;
+          }
+          return { chart };
+        }),
 
       selectChord: (selectedChordId) => set({ selectedChordId }),
 
-      setInsertion: (point) => set((state) => ({ insertion: { ...state.insertion, ...point } })),
+      selectMeasure: (selectedMeasureId) =>
+        set({ selectedMeasureId, insertionMeasureId: selectedMeasureId }),
+      setInsertionMeasure: (insertionMeasureId) => set({ insertionMeasureId }),
 
-      clearChart: () =>
-        set({ chart: [], selectedChordId: null, insertion: { ...DEFAULT_INSERTION } }),
-
-      loadSong: (song) =>
-        set((state) => ({
-          chart: flattenSong(song, state.stringSet),
-          chartTitle: song.title,
-          chartKey: song.key ?? 'C',
-          selectedChordId: null,
-          insertion: { ...DEFAULT_INSERTION },
-        })),
-
-      saveCurrentAs: (title) =>
-        set((state) => {
-          const barCount = Math.max(sequenceBarCount(state.chart), 1);
-          const bars = Array.from({ length: barCount }, (_, i) => ({
-            id: `b${i + 1}`,
-            beats: 4,
-            chords: [] as Song['sections'][number]['bars'][number]['chords'],
-          }));
-          [...state.chart]
-            .sort((a, b) => a.barIndex - b.barIndex || a.beat - b.beat)
-            .forEach((c) => {
-              const idx = Math.max(0, Math.min(bars.length - 1, c.barIndex));
-              bars[idx].chords.push({
-                beat: c.beat,
-                duration: c.durationBeats,
-                root: c.displayRoot,
-                chordType: c.chordType,
-                ...(c.targetTopNote ? { targetTopNote: c.targetTopNote } : {}),
-                ...(Number.isInteger(c.preferredInversion)
-                  ? { preferredInversion: c.preferredInversion }
-                  : {}),
-              });
-            });
-          const song: Song = {
-            id: `saved-${uid('id')}`,
-            title,
-            key: state.chartKey,
-            timeSignature: [4, 4],
-            sections: [{ id: 'main', name: 'Main', bars }],
-          };
-          const existingIndex = state.savedPresets.findIndex((p) => p.title === title);
-          const savedPresets =
-            existingIndex >= 0
-              ? state.savedPresets.map((p, i) => (i === existingIndex ? song : p))
-              : [...state.savedPresets, song];
-          return { savedPresets, chartTitle: title };
+      patchMeasure: (id, patch) =>
+        set((s) => {
+          const chart = cloneChart(s.chart);
+          const m = chart.measures.find((x) => x.id === id);
+          if (!m) return {};
+          const rec = m as unknown as Record<string, unknown>;
+          Object.entries(patch).forEach(([k, v]) => {
+            if (v === undefined) delete rec[k];
+            else rec[k] = v;
+          });
+          return { chart: normalize(chart) };
         }),
 
-      deleteSavedPreset: (id) =>
-        set((state) => ({ savedPresets: state.savedPresets.filter((p) => p.id !== id) })),
+      insertMeasureAfter: (id) =>
+        set((s) => {
+          const chart = cloneChart(s.chart);
+          const idx = id ? chart.measures.findIndex((m) => m.id === id) : chart.measures.length - 1;
+          const fresh: IRealMeasure = { id: uid('m'), chords: [] };
+          chart.measures.splice(idx + 1, 0, fresh);
+          return { chart: normalize(chart), selectedMeasureId: fresh.id, insertionMeasureId: fresh.id };
+        }),
+
+      deleteMeasure: (id) =>
+        set((s) => {
+          const chart = cloneChart(s.chart);
+          chart.measures = chart.measures.filter((m) => m.id !== id);
+          return {
+            chart: normalize(chart),
+            selectedMeasureId: s.selectedMeasureId === id ? null : s.selectedMeasureId,
+            insertionMeasureId: s.insertionMeasureId === id ? null : s.insertionMeasureId,
+          };
+        }),
+
+      clearChart: () =>
+        set((s) => ({
+          chart: createEmptyChart('Untitled Chart', s.chart.key ?? 'C'),
+          selectedChordId: null,
+          selectedMeasureId: null,
+          insertionMeasureId: null,
+        })),
+
+      newChart: () =>
+        set({
+          chart: createEmptyChart(),
+          selectedChordId: null,
+          selectedMeasureId: null,
+          insertionMeasureId: null,
+        }),
+
+      loadChart: (chart) =>
+        set({
+          chart: normalize(cloneChart(chart)),
+          selectedChordId: null,
+          selectedMeasureId: null,
+          insertionMeasureId: null,
+        }),
+
+      loadSong: (song) =>
+        set((s) => {
+          const chart = normalize(songToChart(song));
+          return {
+            chart,
+            tempo: s.tempo,
+            selectedChordId: null,
+            selectedMeasureId: null,
+            insertionMeasureId: null,
+          };
+        }),
+
+      importIRealText: (text) => {
+        try {
+          const playlist = parseIRealURL(text);
+          const chart = normalize(cloneChart(playlist.songs[0]));
+          set((s) => ({
+            chart,
+            tempo: chart.tempo ?? s.tempo,
+            selectedChordId: null,
+            selectedMeasureId: null,
+            insertionMeasureId: null,
+          }));
+          return { ok: true as const, title: chart.title };
+        } catch (e) {
+          return { ok: false as const, error: e instanceof Error ? e.message : 'Could not read that link.' };
+        }
+      },
+
+      saveCurrentAs: (title) =>
+        set((s) => {
+          const snapshot: IRealChart = { ...cloneChart(s.chart), id: uid('chart'), title };
+          const existing = s.savedCharts.findIndex((c) => c.title === title);
+          const savedCharts =
+            existing >= 0
+              ? s.savedCharts.map((c, i) => (i === existing ? snapshot : c))
+              : [...s.savedCharts, snapshot];
+          return { savedCharts, chart: { ...s.chart, title } };
+        }),
+
+      deleteSavedChart: (id) => set((s) => ({ savedCharts: s.savedCharts.filter((c) => c.id !== id) })),
     }),
     {
       name: 'vlc:v2',
-      version: 1,
-      // Validate/repair persisted data so a stale shape from an older build
-      // can never feed undefined roots into the engine on load.
-      migrate: (persisted: unknown) => {
+      version: 2,
+      migrate: (persisted: unknown, version: number) => {
         if (!persisted || typeof persisted !== 'object') return persisted as never;
         const p = persisted as Record<string, unknown>;
         const stringSet: StringSet = p.stringSet === 'upper' ? 'upper' : 'middle';
-        return {
-          ...p,
-          chart: Array.isArray(p.chart)
-            ? p.chart.map((c) => normalizeSeqChord(c, stringSet)).filter((c): c is SequenceChord => c !== null)
-            : [],
-          savedPresets: Array.isArray(p.savedPresets) ? p.savedPresets.filter(isPlausibleSong) : [],
-        } as never;
+        const title = typeof p.chartTitle === 'string' ? p.chartTitle : 'Untitled Chart';
+        const key = typeof p.chartKey === 'string' ? p.chartKey : 'C';
+        // v1 stored chart as SequenceChord[] and savedPresets as Song[].
+        const chart = normalizeStoredChart(p.chart, title, key);
+        let savedCharts: IRealChart[] = [];
+        if (version < 2 && Array.isArray(p.savedPresets)) {
+          savedCharts = (p.savedPresets as Song[])
+            .map((song): IRealChart | null => {
+              try {
+                return { ...songToChart(song), id: uid('chart') };
+              } catch {
+                return null;
+              }
+            })
+            .filter((c): c is IRealChart => c !== null);
+        } else if (Array.isArray(p.savedCharts)) {
+          savedCharts = (p.savedCharts as IRealChart[]).filter(
+            (c) => c && Array.isArray(c.measures),
+          );
+        }
+        return { ...p, stringSet, chart, savedCharts } as never;
       },
       partialize: (state) => ({
         stringSet: state.stringSet,
@@ -353,13 +439,12 @@ export const useStore = create<AppState>()(
         metronome: state.metronome,
         bassline: state.bassline,
         bassSolo: state.bassSolo,
-        chartTitle: state.chartTitle,
-        chartKey: state.chartKey,
+        repeatForm: state.repeatForm,
         chart: state.chart,
-        savedPresets: state.savedPresets,
+        savedCharts: state.savedCharts,
       }),
     },
   ),
 );
 
-export { createEmptySong };
+export { createEmptySong, createEmptyChart, chartToSequence };
