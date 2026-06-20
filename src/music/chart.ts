@@ -199,7 +199,8 @@ export function chartToSequence(chart: IRealChart, options: ChartToSequenceOptio
       const span = Math.max(1, chord.beats || 1);
       if (chord.chordType && !chord.noChord) {
         out.push({
-          id: `${measure.id}.${ci}`,
+          // barIndex (flat position) keeps ids unique across repeated passes.
+          id: `${measure.id}-${barIndex}-${ci}`,
           root: sharpName(pitchClassOf(chord.root)),
           displayRoot: chord.root,
           chordType: chord.chordType,

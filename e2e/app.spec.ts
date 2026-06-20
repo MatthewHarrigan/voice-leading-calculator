@@ -379,3 +379,23 @@ test('playback options update live while the sequence is playing', async ({ page
 
   expect(errors).toEqual([]);
 });
+
+test('a playhead highlights the current bar during playback', async ({ page }) => {
+  await gotoClean(page);
+  await page.getByRole('link', { name: 'Sequence Builder' }).click();
+  await addChord(page, 'D', 'min7');
+  await addChord(page, 'G', 'dom7');
+  await addChord(page, 'C', 'maj7');
+
+  await expect(page.locator('.chart-measure.measure-playing')).toHaveCount(0);
+
+  await page.getByLabel('Tempo (BPM)').fill('120');
+  await page.getByRole('button', { name: 'Play sequence' }).click();
+  // A bar lights up in the chart and a diagram lights up in the optimised grid.
+  await expect(page.locator('.chart-measure.measure-playing')).toHaveCount(1);
+  await expect(page.locator('.optimized-chord.playing')).not.toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Stop' }).click();
+  await expect(page.locator('.chart-measure.measure-playing')).toHaveCount(0);
+  await expect(page.locator('.optimized-chord.playing')).toHaveCount(0);
+});

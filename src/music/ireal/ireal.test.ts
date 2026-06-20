@@ -84,6 +84,17 @@ describe('parse 9.20 Special', () => {
     expect(song.measures[25].close).toBe('final');
   });
 
+  test('preserves the 16-cell layout grid (4 bars/row, 2nd ending under 1st)', () => {
+    // Every bar is 4 cells wide; rows are 16 cells = 4 bars per line.
+    expect(song.measures.every((m) => m.cells === 4)).toBe(true);
+    expect(song.measures[0].cell).toBe(0);
+    expect(song.measures[4].cell).toBe(16); // row 2 starts at bar 5
+    expect(song.measures[6].cell).toBe(24); // 1st ending bar
+    // The 2nd-ending bar is pushed by padding cells to the same column as the 1st.
+    expect(song.measures[8].cell).toBe(40);
+    expect(song.measures[6].cell! % 16).toBe(song.measures[8].cell! % 16);
+  });
+
   test('chord beats sum within a 4/4 bar', () => {
     const packed = song.measures[5]; // C7 B7 Bb7 A7
     expect(packed.chords.map((c) => c.beats)).toEqual([1, 1, 1, 1]);

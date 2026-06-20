@@ -82,6 +82,24 @@ export class ChordPlayer {
   // Live playback options for the running arrangement; the scheduler reads these
   // each beat so tempo / metronome / bass / solo / loop update mid-playback.
   private liveOptions: ArrangementOptions | null = null;
+  // Current in-form beat during arrangement playback (-1 when idle), for a playhead.
+  private beatListeners = new Set<(beat: number) => void>();
+
+  /** Subscribe to the current playback beat (-1 when idle). Returns an unsubscribe fn. */
+  onBeat(listener: (beat: number) => void): () => void {
+    this.beatListeners.add(listener);
+    return () => this.beatListeners.delete(listener);
+  }
+
+  private emitBeat(beat: number): void {
+    this.beatListeners.forEach((l) => {
+      try {
+        l(beat);
+      } catch {
+        /* ignore listener errors */
+      }
+    });
+  }
 
   /** Subscribe to sequence play/stop changes; returns an unsubscribe fn. */
   onSequenceChange(listener: (playing: boolean) => void): () => void {
@@ -290,6 +308,7 @@ export class ChordPlayer {
       this.seqTimer = null;
     }
     this.liveOptions = null;
+    this.emitBeat(-1);
     this.setSeqPlaying(false);
   }
 
@@ -474,6 +493,7 @@ export class ChordPlayer {
         const spb = 60 / Math.max(20, opts.bpm); // seconds per beat
         const beatsPerBar = opts.beatsPerBar ?? 4;
         const beat = opts.loop ? abs % totalBeats : abs;
+        this.emitBeat(beat);
         const at = ctx.currentTime + 0.06;
         if (opts.metronome) this.metronomeClick(at, beat % beatsPerBar === 0);
         const soloing = !!(opts.bassline && opts.soloBass);
@@ -492,6 +512,7 @@ export class ChordPlayer {
         } else {
           this.seqTimer = null;
           this.liveOptions = null;
+          this.emitBeat(-1);
           this.setSeqPlaying(false);
         }
       };

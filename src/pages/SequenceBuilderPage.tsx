@@ -31,6 +31,7 @@ import { MeasureEditor } from '@/components/MeasureEditor';
 import { useInspector } from '@/components/inspectorContext';
 import { getChordPlayer } from '@/audio/player';
 import { useSequencePlaying } from '@/audio/useSequencePlaying';
+import { usePlaybackBeat } from '@/audio/usePlaybackBeat';
 
 const TRANSPOSE_STEPS = [-1, 1];
 
@@ -132,6 +133,19 @@ export function SequenceBuilderPage() {
 
   const transitions = optimized ? movementTransitions(optimized) : [];
   const guide = optimized ? guideLineAnalysis(optimized) : null;
+
+  // Playhead: map the current playback beat to the active flattened bar.
+  const playBeat = usePlaybackBeat();
+  const playingIndex = useMemo(() => {
+    if (playBeat < 0) return -1;
+    let idx = -1;
+    for (let i = 0; i < barStartBeats.length; i++) {
+      if (barStartBeats[i] <= playBeat) idx = i;
+      else break;
+    }
+    return idx;
+  }, [playBeat, barStartBeats]);
+  const playingMeasureId = playingIndex >= 0 ? (flat[playingIndex]?.id ?? null) : null;
 
   const chordCount = chart.measures.reduce((n, m) => n + m.chords.length, 0);
 
@@ -417,6 +431,7 @@ export function SequenceBuilderPage() {
           selectedChordId={selectedChordId}
           selectedMeasureId={selectedMeasureId}
           insertionMeasureId={insertionMeasureId}
+          playingMeasureId={playingMeasureId}
           onSelectChord={(id) => {
             const found = chart.measures.flatMap((m) => m.chords).find((c) => c.id === id);
             if (found) selectForEdit(found);
@@ -504,7 +519,7 @@ export function SequenceBuilderPage() {
 
           <div className="optimized-grid" style={{ marginTop: 14 }}>
             {optimized.map((chord) => (
-              <OptimizedCard key={chord.id} chord={chord} />
+              <OptimizedCard key={chord.id} chord={chord} playing={chord.barIndex === playingIndex} />
             ))}
           </div>
 
@@ -533,12 +548,12 @@ function FormField({ label, children }: { label: string; children: React.ReactNo
   );
 }
 
-function OptimizedCard({ chord }: { chord: OptimizedSeqChord }) {
+function OptimizedCard({ chord, playing }: { chord: OptimizedSeqChord; playing?: boolean }) {
   const lead = topNoteOf(chord.fingering, chord.stringSet);
   return (
     <PlayableDiagram
       variant="bare"
-      className="optimized-chord"
+      className={`optimized-chord${playing ? ' playing' : ''}`}
       chord={{
         fingering: chord.fingering,
         rootDisplay: chord.displayRoot,

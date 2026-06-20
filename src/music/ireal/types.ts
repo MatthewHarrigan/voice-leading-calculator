@@ -45,6 +45,10 @@ export interface IRealChord extends IRealChordRef {
 export interface IRealMeasure {
   id: string;
   chords: IRealChord[];
+  /** Absolute start cell in iReal Pro's 16-cell-per-row layout grid (when known). */
+  cell?: number;
+  /** Width of this measure in layout cells (when known). */
+  cells?: number;
   /** Time signature in force at this measure (set when it changes; bar 1 always set). */
   timeSig?: [number, number];
   open?: BarlineOpen;

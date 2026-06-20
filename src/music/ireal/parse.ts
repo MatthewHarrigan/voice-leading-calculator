@@ -60,18 +60,23 @@ function distributeBeats(n: number, total: number): number[] {
 
 interface PendingMeasure extends Omit<IRealMeasure, 'id'> {
   _open?: BarlineOpen;
+  /** Absolute layout cell of each chord (parallel to `chords`). */
+  _cells?: number[];
 }
 
-/** Tokenize the unscrambled music string into measures. */
+/** Tokenize the unscrambled music string into measures, preserving the cell grid. */
 export function tokenizeMeasures(music: string, initialTimeSig: [number, number]): IRealMeasure[] {
   const measures: IRealMeasure[] = [];
   let running: [number, number] = initialTimeSig;
   let smallOn = false;
 
+  // iReal Pro lays cells out 16 per row; spaces/spacers are real cells, so we
+  // track an absolute cell cursor to recover line breaks and ending alignment.
+  let cellCursor = 0;
+  let measureStartCell = 0;
+
   const blank = (): PendingMeasure => ({ chords: [] });
   let cur = blank();
-  // Effective beats-per-bar captured per measure as it is flushed.
-  const effBeats: number[] = [];
 
   const isReal = (m: PendingMeasure) =>
     m.chords.length > 0 ||
@@ -85,13 +90,33 @@ export function tokenizeMeasures(music: string, initialTimeSig: [number, number]
     m.directive != null;
 
   const push = () => {
-    if (!isReal(cur)) return;
-    const { _open, ...rest } = cur;
-    const measure: IRealMeasure = { id: uid('m'), ...rest };
-    if (_open) measure.open = _open;
-    measures.push(measure);
-    effBeats.push(running[0]);
-    cur = blank();
+    if (isReal(cur)) {
+      const startCell = measureStartCell;
+      const width = Math.max(1, cellCursor - startCell);
+      const barBeats = running[0];
+      const cells = cur._cells ?? [];
+      const { _open, _cells, ...rest } = cur;
+      void _cells;
+      const measure: IRealMeasure = { id: uid('m'), ...rest, cell: startCell, cells: width };
+      if (_open) measure.open = _open;
+      if (measure.chords.length > 0) {
+        if (cells.length === measure.chords.length) {
+          // Beats from cell spans (accurate to how the chart was written).
+          measure.chords.forEach((ch, k) => {
+            const offset = cells[k] - startCell;
+            const nextOffset = k + 1 < cells.length ? cells[k + 1] - startCell : width;
+            const span = Math.max(1, nextOffset - offset);
+            ch.beats = Math.max(1, Math.round((span * barBeats) / width));
+          });
+        } else {
+          const splits = distributeBeats(measure.chords.length, barBeats);
+          measure.chords.forEach((ch, k) => (ch.beats = splits[k] ?? 1));
+        }
+      }
+      measures.push(measure);
+      cur = blank();
+    }
+    measureStartCell = cellCursor;
   };
 
   const closeBar = (close: BarlineClose) => {
@@ -144,9 +169,11 @@ export function tokenizeMeasures(music: string, initialTimeSig: [number, number]
       continue;
     }
 
-    // A chord.
+    // A chord (occupies one layout cell).
     const chord = parseChordToken(rest);
     if (chord) {
+      (cur._cells ??= []).push(cellCursor);
+      cellCursor += 1;
       cur.chords.push({
         id: uid('c'),
         ...chord.ref,
@@ -181,6 +208,8 @@ export function tokenizeMeasures(music: string, initialTimeSig: [number, number]
         closeBar('final');
         break;
       case 'n':
+        (cur._cells ??= []).push(cellCursor);
+        cellCursor += 1;
         cur.chords.push({
           id: uid('c'),
           root: '',
@@ -193,9 +222,11 @@ export function tokenizeMeasures(music: string, initialTimeSig: [number, number]
         break;
       case 'x':
         cur.barRepeat = 1;
+        cellCursor += 1;
         break;
       case 'r':
         cur.barRepeat = 2;
+        cellCursor += 1;
         break;
       case 's':
         smallOn = true;
@@ -212,8 +243,11 @@ export function tokenizeMeasures(music: string, initialTimeSig: [number, number]
       case 'f':
         cur.fermata = true;
         break;
+      case ' ':
+        cellCursor += 1; // an empty layout cell
+        break;
       default:
-        // p (slash), U (end), Y (spacer), comma, space, unknown: ignore.
+        // comma (separator), p (slash), U (end), Y (vertical spacer), unknown.
         break;
     }
     i += 1;
@@ -221,16 +255,7 @@ export function tokenizeMeasures(music: string, initialTimeSig: [number, number]
   // Flush any trailing measure.
   push();
 
-  // Assign beat durations and ensure measure 1 carries the initial time sig.
-  measures.forEach((m, idx) => {
-    const beats = effBeats[idx] ?? initialTimeSig[0];
-    const splits = distributeBeats(m.chords.length, beats);
-    m.chords.forEach((c, k) => {
-      c.beats = splits[k] ?? 1;
-    });
-  });
   if (measures.length > 0 && !measures[0].timeSig) measures[0].timeSig = initialTimeSig;
-
   return measures;
 }
 
