@@ -48,6 +48,8 @@ export function SequenceBuilderPage() {
   const setMetronome = useStore((s) => s.setMetronome);
   const bassline = useStore((s) => s.bassline);
   const setBassline = useStore((s) => s.setBassline);
+  const bassSolo = useStore((s) => s.bassSolo);
+  const setBassSolo = useStore((s) => s.setBassSolo);
   const insertion = useStore((s) => s.insertion);
   const setInsertion = useStore((s) => s.setInsertion);
   const selectedChordId = useStore((s) => s.selectedChordId);
@@ -140,7 +142,13 @@ export function SequenceBuilderPage() {
       // Root, dropped into a low bass register (E2 = 40 is the lowest).
       bassMidi: 40 + ((pitchClassOf(chord.displayRoot) - 4 + 12) % 12),
     }));
-    getChordPlayer().playArrangement(events, { bpm: tempo, beatsPerBar, metronome, bassline });
+    getChordPlayer().playArrangement(events, {
+      bpm: tempo,
+      beatsPerBar,
+      metronome,
+      bassline,
+      soloBass: bassSolo,
+    });
   };
 
   return (
@@ -363,6 +371,17 @@ export function SequenceBuilderPage() {
               />
               Bass line
             </label>
+            {bassline && (
+              <label className="switch" title="Mute the chords — hear only the bass line">
+                <input
+                  type="checkbox"
+                  checked={bassSolo}
+                  onChange={(e) => setBassSolo(e.target.checked)}
+                  data-testid="bass-solo"
+                />
+                Solo
+              </label>
+            )}
           </div>
 
           <div className="optimized-grid" style={{ marginTop: 14 }}>

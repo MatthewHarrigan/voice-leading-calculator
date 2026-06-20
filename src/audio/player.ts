@@ -59,6 +59,8 @@ export interface ArrangementOptions {
   beatsPerBar?: number;
   metronome?: boolean;
   bassline?: boolean;
+  /** When true (with bassline), play only the bass — mute the chord strums. */
+  soloBass?: boolean;
 }
 
 export class ChordPlayer {
@@ -453,9 +455,10 @@ export class ChordPlayer {
         if (token !== this.seqToken) return;
         const at = ctx.currentTime + 0.06;
         if (options.metronome) this.metronomeClick(at, beat % beatsPerBar === 0);
+        const soloing = !!(options.bassline && options.soloBass);
         for (const e of events) {
           if (e.startBeat !== beat) continue;
-          this.strumAt(e.fingering, e.stringSet, at, 0.02);
+          if (!soloing) this.strumAt(e.fingering, e.stringSet, at, 0.02);
           if (options.bassline) {
             const dur = Math.min(5, Math.max(1.4, e.durationBeats * spb + 0.6));
             this.pluckString(6, e.bassMidi, at, dur);

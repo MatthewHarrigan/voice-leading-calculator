@@ -267,6 +267,8 @@ test('play sequence with tempo/metronome/bass can be stopped', async ({ page }) 
 
   await page.getByTestId('metronome').check();
   await page.getByTestId('bassline').check();
+  // Solo only appears once the bass line is enabled.
+  await page.getByTestId('bass-solo').check();
 
   await page.getByRole('button', { name: 'Play sequence' }).click();
   const stop = page.getByRole('button', { name: 'Stop' });

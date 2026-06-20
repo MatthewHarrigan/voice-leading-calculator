@@ -35,6 +35,7 @@ interface AppState {
   tempo: number; // BPM
   metronome: boolean;
   bassline: boolean;
+  bassSolo: boolean;
 
   // --- editable chart (flat runtime model) ---
   chartTitle: string;
@@ -56,6 +57,7 @@ interface AppState {
   setTempo: (n: number) => void;
   setMetronome: (v: boolean) => void;
   setBassline: (v: boolean) => void;
+  setBassSolo: (v: boolean) => void;
 
   addChord: (input: AddChordInput) => void;
   updateChord: (id: string, patch: Partial<SequenceChord>) => void;
@@ -183,6 +185,7 @@ export const useStore = create<AppState>()(
       tempo: 100,
       metronome: false,
       bassline: false,
+      bassSolo: false,
 
       chartTitle: 'Untitled Chart',
       chartKey: 'C',
@@ -205,6 +208,7 @@ export const useStore = create<AppState>()(
       setTempo: (tempo) => set({ tempo: Math.max(40, Math.min(240, Math.round(tempo))) }),
       setMetronome: (metronome) => set({ metronome }),
       setBassline: (bassline) => set({ bassline }),
+      setBassSolo: (bassSolo) => set({ bassSolo }),
 
       addChord: (input) =>
         set((state) => {
@@ -348,6 +352,7 @@ export const useStore = create<AppState>()(
         tempo: state.tempo,
         metronome: state.metronome,
         bassline: state.bassline,
+        bassSolo: state.bassSolo,
         chartTitle: state.chartTitle,
         chartKey: state.chartKey,
         chart: state.chart,
