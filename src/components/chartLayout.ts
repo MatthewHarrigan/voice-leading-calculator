@@ -5,6 +5,8 @@
 import type { IRealChart, IRealMeasure } from '@/music/ireal/types';
 
 export const CELLS_PER_ROW = 16;
+/** Cells allotted to one bar (iReal packs four bars per 16-cell row). */
+export const BAR_CELLS = 4;
 
 export interface Placement {
   row: number;
@@ -33,6 +35,11 @@ export function computeLayout(chart: IRealChart): Placement[] {
 
   const base: { row: number; col: number; span: number }[] = [];
   if (hasGrid) {
+    // iReal lays four four-cell bars per 16-cell row. We honour the imported
+    // grid for row breaks and ending alignment, but a single bar can carry extra
+    // cells (e.g. two chords plus an alternate). Snap each bar to the four-cell
+    // bar grid so one wide bar can't knock the rest of its row — or later rows —
+    // out of the 0/4/8/12 columns; spans then tile up to the next bar.
     let sectionBaseCell = 0;
     let sectionBaseRow = 0;
     let prevRow = 0;
@@ -43,11 +50,23 @@ export function computeLayout(chart: IRealChart): Placement[] {
         sectionBaseRow = prevRow + 1;
       }
       const rel = m.cell! - sectionBaseCell;
-      const col = ((rel % CELLS_PER_ROW) + CELLS_PER_ROW) % CELLS_PER_ROW;
       const row = sectionBaseRow + Math.floor(rel / CELLS_PER_ROW);
-      const span = Math.min(Math.max(1, m.cells!), CELLS_PER_ROW - col);
-      base.push({ row, col, span });
+      const rawCol = ((rel % CELLS_PER_ROW) + CELLS_PER_ROW) % CELLS_PER_ROW;
+      let col = Math.min(Math.round(rawCol / BAR_CELLS) * BAR_CELLS, CELLS_PER_ROW - BAR_CELLS);
+      // Keep bars on the same row strictly left-to-right.
+      const prev = base[idx - 1];
+      if (idx > 0 && prev.row === row && col <= prev.col) {
+        col = Math.min(prev.col + BAR_CELLS, CELLS_PER_ROW - BAR_CELLS);
+      }
+      base.push({ row, col, span: Math.max(1, m.cells!) });
       prevRow = row;
+    });
+    // Span: fill up to the next bar on the row (or the row end), but never wider
+    // than the bar's own cell count.
+    base.forEach((p, idx) => {
+      const next = base[idx + 1];
+      const limit = next && next.row === p.row ? next.col : CELLS_PER_ROW;
+      p.span = Math.max(1, Math.min(p.span, limit - p.col));
     });
   } else {
     let row = 0;

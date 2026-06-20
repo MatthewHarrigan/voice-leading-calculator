@@ -34,7 +34,8 @@ describe('computeLayout', () => {
       bar({ section: 'C', cell: 65, cells: 4 }), // …but this one drifted to col 1
     ]);
     const layout = computeLayout(c);
-    expect(layout[2]).toMatchObject({ row: 0, col: 8, span: 5 }); // wide bar stays put
+    expect(layout[2]).toMatchObject({ row: 0, col: 8, span: 4 }); // wide bar clamped to its slot
+    expect(layout[3]).toMatchObject({ row: 0, col: 12 }); // next bar stays on the grid
     expect(layout[4]).toMatchObject({ row: 1, col: 0 }); // section B flush-left, new row
     expect(layout[5]).toMatchObject({ row: 2, col: 0 }); // section C flush-left despite drift
   });
@@ -56,9 +57,10 @@ describe('computeLayout', () => {
     expect(layout[2]).toEqual({ row: 0, col: 8, span: 4, rowStart: false, rowEnd: true });
   });
 
-  test('clamps an over-wide imported measure to the row boundary', () => {
+  test('snaps an off-grid imported measure to the nearest four-cell bar slot', () => {
     const c = chart([bar({ cell: 14, cells: 4 })]);
-    expect(computeLayout(c)[0]).toEqual({ row: 0, col: 14, span: 2, rowStart: true, rowEnd: true });
+    // cell 14 rounds to the last slot (col 12) rather than rendering inset at 14.
+    expect(computeLayout(c)[0]).toEqual({ row: 0, col: 12, span: 4, rowStart: true, rowEnd: true });
   });
 
   test('marks the first and last bar of each row for barline drawing', () => {
