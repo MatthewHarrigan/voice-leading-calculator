@@ -21,15 +21,34 @@ React is only at the edges. State is a single Zustand store (`src/state/store.ts
 plucked-string synth (`src/audio/`).
 
 ```
-src/music/      notes, chords, tuning, voicing, voiceLeading, progressions, song  (no React)
-src/audio/      Web Audio chord player + hook
-src/state/      Zustand store (settings + editable chart)
-src/data/       song presets + chapter curriculum
-src/components/ ChordDiagram, inspector modal, pickers, global controls
-src/pages/      Library, Progressions, Chapters, Sequence Builder, Melody
-e2e/            Playwright specs
-legacy/         the original static app (reference only)
+src/music/        notes, chords, tuning, voicing, voiceLeading, progressions, song, chart  (no React)
+src/music/ireal/  iReal Pro format: unscramble, chordParser, parse, serialize, flatten, fixtures
+src/audio/        Web Audio chord player + hook
+src/state/        Zustand store (settings + editable IRealChart)
+src/data/         song presets + chapter curriculum
+src/components/   ChordDiagram, ChartView, MeasureEditor, ImportPanel, inspector, pickers, controls
+src/pages/        Library, Progressions, Chapters, Sequence Builder, Melody
+e2e/              Playwright specs
+legacy/           the original static app (reference only)
 ```
+
+### iReal Pro support
+The Sequence Builder is built around `IRealChart` (a measure-based model in
+`src/music/ireal/types.ts`) as the store's source of truth. It imports/exports
+`irealb://` (and reads `irealbook://`) and renders an iReal-style lead sheet.
+- `unscramble.ts` is the byte-exact deobfuscation (50-char block swaps, prefix
+  `1r34LbKcu7`, `Kcl`/`LZ`/`XyQ` expansion); `scramble` reuses it for export.
+- `parse.ts` tokenises the music string into measures (sections, barlines,
+  endings, repeats, time sigs, coda/segno, staff text); `flatten.ts` expands
+  repeats / 1st-2nd endings / one-bar repeats / D.C.–D.S. al Coda/Fine into the
+  performance order that drives diagrams, the optimiser, and playback.
+- `chordParser.ts` maps iReal qualities to the four-part catalogue (best-effort,
+  e.g. C13→dom9); `src/music/chart.ts` bridges Song/SequenceChord ⇄ IRealChart
+  (`songToChart`, `chartToSequence`, `transposeChart`).
+- Beat durations within a bar are inferred by even distribution (not iReal's
+  exact cell counting) — a deliberate, documented approximation.
+- Fixtures (`fixtures.ts`) are real forum charts of copyrighted tunes, used only
+  to test the decoder; keep the set tiny and do not redistribute.
 
 ## Key Domain Facts
 - 24 four-part chord types; 15 of them are the "core" set used by the Chapter 1 assignment.
@@ -41,9 +60,12 @@ legacy/         the original static app (reference only)
   guide line is tracked on the top string (B for middle, high-E for upper).
 
 ## Testing
-- Unit: `src/music/*.test.ts` (36 tests) cover spelling, the chord catalogue, drop-2 voicing,
-  the b9 rule, the optimiser, progressions, and the song model.
-- E2E: `e2e/app.spec.ts` exercises every page in a real browser.
+- Unit: `src/music/**/*.test.ts` (117 tests) cover spelling, the chord catalogue, drop-2 voicing,
+  the b9 rule, the optimiser, progressions, the song model, the Song/Chart converters, and the
+  iReal Pro engine (verified against the "9.20 Special" spec vector — 26 authored bars expand to
+  32 — and 5 real standard fixtures with round-trips).
+- E2E: `e2e/app.spec.ts` (18 tests) exercises every page in a real browser, including iReal
+  import (paste + standards), structure rendering, and measure editing.
 - Always keep `npm test`, `npm run test:e2e`, `npm run lint`, and `npm run typecheck` green.
 
 ## Deployment

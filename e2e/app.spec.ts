@@ -285,3 +285,67 @@ test('theme toggle switches to dark mode', async ({ page }) => {
   await page.getByRole('button', { name: 'Toggle colour theme' }).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
 });
+
+const VECTOR_920 =
+  'irealb://9%2E20%20Special=Warren%20Earl==Medium%20Swing=C==1r34LbKcu7bB%2C7B4D9%2CXQyX%2CC%7CQyX6%2DF%7CQXy%2C9D%7CQyX%2C6%2DF%7CQy%7CsC7%2C4TA%2A%7B%20%2C7G%7CN1lD9Dl2NZL%20QyXQyX%7DG7%2C7bAs%20%2C7G%7CQyX%2C9%2CXyQ%7C7A%2C7KQyX%2C%2ABC7%2ClcKQyX%2C7DZL%20lcQKyX%2C6FZL%20lcKQyX%20LZG7%5B%5D%206C7B%2C7C%5B%2AAD9%2CC%7CQyX%2C6%2DF%7CQyX9%2CD%7CQyX%2C6%2DF%7CQyX%2CXyQ%7Cs%5D%20%20lc%2CBb7%2CA7%7ClD9%2CXyQ%7CG7%2C%20C6%20Z%20==0=0===';
+
+test('imports a pasted iReal Pro link with sections, endings and repeats', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+
+  await gotoFresh(page);
+  await page.getByRole('link', { name: 'Sequence Builder' }).click();
+  await page.getByTestId('import-toggle').click();
+  await page.getByTestId('import-text').fill(VECTOR_920);
+  await page.getByTestId('import-submit').click();
+
+  await expect(page.locator('.chart-meta')).toContainText('9.20 Special');
+  await expect(page.locator('.chart-meta')).toContainText('Key C');
+  // First/second endings and a repeat barline are rendered.
+  await expect(page.locator('.ending-mark')).toHaveCount(2);
+  await expect(page.locator('.chart-measure.close-repeat')).not.toHaveCount(0);
+  await expect(page.locator('.bar-repeat')).not.toHaveCount(0);
+  // Section marks A and B.
+  await expect(page.locator('.section-mark')).not.toHaveCount(0);
+
+  // It can be played and stopped (structure-aware).
+  await page.getByRole('button', { name: 'Play sequence' }).click();
+  await page.getByRole('button', { name: 'Stop' }).click();
+  await expect(page.getByRole('button', { name: 'Play sequence' })).toBeVisible();
+
+  expect(errors).toEqual([]);
+});
+
+test('imports a built-in standard from the import panel', async ({ page }) => {
+  await gotoFresh(page);
+  await page.getByRole('link', { name: 'Sequence Builder' }).click();
+  await page.getByTestId('import-toggle').click();
+  await page.getByTestId('import-panel').getByRole('button', { name: 'Autumn Leaves' }).click();
+
+  await expect(page.locator('.chart-meta')).toContainText('Autumn Leaves');
+  await expect(page.locator('.chart-meta')).toContainText('G minor');
+  await expect(page.locator('.optimized-grid .optimized-chord')).not.toHaveCount(0);
+});
+
+test('measure editor sets a barline and inserts/deletes bars', async ({ page }) => {
+  await gotoFresh(page);
+  await page.getByRole('link', { name: 'Sequence Builder' }).click();
+  await addChord(page, 'C', 'maj7');
+  await addChord(page, 'G', 'dom7');
+
+  const realBars = page.locator('.chart-measure:not(.chart-measure-pad)');
+  await expect(realBars).toHaveCount(2);
+
+  // Select the first bar by clicking its top margin (away from the chord).
+  await page.locator('.chart-measure').first().click({ position: { x: 6, y: 6 } });
+  await expect(page.getByTestId('measure-editor')).toBeVisible();
+
+  await page.getByTestId('measure-close').selectOption('repeat');
+  await expect(page.locator('.chart-measure.close-repeat')).toHaveCount(1);
+
+  await page.getByTestId('insert-measure').click();
+  await expect(realBars).toHaveCount(3);
+
+  await page.getByTestId('delete-measure').click();
+  await expect(realBars).toHaveCount(2);
+});
