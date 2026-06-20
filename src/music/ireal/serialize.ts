@@ -46,6 +46,7 @@ function keyToIReal(key: string | undefined): string {
 /** Build the plain (unscrambled) iReal music token string for a chart. */
 export function buildMusicTokens(chart: IRealChart): string {
   let out = '';
+  let small = false; // chord-size state, toggled by `s`/`l` across the chart
   chart.measures.forEach((m, idx) => {
     out += openToken(m.open);
     if (m.section) out += `*${m.section}`;
@@ -58,7 +59,18 @@ export function buildMusicTokens(chart: IRealChart): string {
     if (m.directive) out += `<${m.directive}>`;
     if (m.barRepeat === 1) out += 'x';
     else if (m.barRepeat === 2) out += 'r';
-    else out += m.chords.map(chordToken).join(',');
+    else {
+      out += m.chords
+        .map((c) => {
+          let pre = '';
+          if (!!c.small !== small) {
+            pre = c.small ? 's' : 'l';
+            small = !!c.small;
+          }
+          return pre + chordToken(c);
+        })
+        .join(',');
+    }
     const isLast = idx === chart.measures.length - 1;
     out += closeToken(m.close ?? (isLast ? 'final' : 'single'));
   });

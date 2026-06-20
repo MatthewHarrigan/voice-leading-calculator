@@ -7,7 +7,14 @@
 import { uid } from '../song';
 import { unscramble, MUSIC_PREFIX } from './unscramble';
 import { parseChordToken, prettyChordSymbol } from './chordParser';
-import type { BarlineClose, BarlineOpen, IRealChart, IRealMeasure, IRealPlaylist } from './types';
+import type {
+  BarlineClose,
+  BarlineOpen,
+  IRealChart,
+  IRealChordRef,
+  IRealMeasure,
+  IRealPlaylist,
+} from './types';
 
 const SCHEME_RE = /(irealb(?:ook)?):\/\/(.*)$/s;
 
@@ -74,6 +81,8 @@ export function tokenizeMeasures(music: string, initialTimeSig: [number, number]
   // track an absolute cell cursor to recover line breaks and ending alignment.
   let cellCursor = 0;
   let measureStartCell = 0;
+  // The most recent chord reference, so an invisible-root `W` can inherit it.
+  let lastRef: IRealChordRef | null = null;
 
   const blank = (): PendingMeasure => ({ chords: [] });
   let cur = blank();
@@ -182,7 +191,31 @@ export function tokenizeMeasures(music: string, initialTimeSig: [number, number]
         small: smallOn || undefined,
         symbol: prettyChordSymbol(chord.ref),
       });
+      lastRef = chord.ref;
       i += chord.length;
+      continue;
+    }
+
+    // Invisible root `W`: a cell that inherits the previous chord's root (used
+    // to place a bass note, i.e. a slash chord, without reprinting the root).
+    const inv = /^W(\/[A-G][#b]?)?/.exec(rest);
+    if (inv) {
+      (cur._cells ??= []).push(cellCursor);
+      cellCursor += 1;
+      if (lastRef) {
+        const bass = inv[1] ? inv[1].slice(1) : lastRef.bass;
+        const ref: IRealChordRef = { ...lastRef, ...(bass ? { bass } : {}) };
+        cur.chords.push({
+          id: uid('c'),
+          ...ref,
+          alternate: null,
+          beats: 0,
+          small: smallOn || undefined,
+          symbol: prettyChordSymbol(ref),
+        });
+        lastRef = ref;
+      }
+      i += inv[0].length;
       continue;
     }
 
@@ -244,10 +277,13 @@ export function tokenizeMeasures(music: string, initialTimeSig: [number, number]
         cur.fermata = true;
         break;
       case ' ':
-        cellCursor += 1; // an empty layout cell
+      case 'p':
+        // An empty cell (space) or a slash that holds the previous chord for a
+        // beat — both occupy one layout cell; `p` extends the prior chord's span.
+        cellCursor += 1;
         break;
       default:
-        // comma (separator), p (slash), U (end), Y (vertical spacer), unknown.
+        // comma (separator), U (end marker), Y (vertical spacer), unknown.
         break;
     }
     i += 1;

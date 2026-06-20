@@ -399,3 +399,16 @@ test('a playhead highlights the current bar during playback', async ({ page }) =
   await expect(page.locator('.chart-measure.measure-playing')).toHaveCount(0);
   await expect(page.locator('.optimized-chord.playing')).toHaveCount(0);
 });
+
+test('optimised diagrams mirror the chart bar layout', async ({ page }) => {
+  await gotoFresh(page);
+  await page.getByRole('link', { name: 'Sequence Builder' }).click();
+  await page.getByTestId('import-toggle').click();
+  await page.getByTestId('import-text').fill(VECTOR_920);
+  await page.getByTestId('import-submit').click();
+
+  // Diagrams are grouped into per-bar measures on the same 16-column grid.
+  await expect(page.locator('.optimized-chart-grid')).toBeVisible();
+  await expect(page.locator('.optimized-measure')).not.toHaveCount(0);
+  await expect(page.locator('.optimized-grid .optimized-chord')).not.toHaveCount(0);
+});

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { unscramble, scramble } from './unscramble';
 import { mapQuality } from './chordParser';
-import { parseIRealSong } from './parse';
+import { parseIRealSong, tokenizeMeasures } from './parse';
 import { toIRealURL, buildMusicTokens } from './serialize';
 import { flattenChart } from './flatten';
 import { VECTOR_920_SPECIAL, STANDARD_FIXTURES } from './fixtures';
@@ -56,6 +56,23 @@ describe('chord quality mapping', () => {
   ];
   test.each(cases)('quality "%s" → %s', (quality, expected) => {
     expect(mapQuality(quality)).toBe(expected);
+  });
+});
+
+describe('cell-grid edge tokens', () => {
+  test('p (slash) holds the previous chord across the bar', () => {
+    const m = tokenizeMeasures('C7,p,p,p|', [4, 4]);
+    expect(m[0].cells).toBe(4);
+    expect(m[0].chords).toHaveLength(1);
+    expect(m[0].chords[0].beats).toBe(4);
+  });
+
+  test('W inherits the previous root as a slash bass and occupies a cell', () => {
+    const m = tokenizeMeasures('C7|W/G|', [4, 4]);
+    expect(m[1].chords).toHaveLength(1);
+    expect(m[1].chords[0].root).toBe('C');
+    expect(m[1].chords[0].bass).toBe('G');
+    expect(m[1].chords[0].symbol).toContain('/G');
   });
 });
 
