@@ -2,7 +2,7 @@ import { Fragment, type CSSProperties, type KeyboardEvent, type ReactNode } from
 import { inversionName } from '@/music/voicing';
 import { prettyChordSymbol } from '@/music/ireal/chordParser';
 import type { IRealChart, IRealMeasure } from '@/music/ireal/types';
-import { computeLayout, structuralClasses, type Placement } from './chartLayout';
+import { computeEndingMarks, computeLayout, structuralClasses, type Placement } from './chartLayout';
 import {
   BarRepeatSign,
   ChordSymbol,
@@ -45,10 +45,12 @@ export function ChartGrid({
   renderBody,
 }: ChartGridProps) {
   const layout = computeLayout(chart);
+  const endings = computeEndingMarks(chart);
   return (
     <div className={gridClassName} aria-label={ariaLabel}>
       {chart.measures.map((m, i) => {
         const place = layout[i];
+        const endMark = endings[i];
         const style: CSSProperties = {
           gridColumn: `${place.col + 1} / span ${place.span}`,
           gridRow: place.row + 1,
@@ -58,7 +60,7 @@ export function ChartGrid({
           measureBaseClassName,
           'barred',
           structuralClasses(m, place),
-          m.ending != null ? 'has-ending' : '',
+          endMark ? 'has-ending' : '',
           m.id === selectedMeasureId ? 'measure-selected' : '',
           m.id === insertionMeasureId ? 'measure-insertion' : '',
           playing ? 'measure-playing' : '',
@@ -91,7 +93,13 @@ export function ChartGrid({
             onClick={onSelectMeasure ? () => onSelectMeasure(m.id) : undefined}
             {...interactive}
           >
-            {m.ending != null && <EndingBracket ending={m.ending} />}
+            {endMark && (
+              <EndingBracket
+                ending={endMark.ending}
+                start={endMark.start}
+                rowStart={place.rowStart}
+              />
+            )}
             {m.open === 'repeat' && <RepeatDots side="open" />}
             {m.close === 'repeat' && <RepeatDots side="close" />}
             <MeasureMarks measure={m} />

@@ -1011,20 +1011,31 @@ input[type='text'] {
   margin-right: 8px;
   align-self: center;
 }
-/* Ending ("house") bracket drawn across the top of the bar. */
-.ending-mark {
+/* Ending ("house") bracket drawn across the top of the bars. It spans every bar
+   of the ending: the start bar (.ending-mark) carries the number and a left
+   wall; continuation bars (.ending-cont) draw just the top line so the bracket
+   reads as one continuous house (the grid has no column gap). */
+.ending-mark,
+.ending-cont {
   position: absolute;
   top: 1px;
   left: 0;
-  right: 1px;
+  right: 0;
   border-top: 1.5px solid var(--ink);
+  pointer-events: none;
+  z-index: 2;
+}
+.ending-mark {
   border-left: 1.5px solid var(--ink);
   padding: 1px 0 0 4px;
   font-size: 12px;
   font-weight: 700;
   color: var(--ink);
-  pointer-events: none;
-  z-index: 2;
+}
+/* A continuation bar that begins a wrapped row gets a left wall too, so the
+   bracket has a clean left edge on each line it spans. */
+.ending-cont-wall {
+  border-left: 1.5px solid var(--ink);
 }
 .nav-mark {
   display: inline-flex;

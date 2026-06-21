@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { computeLayout } from './chartLayout';
+import { computeEndingMarks, computeLayout } from './chartLayout';
 import type { IRealChart, IRealMeasure } from '@/music/ireal/types';
 
 function chart(measures: IRealMeasure[]): IRealChart {
@@ -71,5 +71,41 @@ describe('computeLayout', () => {
     expect(layout[3].rowEnd).toBe(true);
     expect(layout[4].rowStart).toBe(true);
     expect(layout[4].rowEnd).toBe(true); // last bar overall
+  });
+});
+
+describe('computeEndingMarks', () => {
+  test('spans a multi-bar first ending up to the repeat barline (Beautiful Love)', () => {
+    // A (8 bars), then a 1st ending of 8 bars ending in a repeat, then a 2nd
+    // ending of 8 bars ending in the final bar — the bracket must cover them all.
+    const ms: IRealMeasure[] = [];
+    for (let i = 0; i < 8; i++) ms.push(bar(i === 0 ? { section: 'A' } : {}));
+    for (let i = 0; i < 8; i++)
+      ms.push(bar({ ...(i === 0 ? { section: 'B', ending: 1 } : {}), ...(i === 7 ? { close: 'repeat' } : {}) }));
+    for (let i = 0; i < 8; i++)
+      ms.push(bar({ ...(i === 0 ? { section: 'C', ending: 2 } : {}), ...(i === 7 ? { close: 'final' } : {}) }));
+    const marks = computeEndingMarks(chart(ms));
+
+    expect(marks.slice(0, 8).every((m) => m === null)).toBe(true); // section A: no bracket
+    expect(marks[8]).toEqual({ ending: 1, start: true }); // 1st ending starts here
+    expect(marks.slice(9, 16).every((m) => m?.ending === 1 && m.start === false)).toBe(true);
+    expect(marks[16]).toEqual({ ending: 2, start: true }); // 2nd ending starts here
+    expect(marks.slice(17, 24).every((m) => m?.ending === 2 && m.start === false)).toBe(true);
+  });
+
+  test('stops a 2nd ending at a double barline / the next section (9.20 Special)', () => {
+    const c = chart([
+      bar({ ending: 1 }),
+      bar({ close: 'repeat' }), // 1st ending = 2 bars, closed by the repeat
+      bar({ ending: 2 }),
+      bar({ close: 'double' }), // 2nd ending = 2 bars, closed by the double bar
+      bar({ section: 'B' }), // a new section — must NOT be under the bracket
+    ]);
+    const marks = computeEndingMarks(c);
+    expect(marks[0]).toEqual({ ending: 1, start: true });
+    expect(marks[1]).toEqual({ ending: 1, start: false });
+    expect(marks[2]).toEqual({ ending: 2, start: true });
+    expect(marks[3]).toEqual({ ending: 2, start: false });
+    expect(marks[4]).toBeNull();
   });
 });
