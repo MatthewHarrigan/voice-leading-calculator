@@ -71,16 +71,22 @@ export function ChordDiagram({
       };
     });
 
-    return { strings, minFret, height, fretboardW, fretboardH, stringSpacing, fretSpacing, notes };
+    const hasOpen = strings.some((s) => fingering.frets[s] === 0);
+    return { strings, minFret, height, hasOpen, fretboardW, fretboardH, stringSpacing, fretSpacing, notes };
   }, [fingering, rootDisplay, stringSet, leadNote]);
 
   const avoid = highlightAvoid && hasFlatNineAvoidInterval(fingering, stringSet);
-  const { minFret, height, fretboardW, fretboardH, stringSpacing, fretSpacing, notes, strings } = model;
+  const { minFret, height, hasOpen, fretboardW, fretboardH, stringSpacing, fretSpacing, notes, strings } = model;
+  // When the title is rendered above the SVG (guitar sheet), the reserved title
+  // band at the top is dead space that reads as a gap before the fretboard. Crop
+  // it from the viewBox — but keep headroom for open-string markers (at top-12)
+  // when the voicing has any.
+  const topCrop = showTitle ? 0 : hasOpen ? 13 : 28;
 
   return (
     <svg
       className={`chord-diagram${avoid ? ' is-avoid' : ''}${className ? ` ${className}` : ''}`}
-      viewBox={`0 0 ${W} ${height}`}
+      viewBox={`0 ${topCrop} ${W} ${height - topCrop}`}
       role="img"
       aria-label={ariaLabel ?? title ?? 'chord diagram'}
       preserveAspectRatio="xMidYMid meet"

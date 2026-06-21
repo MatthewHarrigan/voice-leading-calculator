@@ -1314,7 +1314,7 @@ input[type='text'] {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 0;
   /* Fixed, iReal-compact diagrams that pack left and never overlap. */
   flex: 0 0 auto;
   width: 90px;
