@@ -707,6 +707,7 @@ input[type='text'] {
   color: var(--faint);
 }
 .sequence-chord {
+  position: relative;
   align-self: center;
   margin: 0 2px;
   padding: 5px 8px;
@@ -1050,12 +1051,18 @@ input[type='text'] {
 .bar-repeat {
   margin: 0 auto;
 }
+/* Alternate chord floats in the gap above the bar (like iReal) so it never
+   pushes the main chord off the baseline its neighbours share. */
 .sc-alt {
-  display: block;
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% - 1px);
+  transform: translateX(-50%);
   font-size: 11px;
   color: var(--muted);
-  margin-bottom: 2px;
   line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 /* Repeat-sign dots drawn beside the thick {/} barlines. */

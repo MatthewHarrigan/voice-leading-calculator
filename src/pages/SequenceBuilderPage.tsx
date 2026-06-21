@@ -606,12 +606,7 @@ export function SequenceBuilderPage() {
           </div>
 
           {chartViewMode !== 'chart' && (
-            <>
-              <GuitarChartView chart={chart} byMeasure={optimizedByMeasure} playingMeasureId={playingMeasureId} />
-              <p className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-                Diagrams mirror the chart layout — one voicing per bar (first pass through the form).
-              </p>
-            </>
+            <GuitarChartView chart={chart} byMeasure={optimizedByMeasure} playingMeasureId={playingMeasureId} />
           )}
 
           <MovementAnalysis optimized={optimized} transitions={transitions} guide={guide} />

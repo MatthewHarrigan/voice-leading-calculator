@@ -57,11 +57,15 @@ export function TimeSig({ sig }: { sig: [number, number] }) {
 export function BarRepeatSign({ n }: { n: 1 | 2 }) {
   return (
     <span className="bar-repeat" title={`${n}-bar repeat`} aria-label={`${n} bar repeat`}>
-      <svg viewBox="0 0 44 36" width="34" height="28" aria-hidden focusable="false">
-        {n === 2 && <line x1="13" y1="29" x2="23" y2="7" stroke="currentColor" strokeWidth="2.4" />}
-        <line x1="21" y1="29" x2="31" y2="7" stroke="currentColor" strokeWidth="2.4" />
-        <circle cx="16.5" cy="11.5" r="2.1" fill="currentColor" />
-        <circle cx="27.5" cy="24.5" r="2.1" fill="currentColor" />
+      <svg viewBox="0 0 36 36" width="30" height="30" aria-hidden focusable="false">
+        {/* A one-bar repeat (%): a bold slash with a dot in the upper-left and
+            lower-right. A two-bar repeat adds a second parallel slash. */}
+        <circle cx="13" cy="13" r="2.5" fill="currentColor" />
+        <line x1="11" y1="25" x2="25" y2="11" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+        {n === 2 && (
+          <line x1="17" y1="25" x2="31" y2="11" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+        )}
+        <circle cx={n === 2 ? 29 : 23} cy="23" r="2.5" fill="currentColor" />
       </svg>
     </span>
   );
