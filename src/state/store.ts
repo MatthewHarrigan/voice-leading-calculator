@@ -21,6 +21,20 @@ import { createEmptySong, uid, type SequenceChord, type Song } from '@/music/son
 
 export type Theme = 'light' | 'dark';
 export type SortMode = 'default' | 'string';
+
+/** A tune saved into a custom playlist — the verbatim iReal chunk, re-parsed on open. */
+export interface SavedTune {
+  title: string;
+  composer: string;
+  scheme: string;
+  chunk: string;
+}
+/** A user-curated, named set of tunes (persisted). */
+export interface UserPlaylist {
+  id: string;
+  name: string;
+  entries: SavedTune[];
+}
 /** Which lead sheet the Sequence Builder shows: chord score, guitar diagrams, or both. */
 export type ChartViewMode = 'chart' | 'guitar' | 'both';
 
@@ -52,6 +66,9 @@ interface AppState {
   // --- loaded playlist (in-memory only; raw source kept under a dedicated
   // localStorage key so a large playlist never bloats the persisted state) ---
   playlist: IRealIndex | null;
+
+  // --- user-curated playlists (persisted) ---
+  userPlaylists: UserPlaylist[];
 
   // --- setters ---
   setStringSet: (s: StringSet) => void;
@@ -104,6 +121,13 @@ interface AppState {
   setPlaylist: (source: string) => { ok: true; persisted: boolean } | { ok: false; error: string };
   rehydratePlaylist: () => void;
   clearPlaylist: () => void;
+
+  // --- custom playlists ---
+  createPlaylist: (name: string) => string;
+  renamePlaylist: (id: string, name: string) => void;
+  deletePlaylist: (id: string) => void;
+  addToPlaylist: (id: string, tune: SavedTune) => void;
+  removeFromPlaylist: (id: string, title: string) => void;
 }
 
 /** localStorage key for the raw playlist source — kept OUT of the persisted
@@ -223,6 +247,7 @@ export const useStore = create<AppState>()(
 
       savedCharts: [],
       playlist: null,
+      userPlaylists: [],
 
       setStringSet: (stringSet) => set({ stringSet }),
       setAvoidB9: (avoidB9) => set({ avoidB9 }),
@@ -494,6 +519,40 @@ export const useStore = create<AppState>()(
         }
         set({ playlist: null });
       },
+
+      createPlaylist: (name) => {
+        const id = uid('pl');
+        set((s) => ({
+          userPlaylists: [...s.userPlaylists, { id, name: name.trim() || 'Untitled', entries: [] }],
+        }));
+        return id;
+      },
+
+      renamePlaylist: (id, name) =>
+        set((s) => ({
+          userPlaylists: s.userPlaylists.map((p) =>
+            p.id === id ? { ...p, name: name.trim() || p.name } : p,
+          ),
+        })),
+
+      deletePlaylist: (id) =>
+        set((s) => ({ userPlaylists: s.userPlaylists.filter((p) => p.id !== id) })),
+
+      addToPlaylist: (id, tune) =>
+        set((s) => ({
+          userPlaylists: s.userPlaylists.map((p) =>
+            p.id === id && !p.entries.some((e) => e.title === tune.title)
+              ? { ...p, entries: [...p.entries, tune] }
+              : p,
+          ),
+        })),
+
+      removeFromPlaylist: (id, title) =>
+        set((s) => ({
+          userPlaylists: s.userPlaylists.map((p) =>
+            p.id === id ? { ...p, entries: p.entries.filter((e) => e.title !== title) } : p,
+          ),
+        })),
     }),
     {
       name: 'vlc:v2',
@@ -539,6 +598,7 @@ export const useStore = create<AppState>()(
         chartViewMode: state.chartViewMode,
         chart: state.chart,
         savedCharts: state.savedCharts,
+        userPlaylists: state.userPlaylists,
       }),
     },
   ),

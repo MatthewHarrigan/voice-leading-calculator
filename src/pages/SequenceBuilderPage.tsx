@@ -295,7 +295,7 @@ export function SequenceBuilderPage() {
         </div>
 
         <button className="btn btn-sm btn-primary" onClick={() => setShowImport((v) => !v)} data-testid="import-toggle">
-          Import iReal Pro
+          Tunes
         </button>
         {playlist && playlist.songs.length > 1 && (
           <div className="playlist-chip" data-testid="playlist-chip">

@@ -1143,6 +1143,66 @@ input[type='text'] {
 .playlist-chip .muted {
   color: var(--muted);
 }
+.tunes-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 12px 0;
+}
+.tunes-section + .tunes-section {
+  border-top: 1px solid var(--hairline);
+  padding-top: 12px;
+}
+.playlist-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.playlist-row .playlist-song {
+  flex: 1 1 auto;
+}
+.my-playlists {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.add-wrap {
+  position: relative;
+}
+.add-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  z-index: 5;
+  min-width: 170px;
+  max-height: 220px;
+  overflow: auto;
+  padding: 4px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+}
+.add-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+.add-menu-item:hover {
+  background: var(--surface-2);
+}
+.add-menu-new {
+  margin-top: 4px;
+  border-top: 1px solid var(--hairline);
+  color: var(--accent);
+}
 .sequence-chord.small .sc-symbol {
   font-size: calc(var(--chart-symbol-size) * 0.72);
 }

@@ -317,12 +317,16 @@ test('imports a pasted iReal Pro link with sections, endings and repeats', async
   expect(errors).toEqual([]);
 });
 
-test('imports a built-in standard from the import panel', async ({ page }) => {
+test('opens a tune from the bundled Jazz 1460 playlist', async ({ page }) => {
   await gotoFresh(page);
   await page.getByRole('link', { name: 'Sequence Builder' }).click();
   await page.getByTestId('import-toggle').click();
-  await page.getByTestId('import-panel').getByRole('button', { name: 'Autumn Leaves' }).click();
+  await page.getByTestId('bundled-jazz-1460').click();
+  await page.getByTestId('playlist-search').fill('autumn leaves');
+  await page.getByTestId('playlist-picker').getByRole('button', { name: /Autumn Leaves/ }).first().click();
 
+  // The canonical version renders correctly (the old hand-typed preset's 2nd
+  // endings were broken) and produces voicings.
   await expect(page.locator('.chart-meta')).toContainText('Autumn Leaves');
   await expect(page.locator('.chart-meta')).toContainText('G minor');
   await expect(page.locator('.optimized-grid .optimized-chord')).not.toHaveCount(0);
@@ -509,10 +513,39 @@ test('renders stacked time signature, repeat dots, and alternate chords', async 
   await expect(page.locator('.time-sig')).not.toHaveCount(0);
   await expect(page.locator('.repeat-dots')).not.toHaveCount(0);
 
-  // All Of Me carries alternate chords in parentheses.
+  // Stella By Starlight carries alternate chords (Gm7 / Aø7) shown small above the bar.
   await page.getByTestId('import-toggle').click();
-  await page.getByTestId('import-panel').getByRole('button', { name: 'All Of Me' }).click();
+  await page.getByTestId('bundled-jazz-1460').click();
+  await page.getByTestId('playlist-search').fill('stella by starlight');
+  await page.getByTestId('playlist-picker').getByRole('button', { name: /Stella By Starlight/ }).first().click();
   await expect(page.locator('.sc-alt')).not.toHaveCount(0);
+});
+
+test('builds a custom playlist that persists across reload', async ({ page }) => {
+  await gotoClean(page); // clears once; the reload below keeps localStorage
+  await page.getByRole('link', { name: 'Sequence Builder' }).click();
+  await page.getByTestId('import-toggle').click();
+  await page.getByTestId('bundled-jazz-1460').click();
+  await page.getByTestId('playlist-search').fill('blue bossa');
+
+  // Add the tune to a brand-new playlist via the row's "+ Add to" menu.
+  page.on('dialog', (d) => d.accept('Gig set'));
+  await page.getByTestId('playlist-add').first().click();
+  await page.getByRole('button', { name: /New playlist/ }).click();
+
+  // It now lives under My playlists.
+  await page.getByTestId('playlist-back').click();
+  await expect(page.locator('.my-playlists')).toContainText('Gig set');
+
+  // Survives a real reload, and its tune still loads. (Jazz 1460 stays loaded,
+  // so the panel reopens in the browser — step back to the Tunes home first.)
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Sequence Builder' }).click();
+  await page.getByTestId('import-toggle').click();
+  await page.getByTestId('playlist-back').click();
+  await page.locator('.my-playlists .playlist-song').filter({ hasText: 'Gig set' }).click();
+  await page.getByTestId('playlist-picker').getByRole('button', { name: /Blue Bossa/ }).first().click();
+  await expect(page.locator('.chart-meta')).toContainText('Blue Bossa');
 });
 
 test('view toggle switches between chart, guitar and both', async ({ page }) => {
