@@ -61,6 +61,10 @@ export function ChartGrid({
           measureBaseClassName,
           'barred',
           structuralClasses(m, place),
+          // Both the volta and the section letter float in the lane above the
+          // bar; when a bar has both, shift the section letter clear of the
+          // volta number.
+          m.ending != null ? 'has-ending' : '',
           m.id === selectedMeasureId ? 'measure-selected' : '',
           m.id === insertionMeasureId ? 'measure-insertion' : '',
           playing ? 'measure-playing' : '',

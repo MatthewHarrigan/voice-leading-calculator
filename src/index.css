@@ -985,6 +985,11 @@ input[type='text'] {
   pointer-events: none;
   z-index: 3;
 }
+/* When a bar carries both a volta and a section letter, shift the letter clear
+   of the volta number (both live in the lane above the bar). */
+.has-ending .measure-marks {
+  padding-left: 20px;
+}
 .measure-marks-spacer {
   flex: 1;
 }
@@ -1027,17 +1032,19 @@ input[type='text'] {
 .time-sig-leading .time-sig {
   margin-right: 7px;
 }
-/* Short open volta over the ending's first bar (iReal style): a left tick, a top
-   line across that one bar, and the number hanging just under the roof. */
+/* Short open volta over the ending's first bar (iReal style): it floats in the
+   lane ABOVE the bar — on the same level as the section letter — as a left tick,
+   a top line across that one bar, and the number hanging just under the roof. */
 .ending-mark {
   position: absolute;
-  top: 1px;
+  bottom: 100%;
+  margin-bottom: 1px;
   left: 0;
-  right: 0;
+  right: 1px;
   border-top: 1.5px solid var(--ink);
   border-left: 1.5px solid var(--ink);
   /* Hang the number a few px under the roof so the line stays crisp (not thick). */
-  padding: 4px 0 0 5px;
+  padding: 3px 0 1px 5px;
   font-size: 11px;
   line-height: 1;
   font-weight: 700;
