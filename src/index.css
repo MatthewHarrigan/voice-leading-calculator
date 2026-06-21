@@ -992,9 +992,10 @@ input[type='text'] {
   font-size: 14px;
   line-height: 1.35;
 }
-/* When a bar carries an ending bracket, drop the marks below it so they don't collide. */
+/* When a bar carries an ending bracket, drop the rehearsal box clear of both the
+   bracket roof and the ending number (which hangs just under the roof). */
 .has-ending .measure-marks {
-  top: 15px;
+  top: 22px;
 }
 /* Tall stacked time-signature fraction leading the bar, at staff height. */
 .time-sig {
@@ -1027,8 +1028,10 @@ input[type='text'] {
 }
 .ending-mark {
   border-left: 1.5px solid var(--ink);
-  padding: 1px 0 0 4px;
-  font-size: 12px;
+  /* Hang the number a few px under the roof so the line stays crisp (not thick). */
+  padding: 4px 0 0 5px;
+  font-size: 11px;
+  line-height: 1;
   font-weight: 700;
   color: var(--ink);
 }
@@ -1057,6 +1060,12 @@ input[type='text'] {
   cursor: pointer;
   margin: 0;
   min-width: 0;
+}
+/* In the chord score the first chord sits hard-left, under the rehearsal box;
+   nudge the bar's chords right so the box and the chord no longer collide.
+   (The guitar sheet centres its chord name over a wide diagram, so it's clear.) */
+.chart-measure.section-offset .measure-cells {
+  padding-left: 24px;
 }
 /* A whole-bar simile/repeat sign is centred in its bar, not left-packed. */
 .bar-repeat {

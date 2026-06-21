@@ -61,6 +61,9 @@ export function ChartGrid({
           'barred',
           structuralClasses(m, place),
           endMark ? 'has-ending' : '',
+          // A rehearsal box sits top-left; nudge the first chord clear of it
+          // (unless a time signature already offsets the bar's content).
+          m.section && !m.timeSig ? 'section-offset' : '',
           m.id === selectedMeasureId ? 'measure-selected' : '',
           m.id === insertionMeasureId ? 'measure-insertion' : '',
           playing ? 'measure-playing' : '',
