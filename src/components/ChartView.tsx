@@ -2,7 +2,7 @@ import { Fragment, type CSSProperties, type KeyboardEvent, type ReactNode } from
 import { inversionName } from '@/music/voicing';
 import { prettyChordSymbol } from '@/music/ireal/chordParser';
 import type { IRealChart, IRealMeasure } from '@/music/ireal/types';
-import { computeEndingMarks, computeLayout, structuralClasses, type Placement } from './chartLayout';
+import { computeLayout, structuralClasses, type Placement } from './chartLayout';
 import {
   BarRepeatSign,
   ChordSymbol,
@@ -45,25 +45,22 @@ export function ChartGrid({
   renderBody,
 }: ChartGridProps) {
   const layout = computeLayout(chart);
-  const endings = computeEndingMarks(chart);
   return (
     <div className={gridClassName} aria-label={ariaLabel}>
       {chart.measures.map((m, i) => {
         const place = layout[i];
-        const endMark = endings[i];
         const style: CSSProperties = {
           gridColumn: `${place.col + 1} / span ${place.span}`,
           gridRow: place.row + 1,
         };
         const playing = !!playingMeasureId && m.id === playingMeasureId;
+        // The leading time signature sits in the left gutter, outside the first
+        // bar (iReal style); a mid-tune change still renders inside its bar.
+        const leadingTimeSig = i === 0 && m.timeSig;
         const cls = [
           measureBaseClassName,
           'barred',
           structuralClasses(m, place),
-          endMark ? 'has-ending' : '',
-          // A rehearsal box sits top-left; nudge the first chord clear of it
-          // (unless a time signature already offsets the bar's content).
-          m.section && !m.timeSig ? 'section-offset' : '',
           m.id === selectedMeasureId ? 'measure-selected' : '',
           m.id === insertionMeasureId ? 'measure-insertion' : '',
           playing ? 'measure-playing' : '',
@@ -96,18 +93,17 @@ export function ChartGrid({
             onClick={onSelectMeasure ? () => onSelectMeasure(m.id) : undefined}
             {...interactive}
           >
-            {endMark && (
-              <EndingBracket
-                ending={endMark.ending}
-                start={endMark.start}
-                rowStart={place.rowStart}
-              />
+            {m.ending != null && <EndingBracket ending={m.ending} />}
+            {leadingTimeSig && (
+              <span className="time-sig-leading">
+                <TimeSig sig={m.timeSig!} />
+              </span>
             )}
             {m.open === 'repeat' && <RepeatDots side="open" />}
             {m.close === 'repeat' && <RepeatDots side="close" />}
             <MeasureMarks measure={m} />
             <div className="measure-cells">
-              {m.timeSig && <TimeSig sig={m.timeSig} />}
+              {m.timeSig && !leadingTimeSig && <TimeSig sig={m.timeSig} />}
               {m.barRepeat ? <BarRepeatSign n={m.barRepeat} /> : renderBody(m, place)}
             </div>
             {(m.staffText || m.directive) && (

@@ -77,28 +77,15 @@ export function RepeatDots({ side }: { side: 'open' | 'close' }) {
 }
 
 /**
- * One row-segment of an ending ("house") bracket. The first bar of the ending
- * carries the number and a left wall; continuation bars draw just the top line
- * (with a left wall when they begin a wrapped row) so the bracket reads as one
- * continuous house spanning every bar of the ending, as in iReal Pro.
+ * A short open volta over the ending's first bar (iReal Pro style): a left tick,
+ * a top line spanning that one bar, and the number hanging just under the roof.
  */
-export function EndingBracket({
-  ending,
-  start,
-  rowStart,
-}: {
-  ending: number;
-  start: boolean;
-  rowStart: boolean;
-}) {
-  if (start) {
-    return (
-      <span className="ending-mark" aria-label={`ending ${ending}`}>
-        {ROMAN[ending] ?? ending}.
-      </span>
-    );
-  }
-  return <span className={`ending-cont${rowStart ? ' ending-cont-wall' : ''}`} aria-hidden />;
+export function EndingBracket({ ending }: { ending: number }) {
+  return (
+    <span className="ending-mark" aria-label={`ending ${ending}`}>
+      {ROMAN[ending] ?? ending}.
+    </span>
+  );
 }
 
 /** Section letter (A/B/C…), nav glyphs and fermata that sit above the bar. */

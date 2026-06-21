@@ -95,43 +95,6 @@ export function computeLayout(chart: IRealChart): Placement[] {
   }));
 }
 
-export interface EndingMark {
-  /** The ending number (1, 2, …). */
-  ending: number;
-  /** True on the first bar of the ending — the only bar that shows the number. */
-  start: boolean;
-}
-
-/**
- * Work out the full extent of every 1st/2nd-time ending so the bracket can be
- * drawn across ALL its bars (like iReal Pro), not just the bar that carries the
- * `N1`/`N2` token. An ending runs from its start bar up to and including the bar
- * that closes it — a repeat/final/double barline — or stops just before the next
- * ending or rehearsal section begins. Returns one entry per measure (null when
- * the bar is not under an ending bracket).
- */
-export function computeEndingMarks(chart: IRealChart): (EndingMark | null)[] {
-  const ms = chart.measures;
-  const marks: (EndingMark | null)[] = ms.map(() => null);
-  for (let i = 0; i < ms.length; i++) {
-    const e = ms[i].ending;
-    if (e == null) continue;
-    let j = i;
-    while (j < ms.length) {
-      marks[j] = { ending: e, start: j === i };
-      const cur = ms[j];
-      const next = ms[j + 1];
-      // A structural close (repeat/final/double bar) ends the ending here.
-      if (cur.close === 'repeat' || cur.close === 'final' || cur.close === 'double') break;
-      // The next ending or a new rehearsal section also bounds it.
-      if (next && (next.ending != null || next.section != null)) break;
-      j += 1;
-    }
-    i = j; // resume scanning after this ending's last bar
-  }
-  return marks;
-}
-
 /** Structural (barline + row-edge) CSS classes for a measure, shared by views. */
 export function structuralClasses(m: IRealMeasure, place: Placement): string {
   return [

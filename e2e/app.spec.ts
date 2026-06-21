@@ -303,11 +303,8 @@ test('imports a pasted iReal Pro link with sections, endings and repeats', async
   await expect(page.locator('.chart-meta')).toContainText('Key C');
   // First/second endings and a repeat barline are rendered (scope to the score;
   // the guitar-diagram view mirrors the same chrome, so endings appear in both).
-  // Each ending shows one labelled house (.ending-mark); its bracket then
-  // continues across the rest of its bars as .ending-cont segments — the 9.20
-  // endings are two bars each, so there is at least one continuation segment.
+  // Each ending shows one short volta (.ending-mark) over its first bar.
   await expect(page.locator('.chart-view .ending-mark')).toHaveCount(2);
-  await expect(page.locator('.chart-view .ending-cont')).not.toHaveCount(0);
   await expect(page.locator('.chart-measure.close-repeat')).not.toHaveCount(0);
   await expect(page.locator('.bar-repeat')).not.toHaveCount(0);
   // Section marks A and B.
