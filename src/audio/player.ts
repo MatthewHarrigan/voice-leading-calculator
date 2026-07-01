@@ -50,8 +50,18 @@ export interface ArrangementEvent {
   startBeat: number;
   /** Length in beats (controls bass note length). */
   durationBeats: number;
-  /** Low MIDI pitch of the chord root, for the optional bass line. */
-  bassMidi: number;
+  /** Low MIDI pitch of the chord root — legacy single-root bass fallback. */
+  bassMidi?: number;
+}
+
+/** One note of a precomputed walking bass line, keyed by absolute in-form beat. */
+export interface BassTrackNote {
+  midi: number;
+  /** Absolute in-form beat onset; fractional for off-beat embellishments. */
+  beat: number;
+  durationBeats: number;
+  /** Loudness 0–1 (ghost notes < 1). Default 1. */
+  velocity?: number;
 }
 
 export interface ArrangementOptions {
@@ -61,6 +71,14 @@ export interface ArrangementOptions {
   bassline?: boolean;
   /** When true (with bassline), play only the bass — mute the chord strums. */
   soloBass?: boolean;
+  /**
+   * Precomputed walking bass line for the whole form (one note per beat / two
+   * beats). When present it drives the bass instead of the per-event root, so a
+   * live style change just swaps this array.
+   */
+  bassNotes?: BassTrackNote[];
+  /** Swing the eighth-note offbeats of the bass line (delays each "and"). */
+  swing?: boolean;
   /** When true, loop the whole arrangement until stopped. */
   loop?: boolean;
   /** Play the whole form this many times before stopping (ignored when loop). */
@@ -197,7 +215,7 @@ export class ChordPlayer {
   }
 
   /** Build and schedule a pluck voice; returns it so the caller can track it. */
-  private buildVoice(midi: number, when: number, duration: number, stringIndex: number): Voice {
+  private buildVoice(midi: number, when: number, duration: number, stringIndex: number, gain = 1): Voice {
     const ctx = this.ensureContext();
     const freq = midiToFreq(midi);
     const nyquist = ctx.sampleRate / 2;
@@ -212,7 +230,7 @@ export class ChordPlayer {
 
     const amp = ctx.createGain();
     amp.gain.setValueAtTime(0.0001, when);
-    amp.gain.exponentialRampToValueAtTime(0.28, when + 0.006);
+    amp.gain.exponentialRampToValueAtTime(Math.max(0.0001, 0.28 * gain), when + 0.006);
     amp.gain.exponentialRampToValueAtTime(0.0001, when + duration);
 
     filter.connect(amp);
@@ -255,10 +273,10 @@ export class ChordPlayer {
   }
 
   /** Pluck a specific string: damps that string's previous note, lets others ring. */
-  private pluckString(stringIndex: number, midi: number, when: number, duration = DEFAULT_SUSTAIN): void {
+  private pluckString(stringIndex: number, midi: number, when: number, duration = DEFAULT_SUSTAIN, gain = 1): void {
     const prev = this.stringVoices[stringIndex];
     if (prev) this.dampVoice(prev, when);
-    this.stringVoices[stringIndex] = this.buildVoice(midi, when, duration, stringIndex);
+    this.stringVoices[stringIndex] = this.buildVoice(midi, when, duration, stringIndex, gain);
   }
 
   /** A stable key identifying a chord voicing (string set + active frets). */
@@ -502,12 +520,34 @@ export class ChordPlayer {
         const at = ctx.currentTime + 0.06;
         if (opts.metronome) this.metronomeClick(at, beat % beatsPerBar === 0);
         const soloing = !!(opts.bassline && opts.soloBass);
-        for (const e of events) {
-          if (e.startBeat !== beat) continue;
-          if (!soloing) this.strumAt(e.fingering, e.stringSet, at, 0.02);
-          if (opts.bassline) {
-            const dur = Math.min(5, Math.max(1.4, e.durationBeats * spb + 0.6));
-            this.pluckString(6, e.bassMidi, at, dur);
+        if (!soloing) {
+          for (const e of events) {
+            if (e.startBeat !== beat) continue;
+            this.strumAt(e.fingering, e.stringSet, at, 0.02);
+          }
+        }
+        if (opts.bassline) {
+          if (opts.bassNotes && opts.bassNotes.length) {
+            // The walking line: pluck whichever note(s) fall inside this beat's
+            // window [beat, beat+1). Fractional onsets (anticipations, ghost
+            // skips) schedule partway through; swing delays the "and".
+            for (const bn of opts.bassNotes) {
+              let offset = bn.beat - beat;
+              if (offset < -0.001 || offset >= 0.999) continue;
+              if (opts.swing && Math.abs(offset - 0.5) < 0.02) offset = 2 / 3; // swung eighth
+              const dur =
+                bn.durationBeats >= 1
+                  ? Math.min(5, Math.max(1.2, bn.durationBeats * spb + 0.5))
+                  : Math.max(0.18, bn.durationBeats * spb);
+              this.pluckString(6, bn.midi, at + offset * spb, dur, bn.velocity ?? 1);
+            }
+          } else {
+            // Legacy fallback: one held root per chord event.
+            for (const e of events) {
+              if (e.startBeat !== beat || e.bassMidi == null) continue;
+              const dur = Math.min(5, Math.max(1.4, e.durationBeats * spb + 0.6));
+              this.pluckString(6, e.bassMidi, at, dur);
+            }
           }
         }
         const next = abs + 1;

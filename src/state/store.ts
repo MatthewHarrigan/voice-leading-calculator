@@ -5,6 +5,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { type ChordTypeId } from '@/music/chords';
+import type { BassFeel, BassStyle } from '@/music/walkingBass';
 import { parseKey, pitchClassOf } from '@/music/notes';
 import type { StringSet } from '@/music/tuning';
 import {
@@ -50,6 +51,13 @@ interface AppState {
   metronome: boolean;
   bassline: boolean;
   bassSolo: boolean;
+  bassStyle: BassStyle; // which rung of the walking-bass ladder to generate
+  bassFeel: BassFeel; // half-note "two" feel vs quarter-note "four" feel
+  bassSwing: boolean; // swing the bass line's offbeats
+  bassGhosts: boolean; // add ghost-note skips
+  bassAnticipate: boolean; // push chord-change downbeats early
+  bassTriplets: boolean; // roll triplet "drops" into targets
+  bassAmount: number; // embellishment density 0..1
   repeatForm: boolean; // loop the whole chart during playback
   chartViewMode: ChartViewMode;
 
@@ -81,6 +89,13 @@ interface AppState {
   setMetronome: (v: boolean) => void;
   setBassline: (v: boolean) => void;
   setBassSolo: (v: boolean) => void;
+  setBassStyle: (s: BassStyle) => void;
+  setBassFeel: (f: BassFeel) => void;
+  setBassSwing: (v: boolean) => void;
+  setBassGhosts: (v: boolean) => void;
+  setBassAnticipate: (v: boolean) => void;
+  setBassTriplets: (v: boolean) => void;
+  setBassAmount: (v: number) => void;
   setRepeatForm: (v: boolean) => void;
   setChartViewMode: (m: ChartViewMode) => void;
 
@@ -237,6 +252,13 @@ export const useStore = create<AppState>()(
       metronome: false,
       bassline: false,
       bassSolo: false,
+      bassStyle: 'walking',
+      bassFeel: 'four',
+      bassSwing: true,
+      bassGhosts: false,
+      bassAnticipate: false,
+      bassTriplets: false,
+      bassAmount: 0.35,
       repeatForm: false,
       chartViewMode: 'both',
 
@@ -259,6 +281,13 @@ export const useStore = create<AppState>()(
       setMetronome: (metronome) => set({ metronome }),
       setBassline: (bassline) => set({ bassline }),
       setBassSolo: (bassSolo) => set({ bassSolo }),
+      setBassStyle: (bassStyle) => set({ bassStyle }),
+      setBassFeel: (bassFeel) => set({ bassFeel }),
+      setBassSwing: (bassSwing) => set({ bassSwing }),
+      setBassGhosts: (bassGhosts) => set({ bassGhosts }),
+      setBassAnticipate: (bassAnticipate) => set({ bassAnticipate }),
+      setBassTriplets: (bassTriplets) => set({ bassTriplets }),
+      setBassAmount: (bassAmount) => set({ bassAmount: Math.max(0, Math.min(1, bassAmount)) }),
       setRepeatForm: (repeatForm) => set({ repeatForm }),
       setChartViewMode: (chartViewMode) => set({ chartViewMode }),
 
@@ -594,6 +623,13 @@ export const useStore = create<AppState>()(
         metronome: state.metronome,
         bassline: state.bassline,
         bassSolo: state.bassSolo,
+        bassStyle: state.bassStyle,
+        bassFeel: state.bassFeel,
+        bassSwing: state.bassSwing,
+        bassGhosts: state.bassGhosts,
+        bassAnticipate: state.bassAnticipate,
+        bassTriplets: state.bassTriplets,
+        bassAmount: state.bassAmount,
         repeatForm: state.repeatForm,
         chartViewMode: state.chartViewMode,
         chart: state.chart,

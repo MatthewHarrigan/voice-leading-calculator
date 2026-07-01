@@ -1388,3 +1388,85 @@ input[type='text'] {
     transform: none;
   }
 }
+
+/* --- Walking bass line readout (Sequence Builder) --- */
+.bass-style-select {
+  max-width: 200px;
+}
+.bassline-view {
+  margin-top: 18px;
+}
+.bassline-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.bassline-row {
+  display: flex;
+  gap: 0;
+  border-left: 2px solid var(--ink);
+}
+.bassline-row + .bassline-row {
+  border-top: 0;
+}
+.bassline-bar {
+  flex: 1 1 0;
+  display: flex;
+  min-height: 46px;
+  border-right: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  border-top: 1px solid var(--hairline);
+}
+.bassline-row:not(:first-child) .bassline-bar {
+  border-top: 0;
+}
+.bassline-bar:last-child {
+  border-right: 2px solid var(--ink);
+}
+.bassline-bar.spacer {
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 6px,
+    var(--surface-2) 6px,
+    var(--surface-2) 12px
+  );
+}
+.bassline-bar.playing {
+  background: var(--accent-soft);
+}
+.bassline-beat {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 2px;
+  border-radius: var(--radius-sm);
+}
+.bassline-beat.empty {
+  color: var(--faint);
+  justify-content: center;
+}
+.bassline-beat.active {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.bassline-note {
+  font-family: var(--serif);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+}
+.bassline-label {
+  font-family: var(--sans);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+.bassline-beat.active .bassline-label {
+  color: var(--accent-ink);
+}

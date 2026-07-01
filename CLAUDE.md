@@ -21,7 +21,7 @@ React is only at the edges. State is a single Zustand store (`src/state/store.ts
 plucked-string synth (`src/audio/`).
 
 ```
-src/music/        notes, chords, tuning, voicing, voiceLeading, progressions, song, chart  (no React)
+src/music/        notes, chords, tuning, voicing, voiceLeading, progressions, song, chart, walkingBass  (no React)
 src/music/ireal/  iReal Pro format: unscramble, chordParser, parse, serialize, flatten, fixtures
 src/audio/        Web Audio chord player + hook
 src/state/        Zustand store (settings + editable IRealChart)
@@ -82,6 +82,33 @@ raised quality, pretty accidentals) used by both. A persisted `chartViewMode`
 - "Avoid b9": any two voices a minor-9th apart, except dominant 7♭9.
 - Voice-leading optimiser: greedy minimisation of fret movement + a missed-lead-note penalty;
   guide line is tracked on the top string (B for middle, high-E for upper).
+- Walking bass (`walkingBass.ts`, after Ed Friedland's *Building Walking Bass Lines*): a
+  progressive style ladder — `roots` → `roots-fifths` → `chromatic` / `dominant` / `scale`
+  approach → `walking` (full) → `advanced` (Part Two). Invariants: the root anchors every
+  chord's downbeat; the last beat before a change is an approach note (chromatic U/chr·L/chr,
+  dominant U/dom·L/dom = the target's fifth, or scale `sc`); inner beats arpeggiate chord
+  tones. `advanced` replaces the single approach with a two-note **indirect resolution** — one
+  of Friedland's five chromatic/scalar enclosures (U/sc·L/sc·U/chr·L/chr pairs) surrounding the
+  next root over the bar's last two beats, falling back to a single approach when a quick
+  (≤2-beat) change leaves no room.
+- Rhythmic feel (`embellishBassLine` + the player) is an **extension beyond the book** — Friedland
+  is a straight-quarter method (its "Top Priority" page is about time-keeping, not ornament).
+  Three independent options layer real jazz-bass time onto the generated line, for *playback
+  only* (the readout always shows the clean harmonic line): **swing** (player delays each
+  offbeat "and" to a triplet feel), **ghost notes** (a quiet chromatic eighth raked into a
+  target on the "and"), **anticipate** (a chord-change root pushed an eighth early) and
+  **triplet drops** (an upper/lower-neighbour pair in the beat *before* a target, so the target
+  is the triplet's third hit — it always lands immediately, even from a half-note two-feel gap). A **Variation** slider
+  (`bassAmount`, 0–1) sets how often they fire; selection is deterministic and evenly spread
+  via a golden-ratio low-discrepancy sequence (`spread()`), never RNG, so the line is stable
+  across renders. The player's bass track takes fractional beats + a per-note `velocity`; bass
+  notes fire anywhere in their beat window, not just on the integer beat. The picker never
+  repeats the previous note, and the line is octave-placed nearest the previous note within
+  the bass register (E1–E3). It harvests harmonic chord tones and the scale (Mixolydian/
+  Dorian/Ionian/dim) from the chord catalogue, *not* the drop-2 voicing. Two-feel = half
+  notes, four-feel = quarters. The Sequence Builder generates it over the flattened form and
+  feeds the player a `bassNotes` track keyed by absolute beat (a live style change just swaps
+  the array); `BassLineView` renders the line under the chart with its analysis labels.
 
 ## Testing
 - Unit: `src/music/**/*.test.ts` + `src/components/chartLayout.test.ts` (144 tests) cover spelling,

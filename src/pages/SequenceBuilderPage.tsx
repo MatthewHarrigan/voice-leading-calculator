@@ -21,11 +21,13 @@ import {
 
 type OptimizedSeqChord = OptimizedChord<SequenceChord>;
 import { pitchClassOf } from '@/music/notes';
+import { BASS_STYLES, embellishBassLine, generateWalkingBass } from '@/music/walkingBass';
 import { SONG_PRESETS } from '@/data/presets';
 import { useStore } from '@/state/store';
 import { ChordTypeSelect, NoteSelect } from '@/components/pickers';
 import { ChartView } from '@/components/ChartView';
 import { GuitarChartView } from '@/components/GuitarChartView';
+import { BassLineView } from '@/components/BassLineView';
 import { ImportPanel } from '@/components/ImportPanel';
 import { MeasureEditor } from '@/components/MeasureEditor';
 import { useInspector } from '@/components/inspectorContext';
@@ -67,6 +69,20 @@ export function SequenceBuilderPage() {
   const setBassline = useStore((s) => s.setBassline);
   const bassSolo = useStore((s) => s.bassSolo);
   const setBassSolo = useStore((s) => s.setBassSolo);
+  const bassStyle = useStore((s) => s.bassStyle);
+  const setBassStyle = useStore((s) => s.setBassStyle);
+  const bassFeel = useStore((s) => s.bassFeel);
+  const setBassFeel = useStore((s) => s.setBassFeel);
+  const bassSwing = useStore((s) => s.bassSwing);
+  const setBassSwing = useStore((s) => s.setBassSwing);
+  const bassGhosts = useStore((s) => s.bassGhosts);
+  const setBassGhosts = useStore((s) => s.setBassGhosts);
+  const bassAnticipate = useStore((s) => s.bassAnticipate);
+  const setBassAnticipate = useStore((s) => s.setBassAnticipate);
+  const bassTriplets = useStore((s) => s.bassTriplets);
+  const setBassTriplets = useStore((s) => s.setBassTriplets);
+  const bassAmount = useStore((s) => s.bassAmount);
+  const setBassAmount = useStore((s) => s.setBassAmount);
   const repeatForm = useStore((s) => s.repeatForm);
   const setRepeatForm = useStore((s) => s.setRepeatForm);
   const chartViewMode = useStore((s) => s.chartViewMode);
@@ -220,8 +236,35 @@ export function SequenceBuilderPage() {
 
   const beatsPerBar = chart.timeSignature[0];
 
+  // The walking bass line for the whole form, regenerated when the chart, the
+  // chosen style/feel, or the bar grid changes. Drives both playback and the
+  // on-screen analysis readout.
+  const bassLine = useMemo(() => {
+    if (!optimized) return [];
+    const input = optimized.map((chord) => ({
+      rootPc: pitchClassOf(chord.root),
+      chordType: chord.chordType,
+      startBeat: (barStartBeats[chord.barIndex] ?? chord.barIndex * beatsPerBar) + (chord.beat - 1),
+      durationBeats: chord.durationBeats,
+    }));
+    return generateWalkingBass(input, { style: bassStyle, feel: bassFeel });
+  }, [optimized, barStartBeats, beatsPerBar, bassStyle, bassFeel]);
+
+  // Playback adds rhythmic feel (anticipations / ghost skips) on top of the
+  // visual line; swing is applied by the player to whatever offbeats result.
+  const bassPlayback = useMemo(
+    () =>
+      embellishBassLine(bassLine, {
+        ghosts: bassGhosts,
+        anticipate: bassAnticipate,
+        triplets: bassTriplets,
+        amount: bassAmount,
+      }),
+    [bassLine, bassGhosts, bassAnticipate, bassTriplets, bassAmount],
+  );
+
   // Push control changes to the running arrangement so tempo, metronome, bass,
-  // solo and loop all update live mid-playback (not just on the next Play).
+  // solo, style and loop all update live mid-playback (not just on the next Play).
   useEffect(() => {
     if (!sequencePlaying) return;
     getChordPlayer().setArrangementOptions({
@@ -230,10 +273,12 @@ export function SequenceBuilderPage() {
       metronome,
       bassline,
       soloBass: bassSolo,
+      bassNotes: bassPlayback,
+      swing: bassSwing,
       loop: repeatForm,
       loopCount: chart.repeats ?? 1,
     });
-  }, [sequencePlaying, tempo, beatsPerBar, metronome, bassline, bassSolo, repeatForm, chart.repeats]);
+  }, [sequencePlaying, tempo, beatsPerBar, metronome, bassline, bassSolo, bassPlayback, bassSwing, repeatForm, chart.repeats]);
 
   const playAll = () => {
     if (!optimized || !audioEnabled) return;
@@ -242,7 +287,6 @@ export function SequenceBuilderPage() {
       stringSet: chord.stringSet,
       startBeat: (barStartBeats[chord.barIndex] ?? chord.barIndex * beatsPerBar) + (chord.beat - 1),
       durationBeats: chord.durationBeats,
-      bassMidi: 40 + ((pitchClassOf(chord.displayRoot) - 4 + 12) % 12),
     }));
     getChordPlayer().playArrangement(events, {
       bpm: tempo,
@@ -250,6 +294,8 @@ export function SequenceBuilderPage() {
       metronome,
       bassline,
       soloBass: bassSolo,
+      bassNotes: bassPlayback,
+      swing: bassSwing,
       loop: repeatForm,
       loopCount: chart.repeats ?? 1,
     });
@@ -589,15 +635,77 @@ export function SequenceBuilderPage() {
               <input type="checkbox" checked={metronome} onChange={(e) => setMetronome(e.target.checked)} data-testid="metronome" />
               Metronome
             </label>
-            <label className="switch" title="Play each chord's root as a bass note">
+            <label className="switch" title="Generate a walking bass line under the chords">
               <input type="checkbox" checked={bassline} onChange={(e) => setBassline(e.target.checked)} data-testid="bassline" />
               Bass line
             </label>
             {bassline && (
-              <label className="switch" title="Mute the chords — hear only the bass line">
-                <input type="checkbox" checked={bassSolo} onChange={(e) => setBassSolo(e.target.checked)} data-testid="bass-solo" />
-                Solo
-              </label>
+              <>
+                <select
+                  className="bass-style-select"
+                  value={bassStyle}
+                  onChange={(e) => setBassStyle(e.target.value as typeof bassStyle)}
+                  title={BASS_STYLES.find((s) => s.id === bassStyle)?.hint}
+                  aria-label="Walking bass style"
+                  data-testid="bass-style"
+                >
+                  {BASS_STYLES.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+                <label className="switch" title="Half-note (two) vs quarter-note (four) feel">
+                  <input
+                    type="checkbox"
+                    checked={bassFeel === 'four'}
+                    onChange={(e) => setBassFeel(e.target.checked ? 'four' : 'two')}
+                    data-testid="bass-feel"
+                  />
+                  Four feel
+                </label>
+                <label className="switch" title="Swing the bass line's offbeats">
+                  <input type="checkbox" checked={bassSwing} onChange={(e) => setBassSwing(e.target.checked)} data-testid="bass-swing" />
+                  Swing
+                </label>
+                <label className="switch" title="Add ghosted eighth-note skips into the targets">
+                  <input type="checkbox" checked={bassGhosts} onChange={(e) => setBassGhosts(e.target.checked)} data-testid="bass-ghosts" />
+                  Ghost notes
+                </label>
+                <label className="switch" title="Push some chord-change downbeats an eighth early">
+                  <input type="checkbox" checked={bassAnticipate} onChange={(e) => setBassAnticipate(e.target.checked)} data-testid="bass-anticipate" />
+                  Anticipate
+                </label>
+                <label className="switch" title="Roll a triplet 'drop' into some targets">
+                  <input type="checkbox" checked={bassTriplets} onChange={(e) => setBassTriplets(e.target.checked)} data-testid="bass-triplets" />
+                  Triplets
+                </label>
+                {(bassGhosts || bassAnticipate || bassTriplets) && (
+                  <div className="control-group" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <span className="label" style={{ textTransform: 'none' }} title="How often the rhythmic embellishments fire">
+                      Variation
+                    </span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      step={5}
+                      value={Math.round(bassAmount * 100)}
+                      onChange={(e) => setBassAmount(Number(e.target.value) / 100)}
+                      aria-label="Embellishment variation"
+                      data-testid="bass-amount"
+                      style={{ width: 110 }}
+                    />
+                    <span style={{ fontVariantNumeric: 'tabular-nums', minWidth: 34 }}>
+                      {Math.round(bassAmount * 100)}%
+                    </span>
+                  </div>
+                )}
+                <label className="switch" title="Mute the chords — hear only the bass line">
+                  <input type="checkbox" checked={bassSolo} onChange={(e) => setBassSolo(e.target.checked)} data-testid="bass-solo" />
+                  Solo
+                </label>
+              </>
             )}
             <label className="switch" title="Loop the whole chart until you press Stop">
               <input type="checkbox" checked={repeatForm} onChange={(e) => setRepeatForm(e.target.checked)} data-testid="repeat-form" />
@@ -607,6 +715,17 @@ export function SequenceBuilderPage() {
 
           {chartViewMode !== 'chart' && (
             <GuitarChartView chart={chart} byMeasure={optimizedByMeasure} playingMeasureId={playingMeasureId} />
+          )}
+
+          {bassline && bassLine.length > 0 && (
+            <BassLineView
+              notes={bassLine}
+              measures={flat}
+              barStartBeats={barStartBeats}
+              chartKey={chart.key}
+              playingIndex={playingIndex}
+              playBeat={playBeat}
+            />
           )}
 
           <MovementAnalysis optimized={optimized} transitions={transitions} guide={guide} />
