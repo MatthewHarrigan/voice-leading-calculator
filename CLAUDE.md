@@ -143,12 +143,11 @@ raised quality, pretty accidentals) used by both. A persisted `chartViewMode`
 - Always keep `npm test`, `npm run test:e2e`, `npm run lint`, and `npm run typecheck` green.
 
 ## Deployment
-CI runs on every push/PR (`.github/workflows/ci.yml`). The Pages deploy
-(`.github/workflows/deploy.yml`) is **manual-only and currently non-functional**: the repo is
-private, and GitHub Pages needs a public repo (or a paid plan). To go live: make the repo
-public, enable Settings → Pages → Source: GitHub Actions, and re-add the push trigger to
-deploy.yml — or host the `dist/` build elsewhere (Netlify/Vercel/Cloudflare support private
-repos). The production base path is `/voice-leading-calculator/`; e2e/CI build with `VITE_BASE=/`.
+The repo is **public** and GitHub Actions deploys to GitHub Pages on every push to `main`
+(`.github/workflows/deploy.yml`) — live at
+https://matthewharrigan.github.io/voice-leading-calculator/. CI runs on every push/PR
+(`.github/workflows/ci.yml`). The production base path is `/voice-leading-calculator/`;
+e2e/CI build with `VITE_BASE=/`.
 
 ## Notes for Claude
 - **Commit messages must NOT include Claude credit or co-author lines.**

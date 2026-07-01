@@ -1,11 +1,8 @@
 name: Deploy to GitHub Pages
 
 on:
-  # Manual-only for now. GitHub Pages isn't available on this repo's current
-  # plan/visibility, so auto-running on every push only produced failed runs
-  # (and failure-notification emails). Once Pages is enabled — make the repo
-  # public or use a plan that allows Pages, then Settings → Pages → Source:
-  # GitHub Actions — run this from the Actions tab, or re-add the push trigger.
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
