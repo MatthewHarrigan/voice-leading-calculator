@@ -442,21 +442,56 @@ input[type='text'] {
 }
 
 /* ---------- Bass control cluster ---------- */
-/* One visual unit for everything that only matters while the bass plays. */
+/* One visual unit for everything that only matters while the bass plays.
+   A soft rectangle, not a pill — pills turn into blobs the moment the
+   controls wrap onto a second line. */
 .bass-group {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
-  padding: 6px 14px;
+  gap: 12px 16px;
+  padding: 10px 14px;
   background: var(--surface-2);
-  border-radius: 999px;
+  border-radius: var(--radius);
+  flex: 1 1 100%;
 }
 .bass-group-label {
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+/* Toggle labels shouldn't highlight when tapped, and never break mid-label. */
+.switch,
+.control-group > .label,
+.bass-group-label {
+  user-select: none;
+}
+.switch {
+  white-space: nowrap;
+}
+
+.tempo-slider {
+  width: 140px;
+}
+
+/* When the playback controls wrap on a narrow screen, snap the switches to
+   two tidy columns instead of a ragged flow. */
+@media (max-width: 760px) {
+  .playback-bar > .control-group,
+  .bass-group > select,
+  .bass-group > .control-group {
+    flex: 1 1 100%;
+  }
+  .playback-bar > .switch,
+  .bass-group > .switch {
+    flex: 0 0 calc(50% - 11px);
+  }
+  .tempo-slider {
+    flex: 1;
+    width: auto;
+  }
 }
 
 /* ---------- Small screens ---------- */

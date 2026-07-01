@@ -665,19 +665,19 @@ export function SequenceBuilderPage() {
           </div>
 
           {/* Tempo & playback */}
-          <div className="control-bar" style={{ marginTop: 14, marginBottom: 0 }}>
+          <div className="control-bar playback-bar" style={{ marginTop: 14, marginBottom: 0 }}>
             <div className="control-group">
               <span className="label">Tempo</span>
               <div className="row" style={{ gap: 10 }}>
                 <input
                   type="range"
+                  className="tempo-slider"
                   min={40}
                   max={300}
                   step={1}
                   value={tempo}
                   onChange={(e) => setTempo(Number(e.target.value))}
                   aria-label="Tempo (BPM)"
-                  style={{ width: 140 }}
                 />
                 <span style={{ fontVariantNumeric: 'tabular-nums', minWidth: 58 }}>♩ = {tempo}</span>
               </div>
