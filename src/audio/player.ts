@@ -83,7 +83,11 @@ export interface ArrangementOptions {
   loop?: boolean;
   /** Play the whole form this many times before stopping (ignored when loop). */
   loopCount?: number;
+  /** Click one bar of metronome before the form starts (even with metronome off). */
+  countIn?: boolean;
 }
+
+export type TransportState = 'idle' | 'playing' | 'paused';
 
 export class ChordPlayer {
   private ctx: AudioContext | null = null;
@@ -104,6 +108,14 @@ export class ChordPlayer {
   private liveOptions: ArrangementOptions | null = null;
   // Current in-form beat during arrangement playback (-1 when idle), for a playhead.
   private beatListeners = new Set<(beat: number) => void>();
+  private transport: TransportState = 'idle';
+  private transportListeners = new Set<(state: TransportState) => void>();
+  // Handles into the running arrangement's closure so pause/resume can freeze
+  // the scheduler and restart its clock without losing its place.
+  private arrControl: { schedule: (abs: number) => void; resetClock: () => void; nextAbs: number } | null = null;
+  // One-shot: after a resume, the next beat re-strikes chords still sounding at
+  // that beat (not just ones that start on it), so playback picks up audibly.
+  private resumeRestrike = false;
 
   /** Subscribe to the current playback beat (-1 when idle). Returns an unsubscribe fn. */
   onBeat(listener: (beat: number) => void): () => void {
@@ -135,6 +147,22 @@ export class ChordPlayer {
     if (this.seqPlaying === playing) return;
     this.seqPlaying = playing;
     this.seqListeners.forEach((l) => l(playing));
+  }
+
+  /** Subscribe to transport changes (idle / playing / paused); returns an unsubscribe fn. */
+  onTransportChange(listener: (state: TransportState) => void): () => void {
+    this.transportListeners.add(listener);
+    return () => this.transportListeners.delete(listener);
+  }
+
+  getTransportState(): TransportState {
+    return this.transport;
+  }
+
+  private setTransport(state: TransportState): void {
+    if (this.transport === state) return;
+    this.transport = state;
+    this.transportListeners.forEach((l) => l(state));
   }
 
   private ensureContext(): AudioContext {
@@ -328,8 +356,46 @@ export class ChordPlayer {
       this.seqTimer = null;
     }
     this.liveOptions = null;
+    this.arrControl = null;
+    this.resumeRestrike = false;
     this.emitBeat(-1);
     this.setSeqPlaying(false);
+    this.setTransport('idle');
+  }
+
+  /**
+   * Freeze the running arrangement at the next beat boundary. Ringing strings
+   * are damped; the scheduler's place is kept so resume() picks up exactly
+   * where it left off. The sequence still counts as "playing" while paused.
+   */
+  pause(): void {
+    if (this.transport !== 'playing' || !this.arrControl) return;
+    if (this.seqTimer !== null) {
+      clearTimeout(this.seqTimer);
+      this.seqTimer = null;
+    }
+    if (this.ctx) {
+      const now = this.ctx.currentTime;
+      for (let s = 0; s <= 6; s++) {
+        const voice = this.stringVoices[s];
+        if (voice) {
+          this.dampVoice(voice, now);
+          this.stringVoices[s] = null;
+        }
+      }
+    }
+    this.lastChordSig = null;
+    this.setTransport('paused');
+  }
+
+  /** Continue a paused arrangement from the beat it stopped before. */
+  resumePlayback(): void {
+    const control = this.arrControl;
+    if (this.transport !== 'paused' || !control) return;
+    this.setTransport('playing');
+    this.resumeRestrike = true;
+    control.resetClock();
+    control.schedule(control.nextAbs);
   }
 
   /**
@@ -501,28 +567,43 @@ export class ChordPlayer {
       const totalBeats = arrangementSpanBeats(events);
       const token = ++this.seqToken;
       this.setSeqPlaying(true);
+      this.setTransport('playing');
       // Incremental beat grid (target time advances by the *current* seconds-per-
       // beat) so a live tempo change re-times from the next beat without a jump.
       let nextTime = performance.now();
 
       // `abs` is an ever-increasing beat counter so looping stays drift-free.
+      // A count-in starts it negative: those beats click but play nothing.
       const scheduleBeat = (abs: number) => {
         if (token !== this.seqToken) return;
         const opts = this.liveOptions;
         if (!opts) return;
         const spb = 60 / Math.max(20, opts.bpm); // seconds per beat
         const beatsPerBar = opts.beatsPerBar ?? 4;
+        const at = ctx.currentTime + 0.06;
+
+        if (abs < 0) {
+          // Count-in bar: metronome only, accented on its first beat.
+          this.metronomeClick(at, abs === -beatsPerBar);
+          this.arrControl!.nextAbs = abs + 1;
+          nextTime += spb * 1000;
+          this.seqTimer = setTimeout(() => scheduleBeat(abs + 1), Math.max(0, nextTime - performance.now()));
+          return;
+        }
+
         // Wrap the beat to the form length so every pass (loop or finite repeat)
         // re-fires the chart's events and re-drives the playhead.
         const passes = opts.loop ? Infinity : Math.max(1, opts.loopCount ?? 1);
         const beat = abs % totalBeats;
         this.emitBeat(beat);
-        const at = ctx.currentTime + 0.06;
         if (opts.metronome) this.metronomeClick(at, beat % beatsPerBar === 0);
+        const restrike = this.resumeRestrike;
+        this.resumeRestrike = false;
         const soloing = !!(opts.bassline && opts.soloBass);
         if (!soloing) {
           for (const e of events) {
-            if (e.startBeat !== beat) continue;
+            const sounding = restrike && e.startBeat < beat && e.startBeat + e.durationBeats > beat;
+            if (e.startBeat !== beat && !sounding) continue;
             this.strumAt(e.fingering, e.stringSet, at, 0.02);
           }
         }
@@ -552,16 +633,26 @@ export class ChordPlayer {
         }
         const next = abs + 1;
         if (next < totalBeats * passes) {
+          this.arrControl!.nextAbs = next;
           nextTime += spb * 1000;
           this.seqTimer = setTimeout(() => scheduleBeat(next), Math.max(0, nextTime - performance.now()));
         } else {
           this.seqTimer = null;
           this.liveOptions = null;
+          this.arrControl = null;
           this.emitBeat(-1);
           this.setSeqPlaying(false);
+          this.setTransport('idle');
         }
       };
-      scheduleBeat(0);
+      this.arrControl = {
+        schedule: scheduleBeat,
+        resetClock: () => {
+          nextTime = performance.now();
+        },
+        nextAbs: 0,
+      };
+      scheduleBeat(options.countIn ? -(options.beatsPerBar ?? 4) : 0);
     } catch {
       /* no audio available */
     }
