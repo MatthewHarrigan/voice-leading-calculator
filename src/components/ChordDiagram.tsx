@@ -11,7 +11,9 @@ import { hasFlatNineAvoidInterval, type Fingering } from '@/music/voicing';
 
 const W = 200;
 const BASE_H = 240;
-const MARGIN = { top: 35, bottom: 20, left: 25, right: 25 };
+// The left gutter is wider than the right so the enlarged starting-fret
+// number floats with clear air between the diagram edge and the fretboard.
+const MARGIN = { top: 35, bottom: 20, left: 32, right: 25 };
 const NUM_FRETS = 5;
 
 export interface ChordDiagramProps {
