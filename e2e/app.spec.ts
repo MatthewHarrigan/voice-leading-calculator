@@ -76,6 +76,45 @@ test('string set toggle persists across navigation', async ({ page }) => {
   await expect(page.getByTestId('stringset-upper')).toHaveClass(/active/);
 });
 
+test('command palette opens with ⌘K, searches, and loads a preset', async ({ page }) => {
+  await gotoFresh(page);
+  // The shortcut listener attaches on mount — wait for the header trigger so a
+  // too-early keypress isn't silently lost.
+  await expect(page.getByTestId('palette-trigger')).toBeVisible();
+  await page.keyboard.press('ControlOrMeta+k');
+  await expect(page.getByTestId('command-palette')).toBeVisible();
+
+  await page.getByTestId('palette-input').fill('jazz blues in f');
+  await page.getByTestId('palette-row').first().click();
+
+  // Loads the preset and jumps to the Sequence Builder.
+  await expect(page.getByTestId('command-palette')).toHaveCount(0);
+  await expect(page.locator('.chart-meta')).toContainText('Jazz Blues in F');
+
+  // The header trigger opens it too, and Escape closes it.
+  await page.getByTestId('palette-trigger').click();
+  await expect(page.getByTestId('command-palette')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByTestId('command-palette')).toHaveCount(0);
+});
+
+test('loading a new tune stops playback and resets the playhead', async ({ page }) => {
+  await gotoClean(page);
+  await page.getByRole('link', { name: 'Sequence Builder' }).click();
+  await addChord(page, 'D', 'min7');
+  await addChord(page, 'G', 'dom7');
+
+  await page.getByTestId('transport-play').click();
+  await expect(page.getByTestId('transport-stop')).toBeVisible();
+
+  // Load a different tune mid-playback: transport returns to idle, playhead clears.
+  await page.getByLabel('Preset').selectOption({ label: 'Jazz Blues in F' });
+  await page.getByRole('button', { name: 'Load' }).click();
+  await expect(page.getByTestId('transport-play')).toBeVisible();
+  await expect(page.locator('.chart-measure.measure-playing')).toHaveCount(0);
+  await expect(page.locator('.chart-meta')).toContainText('Jazz Blues in F');
+});
+
 test('cross-sets toggle persists and progressions label their set pattern', async ({ page }) => {
   await gotoFresh(page);
   await openSettings(page);

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { NavLink, Route, Routes } from 'react-router-dom';
 import { useStore } from '@/state/store';
 import { InspectorProvider } from '@/components/inspector';
+import { CommandPalette } from '@/components/CommandPalette';
 import { GlobalControls } from '@/components/GlobalControls';
 import { LibraryPage } from '@/pages/LibraryPage';
 import { ProgressionsPage } from '@/pages/ProgressionsPage';
@@ -40,8 +41,22 @@ export function App() {
             ))}
           </nav>
           <div className="topbar-spacer" />
+          <button
+            type="button"
+            className="palette-trigger"
+            data-testid="palette-trigger"
+            title="Search tunes, presets and pages (⌘K)"
+            onClick={() =>
+              window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))
+            }
+          >
+            <span className="palette-trigger-label">Search…</span>
+            <kbd>⌘K</kbd>
+          </button>
           <GlobalControls />
         </header>
+
+        <CommandPalette />
 
         <main className="content">
           <Routes>

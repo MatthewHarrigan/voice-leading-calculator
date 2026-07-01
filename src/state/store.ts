@@ -16,6 +16,7 @@ import {
   songToChart,
   transposeChart,
 } from '@/music/chart';
+import { getChordPlayer } from '@/audio/player';
 import { parseIRealIndex, parseIRealURL, type IRealIndex } from '@/music/ireal/parse';
 import type { BarlineClose, BarlineOpen, IRealChart, IRealChord, IRealMeasure } from '@/music/ireal/types';
 import { createEmptySong, uid, type SequenceChord, type Song } from '@/music/song';
@@ -449,14 +450,18 @@ export const useStore = create<AppState>()(
           insertionMeasureId: null,
         }),
 
-      loadChart: (chart) =>
+      loadChart: (chart) => {
+        // A new tune must not inherit the old one's playback — stop the
+        // transport so the playhead resets to the start.
+        getChordPlayer().stop();
         set((s) => ({
           chart: normalize(cloneChart(chart)),
           tempo: chart.tempo ?? s.tempo,
           selectedChordId: null,
           selectedMeasureId: null,
           insertionMeasureId: null,
-        })),
+        }));
+      },
 
       addSavedCharts: (charts) =>
         set((s) => {
@@ -465,7 +470,8 @@ export const useStore = create<AppState>()(
           return { savedCharts: Array.from(byTitle.values()) };
         }),
 
-      loadSong: (song) =>
+      loadSong: (song) => {
+        getChordPlayer().stop();
         set((s) => {
           const chart = normalize(songToChart(song));
           return {
@@ -475,12 +481,14 @@ export const useStore = create<AppState>()(
             selectedMeasureId: null,
             insertionMeasureId: null,
           };
-        }),
+        });
+      },
 
       importIRealText: (text) => {
         try {
           const playlist = parseIRealURL(text);
           const chart = normalize(cloneChart(playlist.songs[0]));
+          getChordPlayer().stop();
           set((s) => ({
             chart,
             tempo: chart.tempo ?? s.tempo,

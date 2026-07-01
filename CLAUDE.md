@@ -130,6 +130,11 @@ raised quality, pretty accidentals) used by both. A persisted `chartViewMode`
   up audibly, and the count-in bar is scheduled as negative beats that click but play nothing.
 - Grid chord cards carry ONE caption (HTML, below the diagram) — the in-SVG title is for
   standalone diagrams (inspector, progressions), not grids (`showTitle={false}`).
+- ⌘K opens a Spotlight-style command palette (`CommandPalette.tsx`, mounted in `App`): searches
+  presets, saved charts, user playlists and the loaded iReal library, plus page navigation and
+  "Open Jazz 1460" (which loads the bundled playlist without leaving the palette). Loading any
+  chart (store `loadChart`/`loadSong`/`importIRealText`) stops the transport so the playhead
+  always resets on a tune change.
 
 ## Testing
 - Unit: `src/music/**/*.test.ts` + `src/components/chartLayout.test.ts` (185 tests) cover spelling,
@@ -137,7 +142,7 @@ raised quality, pretty accidentals) used by both. A persisted `chartViewMode`
   the walking-bass generator, the song model, the Song/Chart converters, the lead-sheet layout grid, and
   the iReal Pro engine (verified against the "9.20 Special" spec vector — 26 authored bars expand to
   32 — plus subtle-token coverage and 5 real standard fixtures with round-trips).
-- E2E: `e2e/app.spec.ts` (30 tests) exercises every page in a real browser, including iReal import
+- E2E: `e2e/app.spec.ts` (32 tests) exercises every page in a real browser, including iReal import
   (paste + standards), structure rendering, measure editing, the chart/guitar/both view toggle, and
   that the guitar sheet mirrors the score's chrome.
 - Always keep `npm test`, `npm run test:e2e`, `npm run lint`, and `npm run typecheck` green.
