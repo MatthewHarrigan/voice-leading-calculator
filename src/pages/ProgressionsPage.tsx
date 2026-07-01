@@ -65,11 +65,10 @@ export function ProgressionsPage() {
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <h3>
               {type === 'major' ? 'Major ii-V-I' : 'Minor ii-V-i'} — Pattern {index + 1}
-              {freeStringSet && (
-                <span className="muted" style={{ fontWeight: 400, fontSize: 13, marginLeft: 8 }}>
-                  {pattern.stringSetPattern}
-                </span>
-              )}
+              <span className="muted" style={{ fontWeight: 400, fontSize: 13, marginLeft: 8 }}>
+                movement {pattern.totalDistance}
+                {freeStringSet ? ` · ${pattern.stringSetPattern}` : ''}
+              </span>
             </h3>
             {audioEnabled &&
               (sequencePlaying && playingIndex === index ? (

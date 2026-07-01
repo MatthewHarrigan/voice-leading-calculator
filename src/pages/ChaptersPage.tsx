@@ -129,6 +129,7 @@ function ChapterCard({
         targetTopNote: card.leadNote ?? null,
       }}
       caption={card.caption}
+      showTitle={false}
       highlightAvoid={highlightAvoid}
     />
   );

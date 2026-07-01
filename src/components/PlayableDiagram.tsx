@@ -116,7 +116,11 @@ export function PlayableDiagram({
       className={`chord-card${avoid ? ' is-avoid' : ''}${className ? ` ${className}` : ''}`}
       {...gesture}
     >
-      {avoid && <span className="avoid-flag">b9</span>}
+      {avoid && (
+        <span className="avoid-flag" title="Contains a minor-9th (b9) clash — the classic avoid interval">
+          b9
+        </span>
+      )}
       {diagram}
       {caption && <div className="card-caption">{caption}</div>}
     </div>

@@ -30,9 +30,10 @@ import { GuitarChartView } from '@/components/GuitarChartView';
 import { BassLineView } from '@/components/BassLineView';
 import { ImportPanel } from '@/components/ImportPanel';
 import { MeasureEditor } from '@/components/MeasureEditor';
+import { Popover } from '@/components/Popover';
 import { useInspector } from '@/components/inspectorContext';
 import { getChordPlayer } from '@/audio/player';
-import { useSequencePlaying } from '@/audio/useSequencePlaying';
+import { useSequencePlaying, useTransportState } from '@/audio/useSequencePlaying';
 import { usePlaybackBeat } from '@/audio/usePlaybackBeat';
 
 const TRANSPOSE_STEPS = [-1, 1];
@@ -60,12 +61,16 @@ export function SequenceBuilderPage() {
   const avoidB9 = useStore((s) => s.avoidB9);
   const audioEnabled = useStore((s) => s.audioEnabled);
   const sequencePlaying = useSequencePlaying();
+  const transport = useTransportState();
+  const [showDetails, setShowDetails] = useState(false);
   const startingInversion = useStore((s) => s.startingInversion);
   const setStartingInversion = useStore((s) => s.setStartingInversion);
   const tempo = useStore((s) => s.tempo);
   const setTempo = useStore((s) => s.setTempo);
   const metronome = useStore((s) => s.metronome);
   const setMetronome = useStore((s) => s.setMetronome);
+  const countIn = useStore((s) => s.countIn);
+  const setCountIn = useStore((s) => s.setCountIn);
   const bassline = useStore((s) => s.bassline);
   const setBassline = useStore((s) => s.setBassline);
   const bassSolo = useStore((s) => s.bassSolo);
@@ -293,6 +298,7 @@ export function SequenceBuilderPage() {
       bpm: tempo,
       beatsPerBar,
       metronome,
+      countIn,
       bassline,
       soloBass: bassSolo,
       bassNotes: bassPlayback,
@@ -357,49 +363,45 @@ export function SequenceBuilderPage() {
             </button>
           </div>
         )}
-        <div className="control-group">
-          <span className="label">Export</span>
-          <div className="row">
-            <button
-              className="btn btn-sm"
-              data-testid="export-link"
-              onClick={() => {
-                const url = toIRealURL(chart);
-                navigator.clipboard?.writeText(url).catch(() => {});
-                window.prompt('iReal Pro link (copy):', url);
-              }}
-            >
-              Link
-            </button>
-            <button className="btn btn-sm" onClick={() => download(`${slug(chart.title)}.html`, toIRealHTML(chart), 'text/html')}>
-              .html
-            </button>
-            <button
-              className="btn btn-sm"
-              onClick={() => download(`${slug(chart.title)}.json`, JSON.stringify(chart, null, 2), 'application/json')}
-            >
-              .json
-            </button>
-          </div>
-        </div>
-
-        <button
-          className="btn btn-sm"
-          onClick={() => {
-            const name = window.prompt('Name this chart:', chart.title);
-            if (name) saveCurrentAs(name);
-          }}
-        >
-          Save as…
-        </button>
-        <button
-          className="btn btn-sm btn-danger"
-          onClick={() => {
-            if (window.confirm('Clear the entire chart? This cannot be undone.')) clearChart();
-          }}
-        >
-          Clear All
-        </button>
+        <Popover label="Export ▾" title="Share, download, save or clear this chart" testid="export-menu">
+          <button
+            className="menu-item"
+            data-testid="export-link"
+            onClick={() => {
+              const url = toIRealURL(chart);
+              navigator.clipboard?.writeText(url).catch(() => {});
+              window.prompt('iReal Pro link (copy):', url);
+            }}
+          >
+            Copy iReal Pro link
+          </button>
+          <button className="menu-item" onClick={() => download(`${slug(chart.title)}.html`, toIRealHTML(chart), 'text/html')}>
+            Download .html
+          </button>
+          <button
+            className="menu-item"
+            onClick={() => download(`${slug(chart.title)}.json`, JSON.stringify(chart, null, 2), 'application/json')}
+          >
+            Download .json
+          </button>
+          <button
+            className="menu-item"
+            onClick={() => {
+              const name = window.prompt('Name this chart:', chart.title);
+              if (name) saveCurrentAs(name);
+            }}
+          >
+            Save as…
+          </button>
+          <button
+            className="menu-item menu-item-danger"
+            onClick={() => {
+              if (window.confirm('Clear the entire chart? This cannot be undone.')) clearChart();
+            }}
+          >
+            Clear all…
+          </button>
+        </Popover>
       </div>
 
       {showImport && (
@@ -412,7 +414,24 @@ export function SequenceBuilderPage() {
         />
       )}
 
-      {/* Chart metadata */}
+      <div className="chart-meta">
+        <strong>{chart.title}</strong> · Key {chart.key ?? 'C'} · {chart.measures.length} bar
+        {chart.measures.length === 1 ? '' : 's'} · {chordCount} chord{chordCount === 1 ? '' : 's'}
+        {chart.composer ? ` · ${chart.composer}` : ''}
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          style={{ marginLeft: 10 }}
+          aria-expanded={showDetails}
+          data-testid="edit-details"
+          onClick={() => setShowDetails((v) => !v)}
+        >
+          {showDetails ? 'Hide details ▴' : 'Edit details ▾'}
+        </button>
+      </div>
+
+      {/* Chart metadata (collapsed by default — the summary line above carries it) */}
+      {showDetails && (
       <div className="control-bar chart-meta-bar">
         <FormField label="Title">
           <input
@@ -475,17 +494,11 @@ export function SequenceBuilderPage() {
           </div>
         </FormField>
       </div>
-
-      <div className="chart-meta">
-        <strong>{chart.title}</strong> · Key {chart.key ?? 'C'} · {chart.measures.length} bar
-        {chart.measures.length === 1 ? '' : 's'} · {chordCount} chord{chordCount === 1 ? '' : 's'}
-        {chart.composer ? ` · ${chart.composer}` : ''}
-      </div>
+      )}
 
       {/* iReal-style footer strip + view toggle */}
       <div className="chart-footer">
         <div className="chart-footer-info">
-          <span>♩ = {tempo}</span>
           <span>×{chart.repeats ?? 1}</span>
           <span>{chart.key ?? 'C'}</span>
           {chart.style ? <span>{chart.style}</span> : null}
@@ -602,14 +615,51 @@ export function SequenceBuilderPage() {
                 </select>
               </FormField>
               {audioEnabled && (
-                <button
-                  type="button"
-                  className={`btn btn-sm${sequencePlaying ? ' btn-stop' : ' btn-primary'}`}
-                  onClick={() => (sequencePlaying ? getChordPlayer().stop() : playAll())}
-                  style={{ alignSelf: 'flex-end', minWidth: 120 }}
-                >
-                  {sequencePlaying ? '■ Stop' : '♪ Play sequence'}
-                </button>
+                <div className="row" style={{ alignSelf: 'flex-end' }}>
+                  {transport === 'idle' ? (
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-primary"
+                      style={{ minWidth: 96 }}
+                      data-testid="transport-play"
+                      onClick={playAll}
+                    >
+                      ▶ Play
+                    </button>
+                  ) : (
+                    <>
+                      {transport === 'playing' ? (
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          style={{ minWidth: 96 }}
+                          data-testid="transport-pause"
+                          onClick={() => getChordPlayer().pause()}
+                        >
+                          ❚❚ Pause
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-primary"
+                          style={{ minWidth: 96 }}
+                          data-testid="transport-resume"
+                          onClick={() => getChordPlayer().resumePlayback()}
+                        >
+                          ▶ Resume
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-stop"
+                        data-testid="transport-stop"
+                        onClick={() => getChordPlayer().stop()}
+                      >
+                        ■ Stop
+                      </button>
+                    </>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -636,12 +686,17 @@ export function SequenceBuilderPage() {
               <input type="checkbox" checked={metronome} onChange={(e) => setMetronome(e.target.checked)} data-testid="metronome" />
               Metronome
             </label>
+            <label className="switch" title="Click one bar in before the form starts">
+              <input type="checkbox" checked={countIn} onChange={(e) => setCountIn(e.target.checked)} data-testid="count-in" />
+              Count-in
+            </label>
             <label className="switch" title="Generate a walking bass line under the chords">
               <input type="checkbox" checked={bassline} onChange={(e) => setBassline(e.target.checked)} data-testid="bassline" />
               Bass line
             </label>
             {bassline && (
-              <>
+              <div className="bass-group" data-testid="bass-group">
+                <span className="bass-group-label">Bass</span>
                 <select
                   className="bass-style-select"
                   value={bassStyle}
@@ -706,7 +761,7 @@ export function SequenceBuilderPage() {
                   <input type="checkbox" checked={bassSolo} onChange={(e) => setBassSolo(e.target.checked)} data-testid="bass-solo" />
                   Solo
                 </label>
-              </>
+              </div>
             )}
             <label className="switch" title="Loop the whole chart until you press Stop">
               <input type="checkbox" checked={repeatForm} onChange={(e) => setRepeatForm(e.target.checked)} data-testid="repeat-form" />

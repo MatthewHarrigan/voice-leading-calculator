@@ -50,6 +50,7 @@ interface AppState {
   startingInversion: number;
   tempo: number; // BPM
   metronome: boolean;
+  countIn: boolean; // one clicked bar before playback starts
   bassline: boolean;
   bassSolo: boolean;
   bassStyle: BassStyle; // which rung of the walking-bass ladder to generate
@@ -89,6 +90,7 @@ interface AppState {
   setStartingInversion: (n: number) => void;
   setTempo: (n: number) => void;
   setMetronome: (v: boolean) => void;
+  setCountIn: (v: boolean) => void;
   setBassline: (v: boolean) => void;
   setBassSolo: (v: boolean) => void;
   setBassStyle: (s: BassStyle) => void;
@@ -253,6 +255,7 @@ export const useStore = create<AppState>()(
       startingInversion: 0,
       tempo: DEFAULT_TEMPO,
       metronome: false,
+      countIn: false,
       bassline: false,
       bassSolo: false,
       bassStyle: 'walking',
@@ -283,6 +286,7 @@ export const useStore = create<AppState>()(
       setStartingInversion: (startingInversion) => set({ startingInversion }),
       setTempo: (tempo) => set({ tempo: Math.max(40, Math.min(320, Math.round(tempo))) }),
       setMetronome: (metronome) => set({ metronome }),
+      setCountIn: (countIn) => set({ countIn }),
       setBassline: (bassline) => set({ bassline }),
       setBassSolo: (bassSolo) => set({ bassSolo }),
       setBassStyle: (bassStyle) => set({ bassStyle }),
@@ -626,6 +630,7 @@ export const useStore = create<AppState>()(
         startingInversion: state.startingInversion,
         tempo: state.tempo,
         metronome: state.metronome,
+        countIn: state.countIn,
         bassline: state.bassline,
         bassSolo: state.bassSolo,
         bassStyle: state.bassStyle,

@@ -23,7 +23,7 @@ plucked-string synth (`src/audio/`).
 ```
 src/music/        notes, chords, tuning, voicing, voiceLeading, progressions, song, chart, walkingBass  (no React)
 src/music/ireal/  iReal Pro format: unscramble, chordParser, parse, serialize, flatten, fixtures
-src/audio/        Web Audio chord player + hook
+src/audio/        Web Audio chord player + hooks (transport: play/pause/resume/stop + count-in)
 src/state/        Zustand store (settings + editable IRealChart)
 src/data/         song presets + chapter curriculum
 src/components/   ChordDiagram, ChartView, MeasureEditor, ImportPanel, inspector, pickers, controls
@@ -116,6 +116,20 @@ raised quality, pretty accidentals) used by both. A persisted `chartViewMode`
   notes, four-feel = quarters. The Sequence Builder generates it over the flattened form and
   feeds the player a `bassNotes` track keyed by absolute beat (a live style change just swaps
   the array); `BassLineView` renders the line under the chart with its analysis labels.
+
+## UI conventions
+
+- The header is one row at every width: global options (string set, cross sets, avoid-b9,
+  sound) live in the `⚙` settings popover (`GlobalControls` + the shared `Popover` component);
+  under 760px the nav becomes a single sideways-scrolling pill row and popovers anchor left.
+- Sequence Builder keeps controls off the music: chart metadata sits behind the summary line's
+  "Edit details" disclosure, exports/save/clear behind one "Export ▾" menu, and the bass options
+  render as a labelled `.bass-group` cluster only while the bass line is on.
+- Playback transport is a state machine (`TransportState` in `player.ts`): pause freezes the
+  beat scheduler and damps the strings, resume re-strikes whatever chord is mid-bar so it picks
+  up audibly, and the count-in bar is scheduled as negative beats that click but play nothing.
+- Grid chord cards carry ONE caption (HTML, below the diagram) — the in-SVG title is for
+  standalone diagrams (inspector, progressions), not grids (`showTitle={false}`).
 
 ## Testing
 - Unit: `src/music/**/*.test.ts` + `src/components/chartLayout.test.ts` (185 tests) cover spelling,

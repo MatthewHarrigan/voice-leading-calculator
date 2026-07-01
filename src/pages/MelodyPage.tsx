@@ -94,6 +94,13 @@ export function MelodyPage() {
         </button>
       </div>
 
+      {!searched && line.length === 0 && (
+        <p className="empty-hint">
+          Try it: E on top of Cmaj7 finds the 2nd inversion. Each find can be added to a melody
+          line below, with the voice-leading between voicings analysed as you go.
+        </p>
+      )}
+
       {searched && !match && (
         <p className="empty-hint">
           No voicing (or family substitution) places {note} on top of {root}

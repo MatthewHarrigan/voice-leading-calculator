@@ -33,13 +33,10 @@ export function LibraryPage() {
         </p>
       </div>
 
-      <div className="control-bar">
+      <div className="control-bar" style={{ width: 'fit-content', paddingRight: 28 }}>
         <div className="control-group">
           <span className="label">Root</span>
           <NoteSelect value={root} onChange={setRoot} aria-label="Root note" />
-        </div>
-        <div className="muted" style={{ fontSize: 13 }}>
-          {avoidB9 ? 'Voicings with a minor-9th (b9) clash are flagged in red.' : 'b9 highlighting off.'}
         </div>
       </div>
 
@@ -59,6 +56,7 @@ export function LibraryPage() {
                       key={inv}
                       chord={toInspect(voicing, root, typeId, stringSet)}
                       caption={inversionName(inv).replace(' Inversion', '')}
+                      showTitle={false}
                       highlightAvoid={avoidB9}
                     />
                   ) : (
@@ -92,6 +90,7 @@ export function LibraryPage() {
                 key={`${typeId}-${inv}`}
                 chord={toInspect(voicing, root, typeId, stringSet)}
                 caption={caption}
+                showTitle={false}
                 highlightAvoid={avoidB9}
               />
             ) : null;

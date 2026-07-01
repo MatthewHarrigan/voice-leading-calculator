@@ -377,6 +377,126 @@ input[type='text'] {
   padding: 7px 10px;
 }
 
+/* ---------- Popovers & menus ---------- */
+.popover-root {
+  position: relative;
+}
+.popover-trigger.active {
+  background: var(--surface-2);
+}
+.popover-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  z-index: 40;
+  min-width: 200px;
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.14);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.popover-left {
+  left: 0;
+}
+.popover-right {
+  right: 0;
+}
+
+.menu-item {
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.menu-item:hover {
+  background: var(--surface-2);
+}
+.menu-item-danger {
+  color: var(--danger);
+}
+
+.settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 8px 10px;
+  min-width: 230px;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.settings-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ---------- Bass control cluster ---------- */
+/* One visual unit for everything that only matters while the bass plays. */
+.bass-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 6px 14px;
+  background: var(--surface-2);
+  border-radius: 999px;
+}
+.bass-group-label {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---------- Small screens ---------- */
+@media (max-width: 760px) {
+  .topbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 14px;
+  }
+  .topbar-spacer {
+    display: none;
+  }
+  .brand {
+    margin-right: auto;
+  }
+  /* The nav takes its own full row and scrolls sideways instead of stacking. */
+  .nav {
+    order: 3;
+    width: 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar {
+    display: none;
+  }
+  .content {
+    padding: 20px 14px 60px;
+  }
+  /* Popover triggers sit near the left edge on small screens, so right-aligned
+     panels would open off-screen — anchor everything left and cap the width. */
+  .popover-right {
+    right: auto;
+    left: 0;
+  }
+  .popover-panel {
+    max-width: calc(100vw - 24px);
+  }
+}
+
 /* ---------- Chord diagram ---------- */
 .chord-diagram {
   width: 100%;
@@ -836,11 +956,19 @@ input[type='text'] {
 }
 
 /* ---------- Chapters ---------- */
+/* One scrollable row of pills, not a wrapping wall of buttons. */
 .chapter-toc {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
   margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+.chapter-toc .btn {
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .assignment-section {
   margin-bottom: 34px;

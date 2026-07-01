@@ -19,6 +19,12 @@ async function addChord(page: Page, root: string, type: string) {
   await page.getByRole('button', { name: 'Add Chord' }).click();
 }
 
+// The global options live in the header settings popover; open it on demand.
+async function openSettings(page: Page) {
+  const toggle = page.getByTestId('settings-toggle');
+  if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+}
+
 test('library renders diagrams and opens the voicing inspector', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -51,6 +57,7 @@ test('avoid-b9 toggle flags and unflags voicings', async ({ page }) => {
   const flagged = await page.locator('.chord-card.is-avoid').count();
   expect(flagged).toBeGreaterThan(0);
 
+  await openSettings(page);
   await page.getByTestId('avoid-b9').uncheck();
   await expect(page.locator('.chord-card.is-avoid')).toHaveCount(0);
 
@@ -60,24 +67,28 @@ test('avoid-b9 toggle flags and unflags voicings', async ({ page }) => {
 
 test('string set toggle persists across navigation', async ({ page }) => {
   await gotoFresh(page);
+  await openSettings(page);
   await page.getByTestId('stringset-upper').click();
   await expect(page.getByTestId('stringset-upper')).toHaveClass(/active/);
 
   await page.getByRole('link', { name: 'Progressions' }).click();
+  await openSettings(page);
   await expect(page.getByTestId('stringset-upper')).toHaveClass(/active/);
 });
 
 test('cross-sets toggle persists and progressions label their set pattern', async ({ page }) => {
   await gotoFresh(page);
+  await openSettings(page);
   await page.getByTestId('free-stringset').check();
 
   await page.getByRole('link', { name: 'Progressions' }).click();
+  await openSettings(page);
   await expect(page.getByTestId('free-stringset')).toBeChecked();
   await expect(page.locator('.progression')).toHaveCount(4);
-  await expect(page.locator('.progression h3 .muted').first()).toHaveText(/(middle|upper)-/);
+  await expect(page.locator('.progression h3 .muted').first()).toHaveText(/movement \d+ · (middle|upper)-/);
 
   await page.getByTestId('free-stringset').uncheck();
-  await expect(page.locator('.progression h3 .muted')).toHaveCount(0);
+  await expect(page.locator('.progression h3 .muted').first()).toHaveText(/movement \d+$/);
 });
 
 test('progressions show four ranked ii-V-I patterns', async ({ page }) => {
@@ -279,15 +290,20 @@ test('play sequence with tempo/metronome/bass can be stopped', async ({ page }) 
   await addChord(page, 'C', 'maj7');
 
   await page.getByTestId('metronome').check();
+  await page.getByTestId('count-in').check();
   await page.getByTestId('bassline').check();
   // Solo only appears once the bass line is enabled.
   await page.getByTestId('bass-solo').check();
 
-  await page.getByRole('button', { name: 'Play sequence' }).click();
-  const stop = page.getByRole('button', { name: 'Stop' });
+  await page.getByTestId('transport-play').click();
+  // Pause freezes the transport; Resume picks it back up; Stop ends it.
+  await page.getByTestId('transport-pause').click();
+  await expect(page.getByTestId('transport-resume')).toBeVisible();
+  await page.getByTestId('transport-resume').click();
+  const stop = page.getByTestId('transport-stop');
   await expect(stop).toBeVisible();
   await stop.click();
-  await expect(page.getByRole('button', { name: 'Play sequence' })).toBeVisible();
+  await expect(page.getByTestId('transport-play')).toBeVisible();
 
   expect(errors).toEqual([]);
 });
@@ -324,9 +340,9 @@ test('imports a pasted iReal Pro link with sections, endings and repeats', async
   await expect(page.locator('.chart-view .section-mark')).not.toHaveCount(0);
 
   // It can be played and stopped (structure-aware).
-  await page.getByRole('button', { name: 'Play sequence' }).click();
-  await page.getByRole('button', { name: 'Stop' }).click();
-  await expect(page.getByRole('button', { name: 'Play sequence' })).toBeVisible();
+  await page.getByTestId('transport-play').click();
+  await page.getByTestId('transport-stop').click();
+  await expect(page.getByTestId('transport-play')).toBeVisible();
 
   expect(errors).toEqual([]);
 });
@@ -379,8 +395,8 @@ test('playback options update live while the sequence is playing', async ({ page
   await addChord(page, 'G', 'dom7');
   await addChord(page, 'C', 'maj7');
 
-  await page.getByRole('button', { name: 'Play sequence' }).click();
-  await expect(page.getByRole('button', { name: 'Stop' })).toBeVisible();
+  await page.getByTestId('transport-play').click();
+  await expect(page.getByTestId('transport-stop')).toBeVisible();
 
   // Toggle each option WHILE playing — these must not throw or stop playback.
   await page.getByTestId('metronome').check();
@@ -392,9 +408,9 @@ test('playback options update live while the sequence is playing', async ({ page
   await page.getByTestId('metronome').uncheck();
 
   // Still playing (repeat-form loops it), and Stop returns to idle.
-  await expect(page.getByRole('button', { name: 'Stop' })).toBeVisible();
-  await page.getByRole('button', { name: 'Stop' }).click();
-  await expect(page.getByRole('button', { name: 'Play sequence' })).toBeVisible();
+  await expect(page.getByTestId('transport-stop')).toBeVisible();
+  await page.getByTestId('transport-stop').click();
+  await expect(page.getByTestId('transport-play')).toBeVisible();
 
   expect(errors).toEqual([]);
 });
@@ -409,12 +425,12 @@ test('a playhead highlights the current bar during playback', async ({ page }) =
   await expect(page.locator('.chart-measure.measure-playing')).toHaveCount(0);
 
   await page.getByLabel('Tempo (BPM)').fill('120');
-  await page.getByRole('button', { name: 'Play sequence' }).click();
+  await page.getByTestId('transport-play').click();
   // A bar lights up in the chart and a diagram lights up in the optimised grid.
   await expect(page.locator('.chart-measure.measure-playing')).toHaveCount(1);
   await expect(page.locator('.optimized-chord.playing')).not.toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Stop' }).click();
+  await page.getByTestId('transport-stop').click();
   await expect(page.locator('.chart-measure.measure-playing')).toHaveCount(0);
   await expect(page.locator('.optimized-chord.playing')).toHaveCount(0);
 });
@@ -598,6 +614,8 @@ test('changing the key transposes all chords in both views', async ({ page }) =>
   await expect(page.locator('.optimized-grid')).toContainText('Dm7');
 
   // Move the key up to D (a whole step): Dm7 G7 Cmaj7 -> Em7 A7 Dmaj7.
+  // The key control lives behind the chart-details disclosure.
+  await page.getByTestId('edit-details').click();
   await page.getByLabel('Chart key').selectOption('D');
 
   await expect(page.locator('.chart-meta')).toContainText('Key D');
