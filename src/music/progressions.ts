@@ -104,30 +104,41 @@ function evaluatePattern(
 
 /**
  * Generate the top `limit` ii-V-I patterns for the given string set, ranked by
- * total voice-leading distance (lower is smoother).
+ * total voice-leading distance (lower is smoother). With `freeStringSet` the
+ * first chord still starts on the given set, but the V and I may sit on either
+ * set — the ranking then weighs set hops against slides up the neck.
  */
 export function generateProgressions(
   type: ProgressionType,
   stringSet: StringSet,
-  options: { avoidB9?: boolean; limit?: number } = {},
+  options: { avoidB9?: boolean; limit?: number; freeStringSet?: boolean } = {},
 ): Progression[] {
   const avoidB9 = options.avoidB9 ?? true;
   const limit = options.limit ?? 4;
   const types = PROGRESSION_TYPES[type];
-  const pattern: [StringSet, StringSet, StringSet] = [stringSet, stringSet, stringSet];
+
+  const setChoices: StringSet[] = options.freeStringSet ? ['middle', 'upper'] : [stringSet];
+  const patterns: [StringSet, StringSet, StringSet][] = [];
+  for (const s2 of setChoices) {
+    for (const s3 of setChoices) {
+      patterns.push([stringSet, s2, s3]);
+    }
+  }
 
   const all: Progression[] = [];
-  for (let inv1 = 0; inv1 < 4; inv1++) {
-    for (let inv2 = 0; inv2 < 4; inv2++) {
-      for (let inv3 = 0; inv3 < 4; inv3++) {
-        const progression = evaluatePattern(
-          PROGRESSION_ROOTS,
-          types,
-          [inv1 as Inversion, inv2 as Inversion, inv3 as Inversion],
-          pattern,
-          avoidB9,
-        );
-        if (progression) all.push(progression);
+  for (const pattern of patterns) {
+    for (let inv1 = 0; inv1 < 4; inv1++) {
+      for (let inv2 = 0; inv2 < 4; inv2++) {
+        for (let inv3 = 0; inv3 < 4; inv3++) {
+          const progression = evaluatePattern(
+            PROGRESSION_ROOTS,
+            types,
+            [inv1 as Inversion, inv2 as Inversion, inv3 as Inversion],
+            pattern,
+            avoidB9,
+          );
+          if (progression) all.push(progression);
+        }
       }
     }
   }

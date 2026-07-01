@@ -39,27 +39,46 @@ export type OptimizedChord<T> = T & {
 export interface OptimizeOptions {
   startingInversion?: number;
   avoidB9?: boolean;
+  /**
+   * Let every chord after the first be voiced on either string set. The
+   * chord's own `stringSet` stays the home set the line starts on.
+   */
+  freeStringSet?: boolean;
 }
 
-/** Sum of absolute fret movement across the active strings between two fingerings. */
-export function voiceLeadingDistance(
-  a: Fingering,
-  b: Fingering,
-  stringSet: StringSet = 'middle',
-): number {
+const STRING_SETS: StringSet[] = ['middle', 'upper'];
+
+/**
+ * Flat cost for hopping between string sets, in fret-movement units. High
+ * enough that a repeated chord stays put (replaying the same pitches on the
+ * other set already costs ~18 frets), low enough that shifting the shape
+ * across the neck beats a long slide up it.
+ */
+const SET_SWITCH_COST = 4;
+
+/**
+ * Sum of absolute fret movement per voice between two fingerings. Voices are
+ * matched by position within each fingering's own string set, so a set switch
+ * compares hand *position* (same frets on the next set up ≈ no movement),
+ * plus a flat switch cost.
+ */
+export function voiceLeadingDistance(a: Fingering, b: Fingering): number {
+  const stringsA = activeStrings(a.stringSet);
+  const stringsB = activeStrings(b.stringSet);
   let total = 0;
-  for (const string of activeStrings(stringSet)) {
-    const fret1 = a.frets[string] ?? 0;
-    const fret2 = b.frets[string] ?? 0;
+  for (let voice = 0; voice < stringsA.length; voice++) {
+    const fret1 = a.frets[stringsA[voice]] ?? 0;
+    const fret2 = b.frets[stringsB[voice]] ?? 0;
     total += Math.abs(fret2 - fret1);
   }
+  if (a.stringSet !== b.stringSet) total += SET_SWITCH_COST;
   return total;
 }
 
 /** Penalty (in distance units) for missing a chord's target top note. */
 export function topNotePenalty(chord: OptimizableChord, fingering: Fingering): number {
   if (!chord.targetTopNote) return 0;
-  const actual = topNoteOf(fingering, chord.stringSet);
+  const actual = topNoteOf(fingering);
   if (!actual) return 30;
   return pitchClassDistance(pitchClassOf(chord.targetTopNote), pitchClassOf(actual)) * 8;
 }
@@ -74,9 +93,10 @@ function usableInversion(
   chord: OptimizableChord,
   inversion: Inversion,
   avoidB9: boolean,
+  stringSet: StringSet = chord.stringSet,
 ): InversionCandidate | null {
-  const voicing = generateChordVoicing(chord.root, chord.chordType, inversion, chord.stringSet);
-  if (!voicing || !shouldUseVoicing(voicing, chord.stringSet, chord.chordType, avoidB9)) {
+  const voicing = generateChordVoicing(chord.root, chord.chordType, inversion, stringSet);
+  if (!voicing || !shouldUseVoicing(voicing, stringSet, chord.chordType, avoidB9)) {
     return null;
   }
   return { inversion, fingering: voicing, voicing: voicing.voicing };
@@ -94,6 +114,7 @@ export function optimizeVoiceLeading<T extends OptimizableChord>(
 ): OptimizedChord<T>[] | null {
   if (sequence.length === 0) return null;
   const avoidB9 = options.avoidB9 ?? true;
+  const freeStringSet = options.freeStringSet ?? false;
   const startingInversion = (options.startingInversion ?? 0) as Inversion;
   const optimized: OptimizedChord<T>[] = [];
 
@@ -124,9 +145,19 @@ export function optimizeVoiceLeading<T extends OptimizableChord>(
     }
   }
 
+  // The line starts on the home set; the other set is a last resort.
+  if (!bestFirst && freeStringSet) {
+    const otherSet: StringSet = first.stringSet === 'middle' ? 'upper' : 'middle';
+    for (const inv of ALL_INVERSIONS) {
+      bestFirst = usableInversion(first, inv, avoidB9, otherSet);
+      if (bestFirst) break;
+    }
+  }
+
   if (!bestFirst) return null;
   optimized.push({
     ...first,
+    stringSet: bestFirst.fingering.stringSet,
     inversion: bestFirst.inversion,
     fingering: bestFirst.fingering,
     voicing: bestFirst.voicing,
@@ -140,26 +171,30 @@ export function optimizeVoiceLeading<T extends OptimizableChord>(
     const candidateInversions: Inversion[] = Number.isInteger(current.preferredInversion)
       ? [current.preferredInversion as Inversion]
       : ALL_INVERSIONS;
+    const candidateSets: StringSet[] = freeStringSet ? STRING_SETS : [current.stringSet];
 
     let best: InversionCandidate | null = null;
     let bestScore = Infinity;
     let bestDistance: number | undefined;
 
-    for (const inv of candidateInversions) {
-      const candidate = usableInversion(current, inv, avoidB9);
-      if (!candidate) continue;
-      const distance = voiceLeadingDistance(previous.fingering, candidate.fingering, current.stringSet);
-      const score = distance + topNotePenalty(current, candidate.fingering);
-      if (score < bestScore) {
-        bestScore = score;
-        best = candidate;
-        bestDistance = distance;
+    for (const set of candidateSets) {
+      for (const inv of candidateInversions) {
+        const candidate = usableInversion(current, inv, avoidB9, set);
+        if (!candidate) continue;
+        const distance = voiceLeadingDistance(previous.fingering, candidate.fingering);
+        const score = distance + topNotePenalty(current, candidate.fingering);
+        if (score < bestScore) {
+          bestScore = score;
+          best = candidate;
+          bestDistance = distance;
+        }
       }
     }
 
     if (!best) return null;
     optimized.push({
       ...current,
+      stringSet: best.fingering.stringSet,
       inversion: best.inversion,
       fingering: best.fingering,
       voicing: best.voicing,
@@ -244,8 +279,11 @@ export function guideLineAnalysis<T>(
     (m) => m === 'common tone' || m.startsWith('step'),
   ).length;
 
+  // A free-string-set line can move between the B and E strings.
+  const mixed = visible.some((v) => v.stringLabel !== visible[0].stringLabel);
+
   return {
-    stringLabel: visible[0].stringLabel,
+    stringLabel: mixed ? 'top string' : visible[0].stringLabel,
     notes,
     commonOrStepCount,
     totalMoves: Math.max(1, motions.length),

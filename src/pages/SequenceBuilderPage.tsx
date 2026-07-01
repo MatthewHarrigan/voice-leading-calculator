@@ -56,6 +56,7 @@ function slug(title: string) {
 export function SequenceBuilderPage() {
   const chart = useStore((s) => s.chart);
   const stringSet = useStore((s) => s.stringSet);
+  const freeStringSet = useStore((s) => s.freeStringSet);
   const avoidB9 = useStore((s) => s.avoidB9);
   const audioEnabled = useStore((s) => s.audioEnabled);
   const sequencePlaying = useSequencePlaying();
@@ -147,11 +148,11 @@ export function SequenceBuilderPage() {
   const optimized = useMemo(() => {
     if (sequence.length === 0) return null;
     try {
-      return optimizeVoiceLeading(sequence, { startingInversion, avoidB9 });
+      return optimizeVoiceLeading(sequence, { startingInversion, avoidB9, freeStringSet });
     } catch {
       return null;
     }
-  }, [sequence, startingInversion, avoidB9]);
+  }, [sequence, startingInversion, avoidB9, freeStringSet]);
 
   const transitions = optimized ? movementTransitions(optimized) : [];
   const guide = optimized ? guideLineAnalysis(optimized) : null;

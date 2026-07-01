@@ -48,10 +48,64 @@ describe('optimizeVoiceLeading', () => {
   });
 });
 
+describe('freeStringSet', () => {
+  it('keeps every chord on its own set when off', () => {
+    const result = optimizeVoiceLeading([chord('D', 'min7'), chord('G', 'dom7'), chord('C', 'maj7')])!;
+    expect(result.every((c) => c.stringSet === 'middle')).toBe(true);
+  });
+
+  it('starts on the home set and only ever uses real sets when on', () => {
+    const result = optimizeVoiceLeading(
+      [chord('D', 'min7'), chord('G', 'dom7'), chord('C', 'maj7'), chord('F', 'maj7'), chord('B', 'min7b5')],
+      { freeStringSet: true },
+    )!;
+    expect(result[0].stringSet).toBe('middle');
+    for (const c of result) {
+      expect(['middle', 'upper']).toContain(c.stringSet);
+      // the fingering actually lives on the reported set
+      expect(c.fingering.stringSet).toBe(c.stringSet);
+    }
+  });
+
+  it('picks the cheaper set for a locked inversion', () => {
+    // Lock both chords' inversions so exactly one candidate exists per set,
+    // then check the optimiser matched the by-hand minimum.
+    const seq: OptimizableChord[] = [
+      { root: 'C', chordType: 'maj7', stringSet: 'middle', preferredInversion: 0 },
+      { root: 'F', chordType: 'maj7', stringSet: 'middle', preferredInversion: 2 },
+    ];
+    const result = optimizeVoiceLeading(seq, { freeStringSet: true })!;
+    const prev = result[0].fingering;
+    const onMiddle = generateChordVoicing('F', 'maj7', 2, 'middle')!;
+    const onUpper = generateChordVoicing('F', 'maj7', 2, 'upper')!;
+    const expected = Math.min(voiceLeadingDistance(prev, onMiddle), voiceLeadingDistance(prev, onUpper));
+    expect(result[1].distance).toBe(expected);
+  });
+
+  it('never switches for an identical repeated chord', () => {
+    const result = optimizeVoiceLeading([chord('C', 'maj7'), chord('C', 'maj7')], { freeStringSet: true })!;
+    expect(result[1].stringSet).toBe(result[0].stringSet);
+    expect(result[1].distance).toBe(0);
+  });
+});
+
 describe('scoring helpers', () => {
   it('measures fret movement across the active strings', () => {
     const a = generateChordVoicing('C', 'maj7', 0, 'middle')!;
-    expect(voiceLeadingDistance(a, a, 'middle')).toBe(0);
+    expect(voiceLeadingDistance(a, a)).toBe(0);
+  });
+
+  it('compares hand position across sets and charges a switch cost', () => {
+    const mid = generateChordVoicing('C', 'maj7', 0, 'middle')!;
+    const up = generateChordVoicing('C', 'maj7', 0, 'upper')!;
+    const perVoice = [0, 1, 2, 3].reduce((sum, voice) => {
+      const fretA = mid.frets[[1, 2, 3, 4][voice]]!;
+      const fretB = up.frets[[2, 3, 4, 5][voice]]!;
+      return sum + Math.abs(fretB - fretA);
+    }, 0);
+    expect(voiceLeadingDistance(mid, up)).toBe(perVoice + 4);
+    // replaying the same pitches on the other set is never free
+    expect(voiceLeadingDistance(mid, up)).toBeGreaterThan(4);
   });
 
   it('penalises a missing target top note', () => {

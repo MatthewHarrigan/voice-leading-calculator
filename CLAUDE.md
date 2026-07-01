@@ -82,6 +82,13 @@ raised quality, pretty accidentals) used by both. A persisted `chartViewMode`
 - "Avoid b9": any two voices a minor-9th apart, except dominant 7♭9.
 - Voice-leading optimiser: greedy minimisation of fret movement + a missed-lead-note penalty;
   guide line is tracked on the top string (B for middle, high-E for upper).
+- Cross-set mode (the global "Cross sets" switch, `freeStringSet`): the selected string set
+  becomes the *home* set the line starts on, and every later chord may be voiced on either set.
+  Distance compares hand **position** per voice (same frets on the other set ≈ no movement) plus
+  a flat 4-fret switch cost, so lines hop sets to stay in position instead of sliding up the
+  neck — but a repeated chord never flaps. Applies to both sequence engines: the greedy
+  optimiser (Sequence Builder) and the ii-V-I enumerator (`generateProgressions`, which keeps
+  its own `crossStringSetDistance` metric and anchors the ii on the home set).
 - Walking bass (`walkingBass.ts`, after Ed Friedland's *Building Walking Bass Lines*): a
   progressive style ladder — `roots` → `roots-fifths` → `chromatic` / `dominant` / `scale`
   approach → `walking` (full) → `advanced` (Part Two). Invariants: the root anchors every
@@ -111,12 +118,12 @@ raised quality, pretty accidentals) used by both. A persisted `chartViewMode`
   the array); `BassLineView` renders the line under the chart with its analysis labels.
 
 ## Testing
-- Unit: `src/music/**/*.test.ts` + `src/components/chartLayout.test.ts` (144 tests) cover spelling,
-  the chord catalogue, drop-2 voicing, the b9 rule, the optimiser, progressions, the song model, the
-  Song/Chart converters, the lead-sheet layout grid, and the iReal Pro engine (verified against the
-  "9.20 Special" spec vector — 26 authored bars expand to 32 — plus subtle-token coverage and 5 real
-  standard fixtures with round-trips).
-- E2E: `e2e/app.spec.ts` (25 tests) exercises every page in a real browser, including iReal import
+- Unit: `src/music/**/*.test.ts` + `src/components/chartLayout.test.ts` (185 tests) cover spelling,
+  the chord catalogue, drop-2 voicing, the b9 rule, the optimiser (incl. cross-set mode), progressions,
+  the walking-bass generator, the song model, the Song/Chart converters, the lead-sheet layout grid, and
+  the iReal Pro engine (verified against the "9.20 Special" spec vector — 26 authored bars expand to
+  32 — plus subtle-token coverage and 5 real standard fixtures with round-trips).
+- E2E: `e2e/app.spec.ts` (30 tests) exercises every page in a real browser, including iReal import
   (paste + standards), structure rendering, measure editing, the chart/guitar/both view toggle, and
   that the guitar sheet mirrors the score's chrome.
 - Always keep `npm test`, `npm run test:e2e`, `npm run lint`, and `npm run typecheck` green.

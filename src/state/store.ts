@@ -42,6 +42,7 @@ export type ChartViewMode = 'chart' | 'guitar' | 'both';
 interface AppState {
   // --- global settings ---
   stringSet: StringSet;
+  freeStringSet: boolean; // voice-lead across both string sets; stringSet is the home set
   avoidB9: boolean;
   sortMode: SortMode;
   theme: Theme;
@@ -80,6 +81,7 @@ interface AppState {
 
   // --- setters ---
   setStringSet: (s: StringSet) => void;
+  setFreeStringSet: (v: boolean) => void;
   setAvoidB9: (v: boolean) => void;
   setSortMode: (m: SortMode) => void;
   toggleTheme: () => void;
@@ -243,6 +245,7 @@ export const useStore = create<AppState>()(
   persist(
     (set) => ({
       stringSet: 'middle',
+      freeStringSet: false,
       avoidB9: true,
       sortMode: 'default',
       theme: 'light',
@@ -272,6 +275,7 @@ export const useStore = create<AppState>()(
       userPlaylists: [],
 
       setStringSet: (stringSet) => set({ stringSet }),
+      setFreeStringSet: (freeStringSet) => set({ freeStringSet }),
       setAvoidB9: (avoidB9) => set({ avoidB9 }),
       setSortMode: (sortMode) => set({ sortMode }),
       toggleTheme: () => set((s) => ({ theme: s.theme === 'light' ? 'dark' : 'light' })),
@@ -614,6 +618,7 @@ export const useStore = create<AppState>()(
       },
       partialize: (state) => ({
         stringSet: state.stringSet,
+        freeStringSet: state.freeStringSet,
         avoidB9: state.avoidB9,
         sortMode: state.sortMode,
         theme: state.theme,

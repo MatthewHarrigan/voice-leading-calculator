@@ -67,6 +67,19 @@ test('string set toggle persists across navigation', async ({ page }) => {
   await expect(page.getByTestId('stringset-upper')).toHaveClass(/active/);
 });
 
+test('cross-sets toggle persists and progressions label their set pattern', async ({ page }) => {
+  await gotoFresh(page);
+  await page.getByTestId('free-stringset').check();
+
+  await page.getByRole('link', { name: 'Progressions' }).click();
+  await expect(page.getByTestId('free-stringset')).toBeChecked();
+  await expect(page.locator('.progression')).toHaveCount(4);
+  await expect(page.locator('.progression h3 .muted').first()).toHaveText(/(middle|upper)-/);
+
+  await page.getByTestId('free-stringset').uncheck();
+  await expect(page.locator('.progression h3 .muted')).toHaveCount(0);
+});
+
 test('progressions show four ranked ii-V-I patterns', async ({ page }) => {
   await gotoFresh(page);
   await page.getByRole('link', { name: 'Progressions' }).click();

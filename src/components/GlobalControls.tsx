@@ -4,6 +4,8 @@ import { getChordPlayer } from '@/audio/player';
 export function GlobalControls() {
   const stringSet = useStore((s) => s.stringSet);
   const setStringSet = useStore((s) => s.setStringSet);
+  const freeStringSet = useStore((s) => s.freeStringSet);
+  const setFreeStringSet = useStore((s) => s.setFreeStringSet);
   const avoidB9 = useStore((s) => s.avoidB9);
   const setAvoidB9 = useStore((s) => s.setAvoidB9);
   const audioEnabled = useStore((s) => s.audioEnabled);
@@ -33,6 +35,19 @@ export function GlobalControls() {
           Upper
         </button>
       </div>
+
+      <label
+        className="switch"
+        title="Voice-lead across both string sets — the selected set starts the line, and later chords may hop sets when it means less movement"
+      >
+        <input
+          type="checkbox"
+          checked={freeStringSet}
+          onChange={(e) => setFreeStringSet(e.target.checked)}
+          data-testid="free-stringset"
+        />
+        Cross sets
+      </label>
 
       <label className="switch" title="Flag voicings with a minor-9th (b9) clash">
         <input

@@ -22,4 +22,18 @@ describe('generateProgressions', () => {
     expect(patterns.length).toBeGreaterThan(0);
     expect(patterns[0].chords.map((c) => c.type)).toEqual(['min7b5', 'dom7', 'min7']);
   });
+
+  it('freeStringSet anchors the ii on the home set and never ranks worse', () => {
+    const fixed = generateProgressions('major', 'middle');
+    const free = generateProgressions('major', 'middle', { freeStringSet: true });
+    expect(free.length).toBeGreaterThan(0);
+    for (const pattern of free) {
+      expect(pattern.chords[0].stringSet).toBe('middle');
+      for (const chord of pattern.chords) {
+        expect(chord.voicing.stringSet).toBe(chord.stringSet);
+      }
+    }
+    // the free search space is a superset of the fixed one, so its best can't rank worse
+    expect(free[0].totalDistance).toBeLessThanOrEqual(fixed[0].totalDistance);
+  });
 });

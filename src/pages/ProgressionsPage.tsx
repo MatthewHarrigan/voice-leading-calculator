@@ -7,6 +7,7 @@ import { useSequencePlaying } from '@/audio/useSequencePlaying';
 
 export function ProgressionsPage() {
   const stringSet = useStore((s) => s.stringSet);
+  const freeStringSet = useStore((s) => s.freeStringSet);
   const avoidB9 = useStore((s) => s.avoidB9);
   const audioEnabled = useStore((s) => s.audioEnabled);
   const [type, setType] = useState<ProgressionType>('major');
@@ -18,8 +19,8 @@ export function ProgressionsPage() {
   }, [sequencePlaying]);
 
   const patterns = useMemo(
-    () => generateProgressions(type, stringSet, { avoidB9 }),
-    [type, stringSet, avoidB9],
+    () => generateProgressions(type, stringSet, { avoidB9, freeStringSet }),
+    [type, stringSet, avoidB9, freeStringSet],
   );
 
   const playProgression = (chords: typeof patterns[number]['chords'], index: number) => {
@@ -64,6 +65,11 @@ export function ProgressionsPage() {
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <h3>
               {type === 'major' ? 'Major ii-V-I' : 'Minor ii-V-i'} — Pattern {index + 1}
+              {freeStringSet && (
+                <span className="muted" style={{ fontWeight: 400, fontSize: 13, marginLeft: 8 }}>
+                  {pattern.stringSetPattern}
+                </span>
+              )}
             </h3>
             {audioEnabled &&
               (sequencePlaying && playingIndex === index ? (
