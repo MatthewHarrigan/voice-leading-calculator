@@ -420,6 +420,11 @@ input[type='text'] {
   font-weight: 600;
   text-anchor: middle;
 }
+.chord-diagram .cd-fret-label {
+  /* The starting-fret number sits alone beside the nut with room to grow;
+     bumped well past the interval labels so it reads at a glance. */
+  font-size: 22px;
+}
 .chord-diagram .cd-lead {
   font-style: italic;
 }
