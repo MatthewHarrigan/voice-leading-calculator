@@ -123,11 +123,14 @@ export function ChordDiagram({
       })}
 
       {/* Starting fret label, centred in the left gutter and on the first
-          fret row (the CSS centres the glyph on this y). A two-digit number
-          at the enlarged size needs the gutter's full width to avoid the
-          viewBox clipping it. */}
+          fret row (the CSS centres the glyph on this y). Two digits at the
+          full size overrun the gutter, so they step down a size. */}
       {minFret > 0 && (
-        <text x={MARGIN.left / 2} y={MARGIN.top + fretSpacing * 0.5} className="cd-fret-label">
+        <text
+          x={MARGIN.left / 2}
+          y={MARGIN.top + fretSpacing * 0.5}
+          className={`cd-fret-label${minFret + 1 >= 10 ? ' cd-fret-label--wide' : ''}`}
+        >
           {minFret + 1}
         </text>
       )}

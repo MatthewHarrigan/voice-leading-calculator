@@ -428,6 +428,11 @@ input[type='text'] {
   font-size: 22px;
   dominant-baseline: central;
 }
+.chord-diagram .cd-fret-label--wide {
+  /* Two digits at 22px fill the whole 25-unit gutter and clip; step down
+     just far enough to keep clear air on both sides. */
+  font-size: 18px;
+}
 .chord-diagram .cd-lead {
   font-style: italic;
 }
