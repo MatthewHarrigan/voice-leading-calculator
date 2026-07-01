@@ -422,8 +422,11 @@ input[type='text'] {
 }
 .chord-diagram .cd-fret-label {
   /* The starting-fret number sits alone beside the nut with room to grow;
-     bumped well past the interval labels so it reads at a glance. */
+     bumped well past the interval labels so it reads at a glance. Its y is
+     the midpoint of the first fret row, so centre the glyph on that point
+     rather than sitting the baseline there. */
   font-size: 22px;
+  dominant-baseline: central;
 }
 .chord-diagram .cd-lead {
   font-style: italic;
