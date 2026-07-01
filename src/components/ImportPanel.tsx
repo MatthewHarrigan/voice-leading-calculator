@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useStore, type SavedTune } from '@/state/store';
 import { parseIRealIndex, parseIRealSongChunk } from '@/music/ireal/parse';
 import { BUNDLED_PLAYLISTS, fetchBundledPlaylist } from '@/data/bundledPlaylists';
@@ -8,8 +8,12 @@ interface ImportPanelProps {
   onImported: (title: string) => void;
 }
 
-/** Cap rendered rows so a 1460-song list paints fast; search to narrow it. */
-const MAX_ROWS = 200;
+/**
+ * Rows render in pages of this size so a 1460-song list paints fast; scrolling
+ * near the bottom of the picker loads the next page, so the whole list is
+ * reachable without searching.
+ */
+const PAGE_SIZE = 200;
 
 /**
  * The Tunes library: open a built-in playlist (Jazz 1460), browse/search any
@@ -63,6 +67,20 @@ export function ImportPanel({ onClose, onImported }: ImportPanelProps) {
       ? rows.filter((r) => r.title.toLowerCase().includes(q) || r.composer.toLowerCase().includes(q))
       : rows;
   }, [rows, query]);
+
+  // Lazy list growth: start with one page and add another whenever the picker
+  // scrolls near its end. A new search / playlist starts back at one page.
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [query, activeCustomId, playlist]);
+
+  const growOnScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 240) {
+      setVisibleCount((count) => (count < matches.length ? count + PAGE_SIZE : count));
+    }
+  };
 
   const goBrowse = () => {
     setQuery('');
@@ -153,7 +171,7 @@ export function ImportPanel({ onClose, onImported }: ImportPanelProps) {
 
   // ---------- Browser ----------
   if (browsing) {
-    const shown = matches.slice(0, MAX_ROWS);
+    const shown = matches.slice(0, visibleCount);
     const title = activeCustom ? activeCustom.name : playlist?.name ?? 'Playlist';
     return (
       <section className="import-panel" data-testid="import-panel">
@@ -188,7 +206,7 @@ export function ImportPanel({ onClose, onImported }: ImportPanelProps) {
             autoFocus
           />
         </div>
-        <div className="playlist-picker" data-testid="playlist-picker">
+        <div className="playlist-picker" data-testid="playlist-picker" onScroll={growOnScroll}>
           {shown.map((tune, i) => (
             <div className="playlist-row" key={`${tune.title}-${i}`}>
               <button
@@ -235,7 +253,7 @@ export function ImportPanel({ onClose, onImported }: ImportPanelProps) {
           {matches.length === 0 && <p className="muted" style={{ fontSize: 13 }}>No matches.</p>}
           {matches.length > shown.length && (
             <p className="playlist-more" data-testid="playlist-more">
-              +{matches.length - shown.length} more — keep typing to narrow the list.
+              +{matches.length - shown.length} more — scroll to load them.
             </p>
           )}
         </div>
