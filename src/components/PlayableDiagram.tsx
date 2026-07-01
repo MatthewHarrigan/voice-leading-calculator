@@ -111,18 +111,26 @@ export function PlayableDiagram({
     );
   }
 
+  // The b9 flag lives in the caption row, not over the fretboard — a corner
+  // badge collides with high-fret dots now grid cards have no title band.
+  const flag = avoid && (
+    <span className="avoid-flag" title="Contains a minor-9th (b9) clash — the classic avoid interval">
+      b9
+    </span>
+  );
+
   return (
     <div
       className={`chord-card${avoid ? ' is-avoid' : ''}${className ? ` ${className}` : ''}`}
       {...gesture}
     >
-      {avoid && (
-        <span className="avoid-flag" title="Contains a minor-9th (b9) clash — the classic avoid interval">
-          b9
-        </span>
-      )}
       {diagram}
-      {caption && <div className="card-caption">{caption}</div>}
+      {(caption || flag) && (
+        <div className="card-caption">
+          {caption}
+          {flag}
+        </div>
+      )}
     </div>
   );
 }

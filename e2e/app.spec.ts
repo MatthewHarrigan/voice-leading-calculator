@@ -124,7 +124,8 @@ test('cross-sets toggle persists and progressions label their set pattern', asyn
   await openSettings(page);
   await expect(page.getByTestId('free-stringset')).toBeChecked();
   await expect(page.locator('.progression')).toHaveCount(4);
-  await expect(page.locator('.progression h3 .muted').first()).toHaveText(/movement \d+ · (middle|upper)-/);
+  // Every pattern shows its movement score; the set pattern only appears when mixed.
+  await expect(page.locator('.progression h3 .muted').first()).toHaveText(/movement \d+/);
 
   await page.getByTestId('free-stringset').uncheck();
   await expect(page.locator('.progression h3 .muted').first()).toHaveText(/movement \d+$/);

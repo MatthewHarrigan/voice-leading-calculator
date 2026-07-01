@@ -752,9 +752,8 @@ input[type='text'] {
   margin-top: 4px;
 }
 .chord-card .avoid-flag {
-  position: absolute;
-  top: 8px;
-  right: 8px;
+  display: inline-block;
+  margin-left: 6px;
   font-size: 10px;
   color: var(--danger);
   border: 1px solid var(--avoid-border);
@@ -1044,9 +1043,11 @@ input[type='text'] {
 .optimized-chord:hover {
   transform: translateY(-2px);
 }
+/* The playhead is bar-granular, so the bar-level tint (below) is the single
+   colour cue — ringing every diagram in the bar as well just reads as noise.
+   The underlined chord symbols remain the non-colour cue. */
 .optimized-chord.playing {
-  background: color-mix(in srgb, var(--accent) 20%, var(--surface));
-  box-shadow: 0 0 0 2px var(--accent);
+  background: transparent;
 }
 /* Diagram grid that mirrors the chart's 16-cell bar layout. */
 .optimized-chart-grid {
@@ -1235,7 +1236,7 @@ input[type='text'] {
   border-radius: 2px;
 }
 .barred.measure-playing {
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
 }
 .barred.measure-playing::before {
   content: '';

@@ -67,7 +67,10 @@ export function ProgressionsPage() {
               {type === 'major' ? 'Major ii-V-I' : 'Minor ii-V-i'} — Pattern {index + 1}
               <span className="muted" style={{ fontWeight: 400, fontSize: 13, marginLeft: 8 }}>
                 movement {pattern.totalDistance}
-                {freeStringSet ? ` · ${pattern.stringSetPattern}` : ''}
+                {/* Only label the sets when the pattern actually mixes them. */}
+                {new Set(pattern.chords.map((c) => c.stringSet)).size > 1
+                  ? ` · ${pattern.stringSetPattern}`
+                  : ''}
               </span>
             </h3>
             {audioEnabled &&
