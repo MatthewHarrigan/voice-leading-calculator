@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { type ChordTypeId } from '@/music/chords';
 import { type SequenceChord } from '@/music/song';
 import { chartToSequence, measureStartBeats } from '@/music/chart';
@@ -174,6 +174,48 @@ export function SequenceBuilderPage() {
     return idx;
   }, [playBeat, barStartBeats]);
   const playingMeasureId = playingIndex >= 0 ? (flat[playingIndex]?.id ?? null) : null;
+
+  // Follow the playhead — but only while the user is already watching it.
+  // If the playing bar walks off the screen edge by itself, nudge it back with
+  // the smallest possible scroll. If the user scrolled elsewhere (to edit or
+  // pick another tune), the previous bar wasn't visible or a manual scroll
+  // happened, so following disarms until they return to the playhead.
+  const watchingPlayheadRef = useRef(false);
+  const userScrolledRef = useRef(false);
+  useEffect(() => {
+    const onUserScroll = () => {
+      userScrolledRef.current = true;
+    };
+    window.addEventListener('wheel', onUserScroll, { passive: true });
+    window.addEventListener('touchmove', onUserScroll, { passive: true });
+    return () => {
+      window.removeEventListener('wheel', onUserScroll);
+      window.removeEventListener('touchmove', onUserScroll);
+    };
+  }, []);
+  useEffect(() => {
+    if (!playingMeasureId) {
+      watchingPlayheadRef.current = false;
+      return;
+    }
+    const els = Array.from(document.querySelectorAll<HTMLElement>('.measure-playing'));
+    if (els.length === 0) return;
+    const visible = els.some((el) => {
+      const r = el.getBoundingClientRect();
+      return r.bottom > 0 && r.top < window.innerHeight;
+    });
+    const scrolledAway = userScrolledRef.current;
+    userScrolledRef.current = false;
+
+    if (visible) {
+      watchingPlayheadRef.current = true;
+    } else if (watchingPlayheadRef.current && !scrolledAway) {
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      els[0].scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest' });
+    } else {
+      watchingPlayheadRef.current = false;
+    }
+  }, [playingMeasureId]);
 
   // Optimised voicings grouped under their authored measure (first pass through
   // the form), so the guitar view mirrors the chart's bar layout exactly.
