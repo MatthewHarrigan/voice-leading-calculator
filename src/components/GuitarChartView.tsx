@@ -29,6 +29,7 @@ export function GuitarChartView({ chart, byMeasure, playingMeasureId }: GuitarCh
       measureBaseClassName="optimized-measure"
       ariaLabel="Guitar chord diagrams"
       playingMeasureId={playingMeasureId}
+      twoBarRowsWhenNarrow
       renderBody={(m) => {
         const chords = byMeasure.get(m.id);
         if (!chords || chords.length === 0) return null;

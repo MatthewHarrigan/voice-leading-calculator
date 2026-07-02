@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { computeLayout } from './chartLayout';
+import { computeLayout, splitLayoutInHalf } from './chartLayout';
 import type { IRealChart, IRealMeasure } from '@/music/ireal/types';
 
 function chart(measures: IRealMeasure[]): IRealChart {
@@ -71,5 +71,35 @@ describe('computeLayout', () => {
     expect(layout[3].rowEnd).toBe(true);
     expect(layout[4].rowStart).toBe(true);
     expect(layout[4].rowEnd).toBe(true); // last bar overall
+  });
+});
+
+describe('splitLayoutInHalf', () => {
+  test('turns a four-bar row into two two-bar display rows on the same 16-col grid', () => {
+    const layout = computeLayout(chart(Array.from({ length: 4 }, () => bar())));
+    const split = splitLayoutInHalf(layout);
+    expect(split[0]).toEqual({ row: 0, col: 0, span: 8, rowStart: true, rowEnd: false });
+    expect(split[1]).toEqual({ row: 0, col: 8, span: 8, rowStart: false, rowEnd: true });
+    expect(split[2]).toEqual({ row: 1, col: 0, span: 8, rowStart: true, rowEnd: false });
+    expect(split[3]).toEqual({ row: 1, col: 8, span: 8, rowStart: false, rowEnd: true });
+  });
+
+  test('keeps a lone trailing bar as its own line with drawn edges', () => {
+    const layout = computeLayout(chart(Array.from({ length: 5 }, () => bar())));
+    const split = splitLayoutInHalf(layout);
+    expect(split[4]).toEqual({ row: 2, col: 0, span: 8, rowStart: true, rowEnd: true });
+  });
+
+  test('caps a wide bar at the two-bar line so it cannot spill over', () => {
+    // An 8-cell bar starting at col 4 spans into the row's second half; the
+    // split clamps it to its own half-line so nothing overlaps.
+    const layout = computeLayout(
+      chart([bar({ cell: 0, cells: 4 }), bar({ cell: 4, cells: 8 }), bar({ cell: 12, cells: 4 })]),
+    );
+    const split = splitLayoutInHalf(layout);
+    expect(split[1].col + split[1].span).toBeLessThanOrEqual(16);
+    expect(split[1].row).toBe(0);
+    // The trailing bar is the only one on its display line, so it draws both edges.
+    expect(split[2]).toEqual({ row: 1, col: 8, span: 8, rowStart: true, rowEnd: true });
   });
 });

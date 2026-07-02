@@ -1643,6 +1643,49 @@ input[type='text'] {
   }
 }
 
+/* Phone-width lead sheets: iReal-compact symbols, tighter gutters, and (via
+   splitLayoutInHalf) two diagram-bars per line instead of four. */
+@media (max-width: 700px) {
+  :root {
+    --chart-symbol-size: 14px;
+  }
+  .chart-view,
+  .optimized-chart-grid {
+    padding-left: 18px;
+    row-gap: 18px;
+  }
+  /* Keep iReal's four bars per line on the score: shave every horizontal
+     spare so a two-chord bar fits its symbols side by side, in time order. */
+  .chart-measure {
+    padding-left: 5px;
+    padding-right: 5px;
+    min-height: 48px;
+  }
+  .chart-measure .measure-cells {
+    gap: 2px 3px;
+  }
+  .sequence-chord {
+    padding: 2px 2px;
+  }
+  .diagram-sheet .measure-cells {
+    gap: 4px;
+  }
+  /* Two 62px diagrams + the 4px gap must fit a half-line bar's ~129px of
+     content (the double barline steals a few px), so a two-chord bar sits
+     side by side like iReal, never stacked. */
+  .diagram-sheet .optimized-measure {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+  .diagram-cell {
+    width: 62px;
+  }
+  .sc-lead,
+  .sc-meta {
+    font-size: 9px;
+  }
+}
+
 /* Import panel */
 .import-panel,
 .measure-editor {

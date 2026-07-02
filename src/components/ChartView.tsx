@@ -1,8 +1,16 @@
-import { Fragment, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type ReactNode,
+} from 'react';
 import { inversionName } from '@/music/voicing';
 import { prettyChordSymbol } from '@/music/ireal/chordParser';
 import type { IRealChart, IRealMeasure } from '@/music/ireal/types';
-import { computeLayout, structuralClasses, type Placement } from './chartLayout';
+import { computeLayout, splitLayoutInHalf, structuralClasses, type Placement } from './chartLayout';
 import {
   BarRepeatSign,
   ChordSymbol,
@@ -23,8 +31,24 @@ interface ChartGridProps {
   playingMeasureId?: string | null;
   onSelectMeasure?: (id: string) => void;
   ariaLabel?: string;
+  /** On narrow screens, re-flow to two bars per line (used by the diagram sheet). */
+  twoBarRowsWhenNarrow?: boolean;
   /** Render the bar's content (chords or diagrams); not called for repeat bars. */
   renderBody: (m: IRealMeasure, place: Placement) => ReactNode;
+}
+
+/** True below the width where four diagram-bars per line stop being readable. */
+function useNarrowScreen(): boolean {
+  const [narrow, setNarrow] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 700px)').matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 700px)');
+    const update = () => setNarrow(mq.matches);
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+  return narrow;
 }
 
 /**
@@ -42,9 +66,14 @@ export function ChartGrid({
   playingMeasureId,
   onSelectMeasure,
   ariaLabel,
+  twoBarRowsWhenNarrow = false,
   renderBody,
 }: ChartGridProps) {
-  const layout = computeLayout(chart);
+  const narrow = useNarrowScreen();
+  const layout = useMemo(() => {
+    const full = computeLayout(chart);
+    return twoBarRowsWhenNarrow && narrow ? splitLayoutInHalf(full) : full;
+  }, [chart, twoBarRowsWhenNarrow, narrow]);
   return (
     <div className={gridClassName} aria-label={ariaLabel}>
       {chart.measures.map((m, i) => {

@@ -130,6 +130,10 @@ raised quality, pretty accidentals) used by both. A persisted `chartViewMode`
   up audibly, and the count-in bar is scheduled as negative beats that click but play nothing.
 - Grid chord cards carry ONE caption (HTML, below the diagram) — the in-SVG title is for
   standalone diagrams (inspector, progressions), not grids (`showTitle={false}`).
+- Phone-width lead sheets (≤700px): the score keeps iReal's four bars per line with compact
+  symbols and shaved paddings so two-chord bars stay side by side; the guitar-diagram sheet
+  re-flows to two bars per line via `splitLayoutInHalf` (`chartLayout.ts`), which halves each
+  16-cell row on the same CSS grid and recomputes the drawn row-edge barlines.
 - ⌘K opens a Spotlight-style command palette (`CommandPalette.tsx`, mounted in `App`): searches
   presets, saved charts, user playlists and the loaded iReal library, plus page navigation and
   "Open Jazz 1460" (which loads the bundled playlist without leaving the palette). Loading any
@@ -137,7 +141,7 @@ raised quality, pretty accidentals) used by both. A persisted `chartViewMode`
   always resets on a tune change.
 
 ## Testing
-- Unit: `src/music/**/*.test.ts` + `src/components/chartLayout.test.ts` (185 tests) cover spelling,
+- Unit: `src/music/**/*.test.ts` + `src/components/chartLayout.test.ts` (188 tests) cover spelling,
   the chord catalogue, drop-2 voicing, the b9 rule, the optimiser (incl. cross-set mode), progressions,
   the walking-bass generator, the song model, the Song/Chart converters, the lead-sheet layout grid, and
   the iReal Pro engine (verified against the "9.20 Special" spec vector — 26 authored bars expand to

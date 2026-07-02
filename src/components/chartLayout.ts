@@ -95,6 +95,27 @@ export function computeLayout(chart: IRealChart): Placement[] {
   }));
 }
 
+/**
+ * Re-flow a 16-cell layout as two-bar lines for narrow screens: each authored
+ * row splits into two display rows of 8 cells, and columns/spans double so the
+ * same 16-column CSS grid renders both densities. Row-edge flags (which drive
+ * the drawn barlines) are recomputed for the new line breaks.
+ */
+export function splitLayoutInHalf(layout: Placement[]): Placement[] {
+  const half = CELLS_PER_ROW / 2;
+  const out = layout.map((p) => {
+    const second = p.col >= half ? 1 : 0;
+    const relCol = p.col - second * half;
+    const span = Math.max(1, Math.min(p.span, half - relCol));
+    return { ...p, row: p.row * 2 + second, col: relCol * 2, span: span * 2 };
+  });
+  return out.map((p, i) => ({
+    ...p,
+    rowStart: p.col === 0 || i === 0 || out[i - 1].row !== p.row,
+    rowEnd: i === out.length - 1 || out[i + 1].row !== p.row,
+  }));
+}
+
 /** Structural (barline + row-edge) CSS classes for a measure, shared by views. */
 export function structuralClasses(m: IRealMeasure, place: Placement): string {
   return [
