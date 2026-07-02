@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { NavLink, Route, Routes } from 'react-router-dom';
 import { useStore } from '@/state/store';
+import { getChordPlayer } from '@/audio/player';
 import { InspectorProvider } from '@/components/inspector';
 import { CommandPalette } from '@/components/CommandPalette';
 import { GlobalControls } from '@/components/GlobalControls';
@@ -24,6 +25,20 @@ export function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
+
+  // iOS grants audio activation most reliably on touchend/click, but strums
+  // start on pointerdown — so unlock the audio session on every plain tap.
+  // Once running this is a no-op, and it also recovers the context after an
+  // iOS "interrupted" state (phone call, lock screen).
+  useEffect(() => {
+    const unlock = () => void getChordPlayer().resume();
+    window.addEventListener('touchend', unlock, { passive: true });
+    window.addEventListener('click', unlock, { passive: true });
+    return () => {
+      window.removeEventListener('touchend', unlock);
+      window.removeEventListener('click', unlock);
+    };
+  }, []);
 
   return (
     <InspectorProvider>

@@ -29,6 +29,12 @@ const PARTIALS: { ratio: number; gain: number; type: OscillatorType }[] = [
 // seconds; this is the decay length of a plucked string.
 const DEFAULT_SUSTAIN = 3.0;
 
+// 50ms of 8-bit silence. Looping this through an <audio> element promotes the
+// page from iOS's "ambient" audio session (muted by the ringer switch) to a
+// "playback" session, so Web Audio actually sounds on a silenced iPhone.
+const SILENT_WAV =
+  'data:audio/wav;base64,UklGRrQBAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YZABAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICA';
+
 interface Voice {
   amp: GainNode;
   oscillators: OscillatorNode[];
@@ -189,11 +195,43 @@ export class ChordPlayer {
     return this.ctx;
   }
 
-  /** Some browsers start the context suspended until a user gesture. Never rejects. */
+  // Silent looping <audio> that holds the iOS "playback" session (see SILENT_WAV).
+  private sessionKeeper: HTMLAudioElement | null = null;
+
+  /**
+   * On touch devices, loop a silent <audio> element so the OS treats the page
+   * as media playback — otherwise the iPhone ringer switch mutes all Web
+   * Audio. Must be called from inside a user gesture; failures are ignored
+   * and retried on the next gesture.
+   */
+  private ensurePlaybackSession(): void {
+    if (this.sessionKeeper) return;
+    if (!('ontouchstart' in window) && navigator.maxTouchPoints === 0) return;
+    try {
+      const audio = document.createElement('audio');
+      audio.setAttribute('playsinline', '');
+      audio.loop = true;
+      audio.preload = 'auto';
+      audio.src = SILENT_WAV;
+      this.sessionKeeper = audio;
+      audio.play().catch(() => {
+        this.sessionKeeper = null; // no activation yet — retry on a later gesture
+      });
+    } catch {
+      this.sessionKeeper = null;
+    }
+  }
+
+  /**
+   * Some browsers start the context suspended until a user gesture, and iOS
+   * additionally parks it as "interrupted" after a call / lock screen. Never
+   * rejects.
+   */
   async resume(): Promise<void> {
     try {
+      this.ensurePlaybackSession();
       const ctx = this.ensureContext();
-      if (ctx.state === 'suspended') await ctx.resume();
+      if (ctx.state === 'suspended' || (ctx.state as string) === 'interrupted') await ctx.resume();
     } catch {
       /* no audio available / no user gesture yet */
     }
@@ -673,6 +711,11 @@ export class ChordPlayer {
   /** Release the audio context and any pending teardown timers. */
   dispose(): void {
     this.cancelSequence();
+    if (this.sessionKeeper) {
+      this.sessionKeeper.pause();
+      this.sessionKeeper.src = '';
+      this.sessionKeeper = null;
+    }
     this.voices.forEach((v) => clearTimeout(v.teardown));
     this.voices.clear();
     this.stringVoices = [null, null, null, null, null, null, null];
